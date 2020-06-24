@@ -1,0 +1,10 @@
+target
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker
+docs
+ci
+.git
+.gitignore
+*.sw[op]

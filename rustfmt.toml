@@ -1,0 +1,24 @@
+# [config.rs](https://github.com/rust-lang-nursery/rustfmt/blob/master/src/config.rs)
+# [rustfmt-configs-guide](https://github.com/regexident/rustfmt-configs-guide)
+
+max_width = 100
+newline_style = "Unix"
+reorder_impl_items = true
+use_field_init_shorthand = true
+use_small_heuristics = "Max"
+use_try_shorthand = true
+
+condense_wildcard_suffixes = true
+fn_single_line = true
+format_doc_comments = true
+format_macro_matchers = true
+format_strings = true
+imports_layout = "HorizontalVertical"
+merge_imports = true
+normalize_comments = true
+normalize_doc_attributes = true
+# report_fixme = "Always"
+# report_todo = "Always"
+unstable_features = true
+version = "Two"
+wrap_comments = true

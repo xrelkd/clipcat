@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package clipboard;
+
+service Clipcat {
+  rpc Insert(InsertRequest) returns (InsertResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Remove(RemoveRequest) returns (RemoveResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc MarkAsClipboard(MarkAsClipboardRequest) returns (MarkAsClipboardResponse);
+  rpc Length(LengthRequest) returns (LengthResponse);
+  rpc Clear(ClearRequest) returns (ClearResponse);
+}
+
+enum ClipboardType {
+  Clipboard = 0;
+  Primary = 1;
+}
+
+message ClipboardData {
+  uint64 id = 1;
+  string data = 2;
+  ClipboardType clipboard_type = 3;
+  uint64 timestamp = 4;
+}
+
+message InsertRequest {
+  ClipboardType clipboard_type = 1;
+  string data = 2;
+}
+message InsertResponse { uint64 id = 1; }
+
+message GetRequest { uint64 id = 1; }
+message GetResponse { ClipboardData data = 1; }
+
+message ListRequest {}
+message ListResponse { repeated ClipboardData data = 1; }
+
+message UpdateRequest {
+  uint64 id = 1;
+  string data = 2;
+}
+message UpdateResponse {
+  bool ok = 1;
+  uint64 new_id = 2;
+}
+
+message MarkAsClipboardRequest { uint64 id = 1; }
+message MarkAsClipboardResponse { bool ok = 1; }
+
+message LengthRequest {}
+message LengthResponse { uint64 length = 1; }
+
+message ClearRequest {}
+message ClearResponse {}
+
+message RemoveRequest { uint64 id = 1; }
+message RemoveResponse { bool ok = 1; }

@@ -1,0 +1,81 @@
+[package]
+name = "clipcat"
+version = "0.4.13"
+authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
+edition = "2018"
+
+[features]
+all = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
+default = ["clipcatd", "clipcatctl", "clipcat-menu"]
+
+app = ["app_dirs", "structopt", "toml", "env_logger"]
+monitor = ["x11-clipboard"]
+daemon = ["daemonize", "libc", "syslog", "tokio/signal", "serde_json", "bincode", "rocksdb"]
+external_editor = ["tokio/process"]
+
+clipcatd = ["app", "monitor", "daemon"]
+clipcatctl = ["app", "tokio/process", "tokio/fs", "external_editor"]
+clipcat-menu = ["app", "tokio/process", "external_editor"]
+clipcat-notify = ["structopt", "monitor"]
+
+[lib]
+name = "clipcat"
+path = "src/lib.rs"
+
+[[bin]]
+name = "clipcatd"
+path = "src/bin/clipcatd/main.rs"
+required-features = ["clipcatd"]
+
+[[bin]]
+name = "clipcatctl"
+path = "src/bin/clipcatctl/main.rs"
+required-features = ["clipcatctl"]
+
+[[bin]]
+name = "clipcat-menu"
+path = "src/bin/clipcat-menu/main.rs"
+required-features = ["clipcat-menu"]
+
+[[bin]]
+name = "clipcat-notify"
+path = "src/bin/clipcat-notify/main.rs"
+required-features = ["clipcat-notify"]
+
+[dependencies]
+futures = "0.3"
+tokio = { version = "0.2", features = ["sync"] }
+
+snafu = "0.6"
+
+tonic = "0.2"
+prost = "0.6"
+
+log = { version = "0.4", features = ["serde"] }
+env_logger = { version = "0.7", optional = true }
+syslog = { version = "5", optional = true }
+
+structopt = { version = "0.3", optional = true }
+app_dirs = { version = "1", optional = true }
+toml = { version = "0.5", optional = true }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", optional = true }
+
+x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
+
+rocksdb = { version = "0.14", optional = true }
+bincode = { version = "1", optional = true }
+
+libc = { version = "0.2", optional = true }
+daemonize = { version = "0.4", optional = true }
+
+[build-dependencies]
+tonic-build = { version = "0.2", features = ["prost"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[profile.dev]
+opt-level = 0
