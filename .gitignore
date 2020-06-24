@@ -1,0 +1,19 @@
+**/target/
+**/*.rs.bk
+
+*.swp
+*.swo
+*.swn
+*.DS_Store
+
+# Visual Studio Code stuff
+.vscode
+
+# GitEye stuff
+.project
+
+# idea ide
+.idea
+
+# git stuff
+.git

@@ -1,0 +1,60 @@
+[formatter.rust]
+command  = "cargo"
+options  = ["fmt", "--all", "--verbose", "--"]
+includes = ["*.rs"]
+
+[formatter.clang-format]
+command  = "clang-format"
+options  = ["-i", "--Werror", "--verbose"]
+includes = ["*.proto"]
+
+[formatter.prettier]
+command = "prettier"
+options = ["--write"]
+includes = [
+  "*.css",
+  "*.html",
+  "*.js",
+  "*.json",
+  "*.jsx",
+  "*.md",
+  "*.mdx",
+  "*.scss",
+  "*.ts",
+  "*.yaml",
+]
+
+[formatter.toml]
+command  = "taplo"
+options  = ["format", "$@"]
+includes = ["*.toml"]
+
+[formatter.nix]
+command  = "nixpkgs-fmt"
+includes = ["*.nix"]
+
+[formatter.sql]
+command = "sleek"
+options = [
+  "--uppercase",
+  "--indent-spaces=4",
+  "--lines-between-queries=2",
+  "--trailing-newline",
+]
+includes = ["*.sql"]
+
+[formatter.shell]
+command = "sh"
+options = ["-eucx", """
+# Perform static analysis tool
+shellcheck --external-sources --source-path=SCRIPTDIR "$@"
+
+# Run formatter
+shfmt --write --simplify --case-indent --indent 4 "$@"
+    """, "--"]
+includes = ["*.sh"]
+
+[formatter.hcl]
+command  = "hclfmt"
+options  = ["-w"]
+includes = ["*.hcl"]

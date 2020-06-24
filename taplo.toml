@@ -1,0 +1,8 @@
+include = ["**/*.toml"]
+
+[formatting]
+align_entries        = true
+allowed_blank_lines  = 1
+array_trailing_comma = true
+crlf                 = false
+indent_string        = "  "
