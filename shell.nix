@@ -1,25 +1,28 @@
 with import <nixpkgs> { };
 
 stdenv.mkDerivation {
-  name = "env";
+  name = "clipcat-dev";
+
+  RUST_BACKTRACE = 1;
 
   LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
 
   PROTOC = "${protobuf}/bin/protoc";
   PROTOC_INCLUDE = "${protobuf}/include";
 
-  buildInputs = [
-    xorg.libxcb
-
-    rustup
+  nativeBuildInputs = [
+    rustc
+    cargo
     rustfmt
-
-    pkgconfig
 
     clang
     llvmPackages.libclang
 
+    pkgconfig
+
     protobuf
     python3
   ];
+
+  buildInputs = [ xorg.libxcb ];
 }
