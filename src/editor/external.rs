@@ -58,3 +58,33 @@ impl ExternalEditor {
         Ok(data)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::editor::ExternalEditor;
+
+    #[test]
+    fn test_from_env() {
+        let external_editor = "my-editor";
+
+        std::env::set_var("EDITOR", external_editor);
+        let editor = ExternalEditor::from_env().unwrap();
+        assert_eq!(&editor.editor, external_editor);
+
+        std::env::remove_var("EDITOR");
+        let editor = ExternalEditor::from_env();
+        assert!(editor.is_err());
+    }
+
+    #[test]
+    fn test_execute() {
+        std::env::set_var("TMPDIR", "/tmp");
+
+        let mut runtime = tokio::runtime::Runtime::new().unwrap();
+        let editor = ExternalEditor::new("echo");
+
+        let data = "this is a string.\nЭто вох";
+        let ret = runtime.block_on(async { editor.execute(&data).await.unwrap() });
+        assert_eq!(&ret, data);
+    }
+}
