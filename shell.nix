@@ -11,9 +11,7 @@ stdenv.mkDerivation {
   PROTOC_INCLUDE = "${protobuf}/include";
 
   nativeBuildInputs = [
-    rustc
-    cargo
-    rustfmt
+    rustup
 
     clang
     llvmPackages.libclang
