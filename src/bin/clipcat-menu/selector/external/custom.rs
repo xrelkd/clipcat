@@ -1,5 +1,5 @@
 use crate::config;
-use crate::selector::external::ExternalProgram;
+use crate::selector::{external::ExternalProgram, SelectionMode};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Custom {
@@ -10,8 +10,8 @@ pub struct Custom {
 impl Custom {
     #[inline]
     pub fn from_config(config: &config::CustomSelector) -> Custom {
-        let (program, args) = (config.program.clone(), config.args.clone());
-        Custom { program, args }
+        let config::CustomSelector { program, args } = config;
+        Custom { program: program.clone(), args: args.clone() }
     }
 }
 
@@ -20,7 +20,7 @@ impl ExternalProgram for Custom {
         self.program.clone()
     }
 
-    fn args(&self) -> Vec<String> {
+    fn args(&self, _seletion_mode: SelectionMode) -> Vec<String> {
         self.args.clone()
     }
 }

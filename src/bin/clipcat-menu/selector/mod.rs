@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
+use clipcat::ClipboardData;
 use snafu::{OptionExt, ResultExt};
 use tokio::io::AsyncWriteExt;
-
-use clipcat::ClipboardData;
 
 use crate::config::Config;
 use crate::error::Error;
@@ -13,6 +12,12 @@ mod external;
 
 pub use self::error::SelectorError;
 use self::external::{Custom, Dmenu, ExternalProgram, Fzf, Rofi, Skim};
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum SelectionMode {
+    Single,
+    Multiple,
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum ExternalSelector {
@@ -87,9 +92,14 @@ impl SelectorRunner {
         Ok(SelectorRunner { external })
     }
 
-    pub async fn run(self, clips: &Vec<ClipboardData>) -> Result<Option<usize>, SelectorError> {
+    pub async fn run(
+        self,
+        clips: &Vec<ClipboardData>,
+        selection_mode: SelectionMode,
+    ) -> Result<Vec<usize>, SelectorError> {
         let input_data = self.external.generate_input(clips);
-        let mut child = self.external.spawn_child().context(error::SpawnExternalProcess)?;
+        let mut child =
+            self.external.spawn_child(selection_mode).context(error::SpawnExternalProcess)?;
         {
             let stdin = child.stdin.as_mut().context(error::OpenStdin)?;
             stdin.write_all(input_data.as_bytes()).await.context(error::WriteStdin)?;
@@ -97,11 +107,11 @@ impl SelectorRunner {
 
         let output = child.wait_with_output().await.context(error::ReadStdout)?;
         if output.stdout.is_empty() {
-            return Ok(None);
+            return Ok(vec![]);
         }
 
-        let selected_index = self.external.parse_output(&output.stdout);
-        Ok(selected_index)
+        let selected_indices = self.external.parse_output(&output.stdout.as_slice());
+        Ok(selected_indices)
     }
 
     #[inline]

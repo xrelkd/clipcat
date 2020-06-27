@@ -4,6 +4,8 @@ use tokio::process::Command;
 
 use clipcat::ClipboardData;
 
+use crate::selector::SelectionMode;
+
 mod custom;
 mod dmenu;
 mod fzf;
@@ -22,11 +24,14 @@ pub use self::skim::Skim;
 pub trait ExternalProgram: Send + Sync {
     fn program(&self) -> String;
 
-    fn args(&self) -> Vec<String>;
+    fn args(&self, selection_mode: SelectionMode) -> Vec<String>;
 
-    fn spawn_child(&self) -> Result<tokio::process::Child, std::io::Error> {
+    fn spawn_child(
+        &self,
+        selection_mode: SelectionMode,
+    ) -> Result<tokio::process::Child, std::io::Error> {
         Command::new(self.program())
-            .args(self.args())
+            .args(self.args(selection_mode))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -55,8 +60,56 @@ pub trait ExternalProgram: Send + Sync {
             .join(ENTRY_SEPARATOR)
     }
 
-    fn parse_output(&self, data: &Vec<u8>) -> Option<usize> {
+    fn parse_output(&self, data: &[u8]) -> Vec<usize> {
         let line = String::from_utf8_lossy(data);
-        line.split(INDEX_SEPARATOR).next().expect("first part must exist").parse().ok()
+        line.split(ENTRY_SEPARATOR)
+            .filter_map(|entry| {
+                entry
+                    .split(INDEX_SEPARATOR)
+                    .next()
+                    .expect("first part must exist")
+                    .parse::<usize>()
+                    .ok()
+            })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use clipcat::ClipboardData;
+
+    use crate::selector::{external::ExternalProgram, SelectionMode};
+
+    struct Dummy;
+    impl ExternalProgram for Dummy {
+        fn program(&self) -> String {
+            "echo".to_owned()
+        }
+
+        fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
+            vec![]
+        }
+    }
+
+    #[test]
+    fn test_generate_input() {
+        let d = Dummy;
+        let clips = vec![
+            ClipboardData::new_clipboard("abcde"),
+            ClipboardData::new_clipboard("АбВГД"),
+            ClipboardData::new_clipboard("あいうえお"),
+        ];
+
+        let v = d.generate_input(&clips);
+        assert_eq!(v, "0: abcde\n1: АбВГД\n2: あいうえお");
+    }
+
+    #[test]
+    fn test_parse_output() {
+        let output = "10: abcde\n2: АбВГД3020\n9:333\n7:30あいうえお38405\n1:323";
+        let d = Dummy;
+        let v = d.parse_output(&output.as_bytes());
+        assert_eq!(v, &[10, 2, 9, 7, 1]);
     }
 }

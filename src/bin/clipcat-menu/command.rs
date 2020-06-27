@@ -9,7 +9,7 @@ use clipcat::grpc::GrpcClient;
 
 use crate::config::Config;
 use crate::error::{self, Error};
-use crate::selector::{ExternalSelector, SelectorRunner};
+use crate::selector::{ExternalSelector, SelectionMode, SelectorRunner};
 
 #[derive(Debug, Clone, StructOpt)]
 #[structopt(name = clipcat::MENU_PROGRAM_NAME)]
@@ -23,10 +23,10 @@ pub struct Command {
     #[structopt(long, short = "s", help = "Specifies a external selector")]
     selector: Option<ExternalSelector>,
 
-    #[structopt(long, help = "Specifies the menu length of selector")]
+    #[structopt(long, short = "m", help = "Specifies the menu length of selector")]
     menu_length: Option<usize>,
 
-    #[structopt(long, help = "Specifies the length of a line showing on selector")]
+    #[structopt(long, short = "l", help = "Specifies the length of a line showing on selector")]
     line_length: Option<usize>,
 }
 
@@ -130,43 +130,54 @@ impl Command {
             let mut client = GrpcClient::new(grpc_addr).await?;
             let clips = client.list().await?;
 
-            let selected_index = selector_runner.run(&clips).await?;
-            match selected_index {
-                None => {
-                    println!("Nothing is selected");
+            let selection_mode = match subcommand {
+                Some(SubCommand::Insert) | Some(SubCommand::Edit { .. }) | None => {
+                    SelectionMode::Single
                 }
-                Some(selected_index) => {
-                    let id = clips[selected_index].id;
-                    let selected_data = &clips[selected_index as usize];
-                    match subcommand {
-                        Some(SubCommand::Remove) => {
-                            client.remove(id).await?;
-                        }
-                        Some(SubCommand::Edit { editor }) => {
-                            let editor = ExternalEditor::new(editor);
-                            let new_data = editor
-                                .execute(&selected_data.data)
-                                .await
-                                .context(error::CallEditor)?;
-                            let (ok, new_id) = client.update(id, &new_data).await?;
-                            if ok {
-                                println!("{:016x}", new_id);
-                            }
-                            client.mark_as_clipboard(new_id).await?;
-                        }
-                        Some(SubCommand::Insert) | None => {
-                            const LINE_LENGTH: usize = 100;
-                            println!(
-                                "index: {}, content: {:?}",
-                                selected_index,
-                                selected_data.printable_data(Some(LINE_LENGTH)),
-                            );
-                            client.mark_as_clipboard(id).await?;
-                        }
-                        _ => unreachable!(),
+                Some(SubCommand::Remove) => SelectionMode::Multiple,
+                _ => unreachable!(),
+            };
+
+            let selected_indices = selector_runner.run(&clips, selection_mode).await?;
+            if selected_indices.is_empty() {
+                println!("Nothing is selected");
+                return Ok(());
+            }
+
+            let ids: Vec<u64> = selected_indices.iter().map(|index| clips[*index].id).collect();
+
+            let selected_index = *selected_indices.first().expect("selected_indices is not empty");
+            let id = clips[selected_index].id;
+            let selected_data = &clips[selected_index as usize];
+
+            match subcommand {
+                Some(SubCommand::Remove) => {
+                    for id in ids {
+                        client.remove(id).await?;
                     }
                 }
+                Some(SubCommand::Insert) | None => {
+                    const LINE_LENGTH: usize = 100;
+                    println!(
+                        "index: {}, content: {:?}",
+                        selected_index,
+                        selected_data.printable_data(Some(LINE_LENGTH)),
+                    );
+                    client.mark_as_clipboard(id).await?;
+                }
+                Some(SubCommand::Edit { editor }) => {
+                    let editor = ExternalEditor::new(editor);
+                    let new_data =
+                        editor.execute(&selected_data.data).await.context(error::CallEditor)?;
+                    let (ok, new_id) = client.update(id, &new_data).await?;
+                    if ok {
+                        println!("{:016x}", new_id);
+                    }
+                    client.mark_as_clipboard(new_id).await?;
+                }
+                _ => unreachable!(),
             }
+
             Ok(())
         };
 

@@ -1,7 +1,10 @@
 use clipcat::ClipboardData;
 
 use crate::config;
-use crate::selector::external::{ExternalProgram, ENTRY_SEPARATOR};
+use crate::selector::{
+    external::{ExternalProgram, ENTRY_SEPARATOR},
+    SelectionMode,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Rofi {
@@ -22,16 +25,28 @@ impl ExternalProgram for Rofi {
         "rofi".to_string()
     }
 
-    fn args(&self) -> Vec<String> {
-        vec![
-            "-dmenu".to_owned(),
-            "-l".to_owned(),
-            self.menu_length.to_string(),
-            "-sep".to_owned(),
-            ENTRY_SEPARATOR.to_owned(),
-            "-format".to_owned(),
-            "i".to_owned(),
-        ]
+    fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
+        match selection_mode {
+            SelectionMode::Single => vec![
+                "-dmenu".to_owned(),
+                "-l".to_owned(),
+                self.menu_length.to_string(),
+                "-sep".to_owned(),
+                ENTRY_SEPARATOR.to_owned(),
+                "-format".to_owned(),
+                "i".to_owned(),
+            ],
+            SelectionMode::Multiple => vec![
+                "-dmenu".to_owned(),
+                "-multi-select".to_owned(),
+                "-l".to_owned(),
+                self.menu_length.to_string(),
+                "-sep".to_owned(),
+                ENTRY_SEPARATOR.to_owned(),
+                "-format".to_owned(),
+                "i".to_owned(),
+            ],
+        }
     }
 
     fn generate_input(&self, clips: &Vec<ClipboardData>) -> String {
@@ -42,8 +57,12 @@ impl ExternalProgram for Rofi {
             .join(ENTRY_SEPARATOR)
     }
 
-    fn parse_output(&self, data: &Vec<u8>) -> Option<usize> {
-        String::from_utf8_lossy(&data).trim().parse::<usize>().ok()
+    fn parse_output(&self, data: &[u8]) -> Vec<usize> {
+        String::from_utf8_lossy(&data)
+            .trim()
+            .split(ENTRY_SEPARATOR)
+            .filter_map(|index| index.parse().ok())
+            .collect()
     }
 
     fn line_length(&self) -> Option<usize> {
@@ -60,5 +79,41 @@ impl ExternalProgram for Rofi {
 
     fn set_menu_length(&mut self, menu_length: usize) {
         self.menu_length = menu_length;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::config;
+    use crate::selector::{external::ExternalProgram, Rofi, SelectionMode};
+
+    #[test]
+    fn test_args() {
+        let rofi = Rofi::from_config(&config::Rofi { menu_length: 30, line_length: 40 });
+        assert_eq!(
+            rofi.args(SelectionMode::Single),
+            vec![
+                "-dmenu".to_owned(),
+                "-l".to_owned(),
+                "30".to_owned(),
+                "-sep".to_owned(),
+                "\n".to_owned(),
+                "-format".to_owned(),
+                "i".to_owned(),
+            ]
+        );
+        assert_eq!(
+            rofi.args(SelectionMode::Multiple),
+            vec![
+                "-dmenu".to_owned(),
+                "-multi-select".to_owned(),
+                "-l".to_owned(),
+                "30".to_owned(),
+                "-sep".to_owned(),
+                "\n".to_owned(),
+                "-format".to_owned(),
+                "i".to_owned(),
+            ]
+        );
     }
 }

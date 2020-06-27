@@ -1,5 +1,5 @@
 use crate::config;
-use crate::selector::external::ExternalProgram;
+use crate::selector::{external::ExternalProgram, SelectionMode};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Dmenu {
@@ -20,7 +20,7 @@ impl ExternalProgram for Dmenu {
         "dmenu".to_string()
     }
 
-    fn args(&self) -> Vec<String> {
+    fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
         vec!["-l".to_owned(), self.menu_length.to_string()]
     }
 

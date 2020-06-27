@@ -1,4 +1,4 @@
-use crate::selector::external::ExternalProgram;
+use crate::selector::{external::ExternalProgram, SelectionMode};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Skim;
@@ -15,7 +15,10 @@ impl ExternalProgram for Skim {
         "sk".to_string()
     }
 
-    fn args(&self) -> Vec<String> {
-        vec!["--no-multi".to_owned()]
+    fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
+        match selection_mode {
+            SelectionMode::Single => vec!["--no-multi".to_owned()],
+            SelectionMode::Multiple => vec!["--multi".to_owned()],
+        }
     }
 }
