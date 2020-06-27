@@ -2,8 +2,7 @@ use std::path::PathBuf;
 
 use snafu::Snafu;
 
-use crate::config::ConfigError;
-use crate::history::HistoryError;
+use crate::{config::ConfigError, history::HistoryError};
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]

@@ -1,15 +1,15 @@
-use std::num::ParseIntError;
-use std::path::PathBuf;
+use std::{num::ParseIntError, path::PathBuf};
 
 use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::editor::ExternalEditor;
-use clipcat::grpc::GrpcClient;
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
 
-use crate::config::Config;
-use crate::error::{self, Error};
+use crate::{
+    config::Config,
+    error::{self, Error},
+};
 
 #[derive(StructOpt)]
 #[structopt(name = clipcat::CTL_PROGRAM_NAME)]
@@ -115,9 +115,7 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command {
-        StructOpt::from_args()
-    }
+    pub fn new() -> Command { StructOpt::from_args() }
 
     fn load_config(&self) -> Config {
         let mut config =
@@ -285,6 +283,4 @@ impl Command {
 }
 
 #[inline]
-fn parse_hex(src: &str) -> Result<u64, ParseIntError> {
-    u64::from_str_radix(src, 16)
-}
+fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }

@@ -57,9 +57,7 @@ impl ClipboardMonitor {
         Ok(monitor)
     }
 
-    pub async fn recv(&mut self) -> Option<ClipboardEvent> {
-        self.event_receiver.recv().await
-    }
+    pub async fn recv(&mut self) -> Option<ClipboardEvent> { self.event_receiver.recv().await }
 }
 
 fn build_thread(

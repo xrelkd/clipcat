@@ -1,9 +1,11 @@
 use clipcat::ClipboardData;
 
-use crate::config;
-use crate::selector::{
-    external::{ExternalProgram, ENTRY_SEPARATOR},
-    SelectionMode,
+use crate::{
+    config,
+    selector::{
+        external::{ExternalProgram, ENTRY_SEPARATOR},
+        SelectionMode,
+    },
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -21,9 +23,7 @@ impl Rofi {
 }
 
 impl ExternalProgram for Rofi {
-    fn program(&self) -> String {
-        "rofi".to_string()
-    }
+    fn program(&self) -> String { "rofi".to_string() }
 
     fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
         match selection_mode {
@@ -65,27 +65,21 @@ impl ExternalProgram for Rofi {
             .collect()
     }
 
-    fn line_length(&self) -> Option<usize> {
-        Some(self.line_length)
-    }
+    fn line_length(&self) -> Option<usize> { Some(self.line_length) }
 
-    fn menu_length(&self) -> Option<usize> {
-        Some(self.menu_length)
-    }
+    fn menu_length(&self) -> Option<usize> { Some(self.menu_length) }
 
-    fn set_line_length(&mut self, line_length: usize) {
-        self.line_length = line_length
-    }
+    fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length }
 
-    fn set_menu_length(&mut self, menu_length: usize) {
-        self.menu_length = menu_length;
-    }
+    fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::config;
-    use crate::selector::{external::ExternalProgram, Rofi, SelectionMode};
+    use crate::{
+        config,
+        selector::{external::ExternalProgram, Rofi, SelectionMode},
+    };
 
     #[test]
     fn test_args() {

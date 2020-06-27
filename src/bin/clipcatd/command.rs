@@ -1,20 +1,23 @@
-use std::net::IpAddr;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    net::IpAddr,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 
 use futures::FutureExt;
 use snafu::ResultExt;
 use structopt::StructOpt;
-use tokio::runtime::Runtime;
-use tokio::sync::Mutex;
+use tokio::{runtime::Runtime, sync::Mutex};
 
 use clipcat::{ClipboardManager, ClipboardMonitor};
 
-use crate::config::{Config, ConfigError};
-use crate::error::{self, Error};
-use crate::history::HistoryManager;
-use crate::lifecycle::{self, LifecycleManager};
+use crate::{
+    config::{Config, ConfigError},
+    error::{self, Error},
+    history::HistoryManager,
+    lifecycle::{self, LifecycleManager},
+};
 
 #[derive(StructOpt, Clone)]
 #[structopt(name = clipcat::DAEMON_PROGRAM_NAME)]
@@ -54,9 +57,7 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command {
-        StructOpt::from_args()
-    }
+    pub fn new() -> Command { StructOpt::from_args() }
 
     fn load_config(&self) -> Result<Config, ConfigError> {
         let config_file = &self.config_file.clone().unwrap_or(Config::default_path());
@@ -265,19 +266,13 @@ struct PidFile {
 
 impl PidFile {
     #[inline]
-    fn exists(&self) -> bool {
-        self.path.exists()
-    }
+    fn exists(&self) -> bool { self.path.exists() }
 
     #[inline]
-    fn clone_path(&self) -> PathBuf {
-        self.path().to_path_buf()
-    }
+    fn clone_path(&self) -> PathBuf { self.path().to_path_buf() }
 
     #[inline]
-    fn path(&self) -> &Path {
-        &self.path
-    }
+    fn path(&self) -> &Path { &self.path }
 
     fn try_load(&self) -> Result<u64, Error> {
         let pid_data = std::fs::read_to_string(&self)
@@ -295,13 +290,9 @@ impl PidFile {
 }
 
 impl From<PathBuf> for PidFile {
-    fn from(path: PathBuf) -> PidFile {
-        PidFile { path }
-    }
+    fn from(path: PathBuf) -> PidFile { PidFile { path } }
 }
 
 impl AsRef<Path> for PidFile {
-    fn as_ref(&self) -> &Path {
-        &self.path
-    }
+    fn as_ref(&self) -> &Path { &self.path }
 }

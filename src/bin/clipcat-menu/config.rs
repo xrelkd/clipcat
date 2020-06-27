@@ -1,5 +1,7 @@
-use std::net::IpAddr;
-use std::path::{Path, PathBuf};
+use std::{
+    net::IpAddr,
+    path::{Path, PathBuf},
+};
 
 use app_dirs::AppDataType;
 
@@ -47,21 +49,15 @@ impl Default for Config {
 }
 
 impl Default for Rofi {
-    fn default() -> Rofi {
-        Rofi { line_length: 100, menu_length: 30 }
-    }
+    fn default() -> Rofi { Rofi { line_length: 100, menu_length: 30 } }
 }
 
 impl Default for Dmenu {
-    fn default() -> Dmenu {
-        Dmenu { line_length: 100, menu_length: 30 }
-    }
+    fn default() -> Dmenu { Dmenu { line_length: 100, menu_length: 30 } }
 }
 
 impl Default for CustomSelector {
-    fn default() -> CustomSelector {
-        CustomSelector { program: "fzf".to_string(), args: vec![] }
-    }
+    fn default() -> CustomSelector { CustomSelector { program: "fzf".to_string(), args: vec![] } }
 }
 
 impl Config {

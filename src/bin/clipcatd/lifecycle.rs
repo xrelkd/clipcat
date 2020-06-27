@@ -1,9 +1,10 @@
-use std::collections::HashMap;
-use std::pin::Pin;
+use std::{collections::HashMap, pin::Pin};
 
 use futures::Future;
-use tokio::signal::unix::{signal, SignalKind};
-use tokio::sync::mpsc;
+use tokio::{
+    signal::unix::{signal, SignalKind},
+    sync::mpsc,
+};
 
 #[derive(Clone)]
 pub struct ShutdownSignal(mpsc::Sender<()>);
@@ -16,15 +17,11 @@ pub fn shutdown_handle() -> (ShutdownSignal, ShutdownSlot) {
 }
 
 impl ShutdownSignal {
-    pub fn shutdown(self) {
-        drop(self.0);
-    }
+    pub fn shutdown(self) { drop(self.0); }
 }
 
 impl ShutdownSlot {
-    pub async fn wait(&mut self) {
-        self.0.recv().await;
-    }
+    pub async fn wait(&mut self) { self.0.recv().await; }
 }
 
 pub type ShutdownHookFn = Box<dyn FnOnce() -> () + Send>;

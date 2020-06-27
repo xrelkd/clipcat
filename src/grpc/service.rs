@@ -4,23 +4,22 @@ use tokio::sync::Mutex;
 
 use tonic::{Request, Response, Status};
 
-use crate::grpc::protobuf::clipcat_server::Clipcat;
-use crate::grpc::protobuf::{
-    BatchRemoveRequest, BatchRemoveResponse, ClearRequest, ClearResponse, GetRequest, GetResponse,
-    InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
-    MarkAsClipboardRequest, MarkAsClipboardResponse, RemoveRequest, RemoveResponse, UpdateRequest,
-    UpdateResponse,
+use crate::{
+    grpc::protobuf::{
+        clipcat_server::Clipcat, BatchRemoveRequest, BatchRemoveResponse, ClearRequest,
+        ClearResponse, GetRequest, GetResponse, InsertRequest, InsertResponse, LengthRequest,
+        LengthResponse, ListRequest, ListResponse, MarkAsClipboardRequest, MarkAsClipboardResponse,
+        RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse,
+    },
+    ClipboardManager,
 };
-use crate::ClipboardManager;
 
 pub struct GrpcService {
     manager: Arc<Mutex<ClipboardManager>>,
 }
 
 impl GrpcService {
-    pub fn new(manager: Arc<Mutex<ClipboardManager>>) -> GrpcService {
-        GrpcService { manager }
-    }
+    pub fn new(manager: Arc<Mutex<ClipboardManager>>) -> GrpcService { GrpcService { manager } }
 }
 
 #[tonic::async_trait]

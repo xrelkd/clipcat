@@ -5,8 +5,7 @@ use clipcat::ClipboardData;
 mod error;
 mod rocksdb;
 
-pub use self::error::HistoryError;
-pub use self::rocksdb::RocksDBDriver;
+pub use self::{error::HistoryError, rocksdb::RocksDBDriver};
 
 pub trait HistoryDriver: Send + Sync {
     fn load(&self) -> Result<Vec<ClipboardData>, HistoryError>;
@@ -45,9 +44,7 @@ impl HistoryManager {
     }
 
     #[inline]
-    pub fn path(&self) -> &Path {
-        &self.file_path
-    }
+    pub fn path(&self) -> &Path { &self.file_path }
 
     #[inline]
     pub fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
@@ -56,14 +53,10 @@ impl HistoryManager {
 
     #[inline]
     #[allow(dead_code)]
-    pub fn clear(&mut self) -> Result<(), HistoryError> {
-        self.driver.clear()
-    }
+    pub fn clear(&mut self) -> Result<(), HistoryError> { self.driver.clear() }
 
     #[inline]
-    pub fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> {
-        self.driver.load()
-    }
+    pub fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> { self.driver.load() }
 
     #[inline]
     pub fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {

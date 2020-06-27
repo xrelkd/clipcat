@@ -1,5 +1,7 @@
-use std::net::IpAddr;
-use std::path::{Path, PathBuf};
+use std::{
+    net::IpAddr,
+    path::{Path, PathBuf},
+};
 
 use app_dirs::AppDataType;
 
@@ -43,7 +45,5 @@ impl Config {
     }
 
     #[inline]
-    pub fn default_log_level_filter() -> log::LevelFilter {
-        log::LevelFilter::Info
-    }
+    pub fn default_log_level_filter() -> log::LevelFilter { log::LevelFilter::Info }
 }

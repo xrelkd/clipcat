@@ -4,12 +4,13 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::editor::ExternalEditor;
-use clipcat::grpc::GrpcClient;
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
 
-use crate::config::Config;
-use crate::error::{self, Error};
-use crate::selector::{ExternalSelector, SelectionMode, SelectorRunner};
+use crate::{
+    config::Config,
+    error::{self, Error},
+    selector::{ExternalSelector, SelectionMode, SelectorRunner},
+};
 
 #[derive(Debug, Clone, StructOpt)]
 #[structopt(name = clipcat::MENU_PROGRAM_NAME)]
@@ -65,9 +66,7 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command {
-        Command::from_args()
-    }
+    pub fn new() -> Command { Command::from_args() }
 
     pub fn run(self) -> Result<(), Error> {
         match self.subcommand {

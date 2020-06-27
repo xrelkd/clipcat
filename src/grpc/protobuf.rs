@@ -19,9 +19,7 @@ impl From<crate::ClipboardType> for ClipboardType {
 }
 
 impl From<crate::ClipboardType> for i32 {
-    fn from(t: crate::ClipboardType) -> i32 {
-        t as i32
-    }
+    fn from(t: crate::ClipboardType) -> i32 { t as i32 }
 }
 
 impl From<crate::ClipboardData> for ClipboardData {

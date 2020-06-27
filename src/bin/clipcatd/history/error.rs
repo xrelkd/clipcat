@@ -5,7 +5,5 @@ pub enum HistoryError {
 }
 
 impl From<rocksdb::Error> for HistoryError {
-    fn from(err: rocksdb::Error) -> HistoryError {
-        HistoryError::RocksDB { source: err }
-    }
+    fn from(err: rocksdb::Error) -> HistoryError { HistoryError::RocksDB { source: err } }
 }

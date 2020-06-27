@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::time::SystemTime;
+use std::{collections::HashMap, time::SystemTime};
 
 use snafu::ResultExt;
 
@@ -16,24 +15,16 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn new() -> ClipboardManager {
-        Self::with_capacity(40)
-    }
+    pub fn new() -> ClipboardManager { Self::with_capacity(40) }
 
     #[inline]
-    pub fn capacity(&self) -> usize {
-        self.capacity
-    }
+    pub fn capacity(&self) -> usize { self.capacity }
 
     #[inline]
-    pub fn set_capacity(&mut self, v: usize) {
-        self.capacity = v;
-    }
+    pub fn set_capacity(&mut self, v: usize) { self.capacity = v; }
 
     #[inline]
-    pub fn import(&mut self, clips: &[ClipboardData]) {
-        self.import_iter(clips.iter());
-    }
+    pub fn import(&mut self, clips: &[ClipboardData]) { self.import_iter(clips.iter()); }
 
     #[inline]
     pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipboardData>) {
@@ -45,24 +36,16 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn list(&self) -> Vec<ClipboardData> {
-        self.iter().cloned().collect()
-    }
+    pub fn list(&self) -> Vec<ClipboardData> { self.iter().cloned().collect() }
 
     #[inline]
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a ClipboardData> {
-        self.clips.values()
-    }
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a ClipboardData> { self.clips.values() }
 
     #[inline]
-    pub fn get(&self, id: u64) -> Option<ClipboardData> {
-        self.clips.get(&id).map(Clone::clone)
-    }
+    pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
-    pub fn insert(&mut self, data: ClipboardData) -> u64 {
-        self.insert_inner(data)
-    }
+    pub fn insert(&mut self, data: ClipboardData) -> u64 { self.insert_inner(data) }
 
     #[inline]
     pub fn insert_clipboard(&mut self, data: &str) -> u64 {
@@ -84,9 +67,7 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn len(&self) -> usize {
-        self.clips.len()
-    }
+    pub fn len(&self) -> usize { self.clips.len() }
 
     fn remove_oldest(&mut self) {
         while self.clips.len() > self.capacity {
@@ -104,14 +85,10 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn remove(&mut self, id: u64) -> bool {
-        self.clips.remove(&id).is_some()
-    }
+    pub fn remove(&mut self, id: u64) -> bool { self.clips.remove(&id).is_some() }
 
     #[inline]
-    pub fn clear(&mut self) {
-        self.clips.clear();
-    }
+    pub fn clear(&mut self) { self.clips.clear(); }
 
     pub fn replace(&mut self, old_id: u64, data: &str) -> (bool, u64) {
         let (clipboard_type, timestamp) = match self.clips.remove(&old_id) {

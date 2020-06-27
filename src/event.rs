@@ -19,19 +19,13 @@ impl ClipboardEvent {
 }
 
 impl PartialEq for ClipboardEvent {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
-    }
+    fn eq(&self, other: &Self) -> bool { self.data == other.data }
 }
 
 impl PartialOrd for ClipboardEvent {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for ClipboardEvent {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.clipboard_type.cmp(&other.clipboard_type)
-    }
+    fn cmp(&self, other: &Self) -> Ordering { self.clipboard_type.cmp(&other.clipboard_type) }
 }

@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
-use clipcat::editor::EditorError;
-use clipcat::grpc::GrpcClientError;
+use clipcat::{editor::EditorError, grpc::GrpcClientError};
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
@@ -20,7 +19,5 @@ pub enum Error {
 }
 
 impl From<GrpcClientError> for Error {
-    fn from(err: GrpcClientError) -> Error {
-        Error::CallGrpcClient { source: err }
-    }
+    fn from(err: GrpcClientError) -> Error { Error::CallGrpcClient { source: err } }
 }

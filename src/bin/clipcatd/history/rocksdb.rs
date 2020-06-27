@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::path::Path;
-use std::time::SystemTime;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+    time::SystemTime,
+};
 
 use rocksdb::{IteratorMode, Options as RocksDBOptions, WriteBatch, DB as RocksDB};
 
@@ -32,9 +33,7 @@ impl RocksDBDriver {
         opt
     }
 
-    fn serialize_id(id: u64) -> Vec<u8> {
-        bincode::serialize(&id).expect("u64 is serializable")
-    }
+    fn serialize_id(id: u64) -> Vec<u8> { bincode::serialize(&id).expect("u64 is serializable") }
 
     fn deserialize_id(id: &[u8]) -> u64 {
         bincode::deserialize(&id).expect("u64 is deserializable")

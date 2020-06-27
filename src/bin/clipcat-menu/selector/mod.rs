@@ -4,8 +4,7 @@ use clipcat::ClipboardData;
 use snafu::{OptionExt, ResultExt};
 use tokio::io::AsyncWriteExt;
 
-use crate::config::Config;
-use crate::error::Error;
+use crate::{config::Config, error::Error};
 
 mod error;
 mod external;
@@ -38,13 +37,12 @@ pub enum ExternalSelector {
 }
 
 impl Default for ExternalSelector {
-    fn default() -> ExternalSelector {
-        ExternalSelector::Rofi
-    }
+    fn default() -> ExternalSelector { ExternalSelector::Rofi }
 }
 
 impl FromStr for ExternalSelector {
     type Err = SelectorError;
+
     fn from_str(selector: &str) -> Result<Self, Self::Err> {
         match selector.to_lowercase().as_ref() {
             "rofi" => Ok(ExternalSelector::Rofi),

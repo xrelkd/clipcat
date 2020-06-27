@@ -5,15 +5,11 @@ pub struct Skim;
 
 impl Skim {
     #[inline]
-    pub fn new() -> Skim {
-        Skim
-    }
+    pub fn new() -> Skim { Skim }
 }
 
 impl ExternalProgram for Skim {
-    fn program(&self) -> String {
-        "sk".to_string()
-    }
+    fn program(&self) -> String { "sk".to_string() }
 
     fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
         match selection_mode {

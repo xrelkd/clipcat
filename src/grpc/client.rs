@@ -1,15 +1,16 @@
-use snafu::ResultExt;
-use snafu::Snafu;
-use tonic::transport::channel::Channel;
-use tonic::Request;
-use tonic::{transport::Error as TonicTransportError, Status as TonicStatus};
-
-use crate::grpc::protobuf::clipcat_client::ClipcatClient;
-use crate::grpc::protobuf::{
-    BatchRemoveRequest, ClearRequest, GetRequest, InsertRequest, LengthRequest, ListRequest,
-    MarkAsClipboardRequest, RemoveRequest, UpdateRequest,
+use snafu::{ResultExt, Snafu};
+use tonic::{
+    transport::{channel::Channel, Error as TonicTransportError},
+    Request, Status as TonicStatus,
 };
-use crate::{ClipboardData, ClipboardType};
+
+use crate::{
+    grpc::protobuf::{
+        clipcat_client::ClipcatClient, BatchRemoveRequest, ClearRequest, GetRequest, InsertRequest,
+        LengthRequest, ListRequest, MarkAsClipboardRequest, RemoveRequest, UpdateRequest,
+    },
+    ClipboardData, ClipboardType,
+};
 
 #[derive(Debug, Snafu)]
 pub enum GrpcClientError {

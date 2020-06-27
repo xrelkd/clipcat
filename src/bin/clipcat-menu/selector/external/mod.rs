@@ -15,11 +15,7 @@ mod skim;
 const ENTRY_SEPARATOR: &'static str = "\n";
 const INDEX_SEPARATOR: char = ':';
 
-pub use self::custom::Custom;
-pub use self::dmenu::Dmenu;
-pub use self::fzf::Fzf;
-pub use self::rofi::Rofi;
-pub use self::skim::Skim;
+pub use self::{custom::Custom, dmenu::Dmenu, fzf::Fzf, rofi::Rofi, skim::Skim};
 
 pub trait ExternalProgram: Send + Sync {
     fn program(&self) -> String;
@@ -41,13 +37,9 @@ pub trait ExternalProgram: Send + Sync {
 
     fn set_menu_length(&mut self, _menu_length: usize) {}
 
-    fn menu_length(&self) -> Option<usize> {
-        None
-    }
+    fn menu_length(&self) -> Option<usize> { None }
 
-    fn line_length(&self) -> Option<usize> {
-        None
-    }
+    fn line_length(&self) -> Option<usize> { None }
 
     fn generate_input(&self, clips: &[ClipboardData]) -> String {
         clips
@@ -83,13 +75,9 @@ mod test {
 
     struct Dummy;
     impl ExternalProgram for Dummy {
-        fn program(&self) -> String {
-            "echo".to_owned()
-        }
+        fn program(&self) -> String { "echo".to_owned() }
 
-        fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
-            vec![]
-        }
+        fn args(&self, _selection_mode: SelectionMode) -> Vec<String> { vec![] }
     }
 
     #[test]

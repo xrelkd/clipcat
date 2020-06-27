@@ -180,15 +180,11 @@ impl Default for ClipboardData {
 }
 
 impl PartialEq for ClipboardData {
-    fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
-    }
+    fn eq(&self, other: &Self) -> bool { self.data == other.data }
 }
 
 impl PartialOrd for ClipboardData {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
 impl Ord for ClipboardData {

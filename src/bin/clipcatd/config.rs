@@ -1,5 +1,7 @@
-use std::net::IpAddr;
-use std::path::{Path, PathBuf};
+use std::{
+    net::IpAddr,
+    path::{Path, PathBuf},
+};
 
 use app_dirs::AppDataType;
 use serde::{Deserialize, Serialize};
@@ -88,9 +90,7 @@ impl Config {
     }
 
     #[inline]
-    fn default_log_level_filter() -> log::LevelFilter {
-        log::LevelFilter::Info
-    }
+    fn default_log_level_filter() -> log::LevelFilter { log::LevelFilter::Info }
 
     #[inline]
     pub fn default_history_file_path() -> PathBuf {
@@ -103,9 +103,7 @@ impl Config {
     }
 
     #[inline]
-    pub fn default_max_history() -> usize {
-        50
-    }
+    pub fn default_max_history() -> usize { 50 }
 
     #[inline]
     pub fn default_pid_file_path() -> PathBuf {
