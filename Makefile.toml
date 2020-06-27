@@ -1,0 +1,54 @@
+[tasks.format]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+dependencies = ["format"]
+
+[tasks.build-release]
+command = "cargo"
+args = ["build", "--release", "--features=all"]
+dependencies = ["format"]
+
+[tasks.test]
+command = "cargo"
+args = ["test"]
+
+[tasks.build-docker]
+command = "docker"
+args = ["build", "--tag=clipcat:latest", "."]
+dependencies = ["format"]
+
+[tasks.generate-completions]
+script = [
+'''
+rm -rf completions
+
+mkdir -p completions/{bash-completion/completions,fish/completions,zsh/site-functions}
+
+./target/release/clipcatd completions bash > "completions/bash-completion/completions/clipcatd"
+./target/release/clipcatd completions fish > "completions/fish/completions/clipcatd.fish"
+./target/release/clipcatd completions zsh > "completions/zsh/site-functions/_clipcatd"
+
+./target/release/clipcatctl completions bash > "completions/bash-completion/completions/clipcatctl"
+./target/release/clipcatctl completions fish > "completions/fish/completions/clipcatctl.fish"
+./target/release/clipcatctl completions zsh > "completions/zsh/site-functions/_clipcatctl"
+
+./target/release/clipcat-menu completions bash > "completions/bash-completion/completions/clipcat-menu"
+./target/release/clipcat-menu completions fish > "completions/fish/completions/clipcat-menu.fish"
+./target/release/clipcat-menu completions zsh > "completions/zsh/site-functions/_clipcat-menu"
+
+./target/release/clipcat-notify completions bash > "completions/bash-completion/completions/clipcat-notify"
+./target/release/clipcat-notify completions fish > "completions/fish/completions/clipcat-notify.fish"
+./target/release/clipcat-notify completions zsh > "completions/zsh/site-functions/_clipcat-notify"
+'''
+]
+dependencies = ["build-release"]
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
