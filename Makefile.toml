@@ -1,7 +1,6 @@
 [tasks.format]
-install_crate = "rustfmt"
-command = "cargo"
-args = ["fmt", "--", "--emit=files"]
+command = "rustup"
+args = ["run", "nightly", "cargo", "fmt"]
 
 [tasks.build]
 command = "cargo"
