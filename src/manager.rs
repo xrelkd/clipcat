@@ -94,8 +94,7 @@ impl ClipboardManager {
 
     #[inline]
     pub fn remove(&mut self, id: u64) -> bool {
-        self.clips.remove(&id);
-        true
+        self.clips.remove(&id).is_some()
     }
 
     #[inline]

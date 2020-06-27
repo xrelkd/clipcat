@@ -7,6 +7,7 @@ service Clipcat {
   rpc Get(GetRequest) returns (GetResponse);
   rpc List(ListRequest) returns (ListResponse);
   rpc Remove(RemoveRequest) returns (RemoveResponse);
+  rpc BatchRemove(BatchRemoveRequest) returns (BatchRemoveResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc MarkAsClipboard(MarkAsClipboardRequest) returns (MarkAsClipboardResponse);
   rpc Length(LengthRequest) returns (LengthResponse);
@@ -57,3 +58,6 @@ message ClearResponse {}
 
 message RemoveRequest { uint64 id = 1; }
 message RemoveResponse { bool ok = 1; }
+
+message BatchRemoveRequest { repeated uint64 ids = 1; }
+message BatchRemoveResponse { repeated uint64 ids = 1; }

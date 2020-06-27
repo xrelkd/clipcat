@@ -6,9 +6,10 @@ use tonic::{Request, Response, Status};
 
 use crate::grpc::protobuf::clipcat_server::Clipcat;
 use crate::grpc::protobuf::{
-    ClearRequest, ClearResponse, GetRequest, GetResponse, InsertRequest, InsertResponse,
-    LengthRequest, LengthResponse, ListRequest, ListResponse, MarkAsClipboardRequest,
-    MarkAsClipboardResponse, RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse,
+    BatchRemoveRequest, BatchRemoveResponse, ClearRequest, ClearResponse, GetRequest, GetResponse,
+    InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
+    MarkAsClipboardRequest, MarkAsClipboardResponse, RemoveRequest, RemoveResponse, UpdateRequest,
+    UpdateResponse,
 };
 use crate::ClipboardManager;
 
@@ -53,6 +54,20 @@ impl Clipcat for GrpcService {
             manager.remove(id)
         };
         Ok(Response::new(RemoveResponse { ok }))
+    }
+
+    async fn batch_remove(
+        &self,
+        request: Request<BatchRemoveRequest>,
+    ) -> Result<Response<BatchRemoveResponse>, Status> {
+        let ids = request.into_inner().ids;
+        let ids = {
+            let mut manager = self.manager.lock().await;
+            ids.into_iter()
+                .filter_map(|id| if manager.remove(id) { Some(id) } else { None })
+                .collect()
+        };
+        Ok(Response::new(BatchRemoveResponse { ids }))
     }
 
     async fn clear(

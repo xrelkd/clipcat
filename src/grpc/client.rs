@@ -6,8 +6,8 @@ use tonic::{transport::Error as TonicTransportError, Status as TonicStatus};
 
 use crate::grpc::protobuf::clipcat_client::ClipcatClient;
 use crate::grpc::protobuf::{
-    ClearRequest, GetRequest, InsertRequest, LengthRequest, ListRequest, MarkAsClipboardRequest,
-    RemoveRequest, UpdateRequest,
+    BatchRemoveRequest, ClearRequest, GetRequest, InsertRequest, LengthRequest, ListRequest,
+    MarkAsClipboardRequest, RemoveRequest, UpdateRequest,
 };
 use crate::{ClipboardData, ClipboardType};
 
@@ -36,6 +36,9 @@ pub enum GrpcClientError {
 
     #[snafu(display("Could not remove clip, error: {}", source))]
     RemoveData { source: TonicStatus },
+
+    #[snafu(display("Could not batch remove clips, error: {}", source))]
+    BatchRemoveData { source: TonicStatus },
 
     #[snafu(display("Could not clear clips, error: {}", source))]
     Clear { source: TonicStatus },
@@ -105,6 +108,13 @@ impl GrpcClient {
         let request = Request::new(RemoveRequest { id });
         let response = self.client.remove(request).await.context(RemoveData)?;
         Ok(response.into_inner().ok)
+    }
+
+    pub async fn batch_remove(&mut self, ids: &[u64]) -> Result<Vec<u64>, GrpcClientError> {
+        let ids = Vec::from(ids);
+        let request = Request::new(BatchRemoveRequest { ids });
+        let response = self.client.batch_remove(request).await.context(BatchRemoveData)?;
+        Ok(response.into_inner().ids)
     }
 
     pub async fn clear(&mut self) -> Result<(), GrpcClientError> {

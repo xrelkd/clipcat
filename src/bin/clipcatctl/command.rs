@@ -233,20 +233,22 @@ impl Command {
                     }
                 }
                 SubCommand::Remove { ids } => {
+                    let ids: Vec<u64> = ids
+                        .into_iter()
+                        .filter_map(|id| match parse_hex(&id) {
+                            Ok(id) => Some(id),
+                            Err(err) => {
+                                eprintln!("Failed to parse ID {}, error: {:?}", id, err);
+                                None
+                            }
+                        })
+                        .collect();
+
                     if ids.is_empty() {
                         println!("Nothing is removed");
                         return Ok(0);
                     }
-                    for id in ids {
-                        let id = match parse_hex(&id) {
-                            Ok(id) => id,
-                            Err(err) => {
-                                eprintln!("Failed to parse ID {}, error: {:?}", id, err);
-                                return Ok(1);
-                            }
-                        };
-                        client.remove(id).await?;
-                    }
+                    client.batch_remove(&ids).await?;
                 }
                 SubCommand::Clear => {
                     client.clear().await?;

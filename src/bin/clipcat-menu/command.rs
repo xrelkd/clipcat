@@ -152,9 +152,7 @@ impl Command {
 
             match subcommand {
                 Some(SubCommand::Remove) => {
-                    for id in ids {
-                        client.remove(id).await?;
-                    }
+                    client.batch_remove(&ids).await?;
                 }
                 Some(SubCommand::Insert) | None => {
                     const LINE_LENGTH: usize = 100;
