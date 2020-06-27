@@ -49,7 +49,7 @@ pub trait ExternalProgram: Send + Sync {
         None
     }
 
-    fn generate_input(&self, clips: &Vec<ClipboardData>) -> String {
+    fn generate_input(&self, clips: &[ClipboardData]) -> String {
         clips
             .iter()
             .enumerate()

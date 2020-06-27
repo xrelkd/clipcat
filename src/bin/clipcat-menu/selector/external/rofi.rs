@@ -49,7 +49,7 @@ impl ExternalProgram for Rofi {
         }
     }
 
-    fn generate_input(&self, clips: &Vec<ClipboardData>) -> String {
+    fn generate_input(&self, clips: &[ClipboardData]) -> String {
         clips
             .iter()
             .map(|data| data.printable_data(self.line_length()))

@@ -81,7 +81,7 @@ impl HistoryDriver for RocksDBDriver {
         Ok(clips)
     }
 
-    fn save(&mut self, data: &Vec<ClipboardData>) -> Result<(), HistoryError> {
+    fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
         let db = self.db.as_mut().expect("RocksDB must be some");
 
         let iter = db.iterator(IteratorMode::Start);

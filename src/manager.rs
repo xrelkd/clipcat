@@ -31,7 +31,7 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn import(&mut self, clips: &Vec<ClipboardData>) {
+    pub fn import(&mut self, clips: &[ClipboardData]) {
         self.clips = clips.iter().cloned().map(|d| (d.id, d)).collect();
         self.remove_oldest();
     }

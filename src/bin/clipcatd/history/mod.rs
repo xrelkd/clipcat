@@ -11,7 +11,7 @@ pub use self::rocksdb::RocksDBDriver;
 pub trait HistoryDriver: Send + Sync {
     fn load(&self) -> Result<Vec<ClipboardData>, HistoryError>;
 
-    fn save(&mut self, data: &Vec<ClipboardData>) -> Result<(), HistoryError>;
+    fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError>;
 
     fn clear(&mut self) -> Result<(), HistoryError>;
 
@@ -23,7 +23,7 @@ pub trait HistoryDriver: Send + Sync {
 
     fn save_and_shrink_to(
         &mut self,
-        data: &Vec<ClipboardData>,
+        data: &[ClipboardData],
         min_capacity: usize,
     ) -> Result<(), HistoryError> {
         self.save(data)?;
@@ -66,7 +66,7 @@ impl HistoryManager {
     }
 
     #[inline]
-    pub fn save(&mut self, data: &Vec<ClipboardData>) -> Result<(), HistoryError> {
+    pub fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
         self.driver.save(data)
     }
 
@@ -78,7 +78,7 @@ impl HistoryManager {
     #[inline]
     pub fn save_and_shrink_to(
         &mut self,
-        data: &Vec<ClipboardData>,
+        data: &[ClipboardData],
         min_capacity: usize,
     ) -> Result<(), HistoryError> {
         self.save(data)?;

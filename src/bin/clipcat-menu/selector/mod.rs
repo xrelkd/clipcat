@@ -94,7 +94,7 @@ impl SelectorRunner {
 
     pub async fn run(
         self,
-        clips: &Vec<ClipboardData>,
+        clips: &[ClipboardData],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, SelectorError> {
         let input_data = self.external.generate_input(clips);

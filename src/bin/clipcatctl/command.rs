@@ -221,12 +221,14 @@ impl Command {
                     client.insert_primary(&data).await?;
                 }
                 SubCommand::List { no_id } => {
+                    const LINE_LENGTH: Option<usize> = Some(100);
+
                     let list = client.list().await?;
                     for data in list {
                         if no_id {
-                            println!("{}", data.printable_data(Some(100)));
+                            println!("{}", data.printable_data(LINE_LENGTH));
                         } else {
-                            println!("{:016x}: {}", data.id, data.printable_data(Some(100)));
+                            println!("{:016x}: {}", data.id, data.printable_data(LINE_LENGTH));
                         }
                     }
                 }
