@@ -12,6 +12,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     rustup
+    cargo-make
 
     clang
     llvmPackages.libclang
