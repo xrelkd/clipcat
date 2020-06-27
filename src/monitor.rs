@@ -19,6 +19,12 @@ pub struct ClipboardMonitorOptions {
     pub enable_primary: bool,
 }
 
+impl Default for ClipboardMonitorOptions {
+    fn default() -> Self {
+        ClipboardMonitorOptions { load_current: true, enable_clipboard: true, enable_primary: true }
+    }
+}
+
 impl Drop for ClipboardMonitor {
     fn drop(&mut self) {
         drop(&mut self.clipboard_thread);
@@ -123,4 +129,24 @@ fn build_thread(
     });
 
     Ok(join_handle)
+}
+
+#[cfg(test)]
+mod test {
+    use tokio::runtime::Runtime;
+
+    use crate::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
+
+    #[test]
+    fn test_dummy() {
+        let opts = ClipboardMonitorOptions {
+            load_current: false,
+            enable_clipboard: false,
+            enable_primary: false,
+        };
+
+        let mut monitor = ClipboardMonitor::new(opts).unwrap();
+        let mut runtime = Runtime::new().unwrap();
+        assert_eq!(runtime.block_on(async { monitor.recv().await }), None);
+    }
 }
