@@ -32,13 +32,26 @@ impl ClipboardManager {
 
     #[inline]
     pub fn import(&mut self, clips: &[ClipboardData]) {
-        self.clips = clips.iter().cloned().map(|d| (d.id, d)).collect();
+        self.import_iter(clips.iter());
+    }
+
+    #[inline]
+    pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipboardData>) {
+        self.clips = clips_iter.fold(HashMap::new(), |mut clips, clip| {
+            clips.insert(clip.id, clip.clone());
+            clips
+        });
         self.remove_oldest();
     }
 
     #[inline]
     pub fn list(&self) -> Vec<ClipboardData> {
-        self.clips.values().cloned().collect()
+        self.iter().cloned().collect()
+    }
+
+    #[inline]
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a ClipboardData> {
+        self.clips.values()
     }
 
     #[inline]
@@ -76,20 +89,18 @@ impl ClipboardManager {
     }
 
     fn remove_oldest(&mut self) {
-        if self.clips.len() <= self.capacity {
-            return;
+        while self.clips.len() > self.capacity {
+            let (_, oldest_id) =
+                self.clips.iter().fold((SystemTime::now(), 0), |oldest, (id, clip)| {
+                    if &clip.timestamp < &oldest.0 {
+                        (clip.timestamp.clone(), id.clone())
+                    } else {
+                        oldest
+                    }
+                });
+
+            self.clips.remove(&oldest_id);
         }
-
-        let (_, oldest_id) =
-            self.clips.iter().fold((SystemTime::now(), 0), |oldest, (id, clip)| {
-                if &clip.timestamp < &oldest.0 {
-                    (clip.timestamp.clone(), id.clone())
-                } else {
-                    oldest
-                }
-            });
-
-        self.clips.remove(&oldest_id);
     }
 
     #[inline]
@@ -141,5 +152,142 @@ impl ClipboardManager {
         .await
         .context(error::SpawnBlockingTask)??;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashSet;
+
+    use crate::{manager::ClipboardManager, ClipboardData, ClipboardType};
+
+    fn create_clips(n: usize) -> Vec<ClipboardData> {
+        (0..n).map(|i| ClipboardData::new_primary(&i.to_string())).collect()
+    }
+
+    #[test]
+    fn test_zero_capacity() {
+        let mut mgr = ClipboardManager::with_capacity(0);
+        assert_eq!(mgr.len(), 0);
+        assert_eq!(mgr.capacity(), 0);
+
+        let n = 20;
+        let clips = create_clips(n);
+        clips.into_iter().for_each(|clip| {
+            mgr.insert(clip);
+        });
+
+        assert_eq!(mgr.len(), 0);
+
+        let n = 20;
+        let clips = create_clips(n);
+        mgr.import(&clips);
+
+        assert_eq!(mgr.len(), 0);
+    }
+
+    #[test]
+    fn test_capacity() {
+        let cap = 10;
+        let mut mgr = ClipboardManager::with_capacity(cap);
+        assert_eq!(mgr.len(), 0);
+        assert_eq!(mgr.capacity(), cap);
+
+        let n = 20;
+        let clips = create_clips(n);
+        clips.into_iter().for_each(|clip| {
+            mgr.insert(clip);
+        });
+
+        assert_eq!(mgr.len(), cap);
+        assert_eq!(mgr.capacity(), cap);
+
+        let n = 20;
+        let clips = create_clips(n);
+        mgr.import(&clips);
+
+        assert_eq!(mgr.len(), cap);
+        assert_eq!(mgr.capacity(), cap);
+    }
+
+    #[test]
+    fn test_insert() {
+        let n = 20;
+        let clips = create_clips(n);
+        let mut mgr = ClipboardManager::new();
+        clips.iter().for_each(|clip| {
+            mgr.insert(clip.clone());
+        });
+        assert_eq!(n, mgr.len());
+
+        let dumped: HashSet<_> = mgr.list().into_iter().collect();
+        let clips: HashSet<_> = clips.into_iter().collect();
+
+        assert_eq!(dumped, clips);
+    }
+
+    #[test]
+    fn test_import() {
+        let n = 10;
+        let clips = create_clips(n);
+        let mut mgr = ClipboardManager::with_capacity(20);
+
+        mgr.import(&clips);
+        assert_eq!(mgr.len(), n);
+
+        let dumped: HashSet<_> = mgr.list().into_iter().collect();
+        let clips: HashSet<_> = clips.into_iter().collect();
+
+        assert_eq!(dumped, clips);
+    }
+
+    #[test]
+    fn test_replace() {
+        let data1 = "ABCDEFG";
+        let data2 = "АБВГД";
+        let clip = ClipboardData::new_clipboard(data1);
+        let mut mgr = ClipboardManager::new();
+        let old_id = mgr.insert(clip);
+        assert_eq!(mgr.len(), 1);
+
+        let (ok, new_id) = mgr.replace(old_id, data2);
+        assert!(ok);
+        assert_ne!(old_id, new_id);
+        assert_eq!(mgr.len(), 1);
+
+        let clip = mgr.get(new_id).unwrap();
+        assert_eq!(clip.data, data2);
+        assert_eq!(clip.clipboard_type, ClipboardType::Clipboard);
+    }
+
+    #[test]
+    fn test_remove() {
+        let mut mgr = ClipboardManager::new();
+        assert_eq!(mgr.len(), 0);
+        assert_eq!(mgr.remove(43), false);
+
+        let clip = ClipboardData::new_primary("АБВГДЕ");
+        let id = mgr.insert(clip);
+        assert_eq!(mgr.len(), 1);
+
+        let ok = mgr.remove(id);
+        assert!(ok);
+        assert_eq!(mgr.len(), 0);
+
+        let ok = mgr.remove(id);
+        assert!(!ok);
+    }
+
+    #[test]
+    fn test_clear() {
+        let n = 20;
+        let clips = create_clips(n);
+        let mut mgr = ClipboardManager::new();
+
+        mgr.import(&clips);
+        assert_eq!(mgr.len(), n);
+
+        mgr.clear();
+        assert_eq!(mgr.len(), 0);
     }
 }
