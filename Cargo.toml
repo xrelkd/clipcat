@@ -1,6 +1,6 @@
 [package]
 name = "clipcat"
-version = "0.4.13"
+version = "0.4.14"
 authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
 edition = "2018"
 
