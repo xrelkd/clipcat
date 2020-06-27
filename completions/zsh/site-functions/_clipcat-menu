@@ -1,0 +1,248 @@
+#compdef clipcat-menu
+
+autoload -U is-at-least
+
+_clipcat-menu() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-c+[Specifies a configuration file]' \
+'--config=[Specifies a configuration file]' \
+'-s+[Specifies a external selector]' \
+'--selector=[Specifies a external selector]' \
+'-m+[Specifies the menu length of selector]' \
+'--menu-length=[Specifies the menu length of selector]' \
+'-l+[Specifies the length of a line showing on selector]' \
+'--line-length=[Specifies the length of a line showing on selector]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+":: :_clipcat-menu_commands" \
+"*::: :->clipcat-menu" \
+&& ret=0
+    case $state in
+    (clipcat-menu)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:clipcat-menu-command-$line[1]:"
+        case $line[1] in
+            (version)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(completions)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':shell:_files' \
+&& ret=0
+;;
+(list-selector)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(default-config)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(insert)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(rm)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(del)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(remove)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(edit)
+_arguments "${_arguments_options[@]}" \
+'-e+[Specifies a external editor]' \
+'--editor=[Specifies a external editor]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_clipcat-menu_commands] )) ||
+_clipcat-menu_commands() {
+    local commands; commands=(
+        "version:Prints version information" \
+"completions:Outputs shell completion code for the specified shell (bash, zsh, fish)" \
+"list-selector:Prints available text selectors" \
+"default-config:Outputs default configuration" \
+"insert:Insert selected clip into clipboard" \
+"remove:Removes selected clip" \
+"edit:Edit selected clip" \
+"help:Prints this message or the help of the given subcommand(s)" \
+    )
+    _describe -t commands 'clipcat-menu commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__completions_commands] )) ||
+_clipcat-menu__completions_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu completions commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__default-config_commands] )) ||
+_clipcat-menu__default-config_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu default-config commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__del_commands] )) ||
+_clipcat-menu__del_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu del commands' commands "$@"
+}
+(( $+functions[_del_commands] )) ||
+_del_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'del commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__delete_commands] )) ||
+_clipcat-menu__delete_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu delete commands' commands "$@"
+}
+(( $+functions[_delete_commands] )) ||
+_delete_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'delete commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__edit_commands] )) ||
+_clipcat-menu__edit_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu edit commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__help_commands] )) ||
+_clipcat-menu__help_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu help commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__insert_commands] )) ||
+_clipcat-menu__insert_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu insert commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__list-selector_commands] )) ||
+_clipcat-menu__list-selector_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu list-selector commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__remove_commands] )) ||
+_clipcat-menu__remove_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu remove commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__rm_commands] )) ||
+_clipcat-menu__rm_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu rm commands' commands "$@"
+}
+(( $+functions[_rm_commands] )) ||
+_rm_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'rm commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__version_commands] )) ||
+_clipcat-menu__version_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu version commands' commands "$@"
+}
+
+_clipcat-menu "$@"

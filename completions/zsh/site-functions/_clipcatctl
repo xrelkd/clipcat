@@ -1,0 +1,615 @@
+#compdef clipcatctl
+
+autoload -U is-at-least
+
+_clipcatctl() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-c+[Specifies a configuration file]' \
+'--config=[Specifies a configuration file]' \
+'-h+[Specifies a server host]' \
+'--host=[Specifies a server host]' \
+'-p+[Specifies a server port]' \
+'--port=[Specifies a server port]' \
+'--log-level=[Specifies a log level]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+":: :_clipcatctl_commands" \
+"*::: :->clipcatctl" \
+&& ret=0
+    case $state in
+    (clipcatctl)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:clipcatctl-command-$line[1]:"
+        case $line[1] in
+            (version)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(completions)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':shell:_files' \
+&& ret=0
+;;
+(default-config)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(paste)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(paste)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(insert)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(insert-primary)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(cut)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(cut)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(load)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(cut-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(cut-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(load-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(get)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::id:_files' \
+&& ret=0
+;;
+(ls)
+_arguments "${_arguments_options[@]}" \
+'--no-id[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(ls)
+_arguments "${_arguments_options[@]}" \
+'--no-id[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+'--no-id[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(update)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':id:_files' \
+':data:_files' \
+&& ret=0
+;;
+(edit)
+_arguments "${_arguments_options[@]}" \
+'-e+[]' \
+'--editor=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':id:_files' \
+&& ret=0
+;;
+(rm)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(del)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(rm)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(del)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(remove)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::ids:_files' \
+&& ret=0
+;;
+(promote)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':id:_files' \
+&& ret=0
+;;
+(remove-all)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(clear)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(count)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(len)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(length)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_clipcatctl_commands] )) ||
+_clipcatctl_commands() {
+    local commands; commands=(
+        "version:Prints version information" \
+"completions:Outputs shell completion code for the specified shell (bash, zsh, fish)" \
+"default-config:Outputs default configuration" \
+"insert:Inserts new clip into clipboard" \
+"insert-primary:Inserts new clip into primary clipboard" \
+"load:Loads file into clipboard" \
+"load-primary:Loads file into primary clipboard" \
+"get:Prints clip with <id>" \
+"list:Prints content of clipboard" \
+"update:Updates clip with <id>" \
+"edit:Edits clip with <id>" \
+"remove:Removes clips with \[ids\]" \
+"promote:Replaces content of clipboard with clip with <id>" \
+"clear:Removes all clips in clipboard" \
+"length:Prints length of clipboard history" \
+"help:Prints this message or the help of the given subcommand(s)" \
+    )
+    _describe -t commands 'clipcatctl commands' commands "$@"
+}
+(( $+functions[_clipcatctl__clear_commands] )) ||
+_clipcatctl__clear_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl clear commands' commands "$@"
+}
+(( $+functions[_clipcatctl__completions_commands] )) ||
+_clipcatctl__completions_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl completions commands' commands "$@"
+}
+(( $+functions[_clipcatctl__count_commands] )) ||
+_clipcatctl__count_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl count commands' commands "$@"
+}
+(( $+functions[_count_commands] )) ||
+_count_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'count commands' commands "$@"
+}
+(( $+functions[_clipcatctl__cut_commands] )) ||
+_clipcatctl__cut_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl cut commands' commands "$@"
+}
+(( $+functions[_cut_commands] )) ||
+_cut_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'cut commands' commands "$@"
+}
+(( $+functions[_clipcatctl__cut-primary_commands] )) ||
+_clipcatctl__cut-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl cut-primary commands' commands "$@"
+}
+(( $+functions[_cut-primary_commands] )) ||
+_cut-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'cut-primary commands' commands "$@"
+}
+(( $+functions[_clipcatctl__default-config_commands] )) ||
+_clipcatctl__default-config_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl default-config commands' commands "$@"
+}
+(( $+functions[_clipcatctl__del_commands] )) ||
+_clipcatctl__del_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl del commands' commands "$@"
+}
+(( $+functions[_del_commands] )) ||
+_del_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'del commands' commands "$@"
+}
+(( $+functions[_clipcatctl__delete_commands] )) ||
+_clipcatctl__delete_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl delete commands' commands "$@"
+}
+(( $+functions[_delete_commands] )) ||
+_delete_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'delete commands' commands "$@"
+}
+(( $+functions[_clipcatctl__edit_commands] )) ||
+_clipcatctl__edit_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl edit commands' commands "$@"
+}
+(( $+functions[_clipcatctl__get_commands] )) ||
+_clipcatctl__get_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl get commands' commands "$@"
+}
+(( $+functions[_clipcatctl__help_commands] )) ||
+_clipcatctl__help_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl help commands' commands "$@"
+}
+(( $+functions[_clipcatctl__insert_commands] )) ||
+_clipcatctl__insert_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl insert commands' commands "$@"
+}
+(( $+functions[_clipcatctl__insert-primary_commands] )) ||
+_clipcatctl__insert-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl insert-primary commands' commands "$@"
+}
+(( $+functions[_clipcatctl__len_commands] )) ||
+_clipcatctl__len_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl len commands' commands "$@"
+}
+(( $+functions[_len_commands] )) ||
+_len_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'len commands' commands "$@"
+}
+(( $+functions[_clipcatctl__length_commands] )) ||
+_clipcatctl__length_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl length commands' commands "$@"
+}
+(( $+functions[_clipcatctl__list_commands] )) ||
+_clipcatctl__list_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl list commands' commands "$@"
+}
+(( $+functions[_clipcatctl__load_commands] )) ||
+_clipcatctl__load_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl load commands' commands "$@"
+}
+(( $+functions[_clipcatctl__load-primary_commands] )) ||
+_clipcatctl__load-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl load-primary commands' commands "$@"
+}
+(( $+functions[_clipcatctl__ls_commands] )) ||
+_clipcatctl__ls_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl ls commands' commands "$@"
+}
+(( $+functions[_ls_commands] )) ||
+_ls_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'ls commands' commands "$@"
+}
+(( $+functions[_clipcatctl__paste_commands] )) ||
+_clipcatctl__paste_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl paste commands' commands "$@"
+}
+(( $+functions[_paste_commands] )) ||
+_paste_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'paste commands' commands "$@"
+}
+(( $+functions[_clipcatctl__promote_commands] )) ||
+_clipcatctl__promote_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl promote commands' commands "$@"
+}
+(( $+functions[_clipcatctl__remove_commands] )) ||
+_clipcatctl__remove_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl remove commands' commands "$@"
+}
+(( $+functions[_clipcatctl__remove-all_commands] )) ||
+_clipcatctl__remove-all_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl remove-all commands' commands "$@"
+}
+(( $+functions[_remove-all_commands] )) ||
+_remove-all_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'remove-all commands' commands "$@"
+}
+(( $+functions[_clipcatctl__rm_commands] )) ||
+_clipcatctl__rm_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl rm commands' commands "$@"
+}
+(( $+functions[_rm_commands] )) ||
+_rm_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'rm commands' commands "$@"
+}
+(( $+functions[_clipcatctl__update_commands] )) ||
+_clipcatctl__update_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl update commands' commands "$@"
+}
+(( $+functions[_clipcatctl__version_commands] )) ||
+_clipcatctl__version_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl version commands' commands "$@"
+}
+
+_clipcatctl "$@"

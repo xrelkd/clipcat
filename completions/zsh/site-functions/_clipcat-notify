@@ -1,0 +1,94 @@
+#compdef clipcat-notify
+
+autoload -U is-at-least
+
+_clipcat-notify() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'--no-clipboard[Does not monitor clipboard]' \
+'--no-primary[Does not monitor primary]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+":: :_clipcat-notify_commands" \
+"*::: :->clipcat-notify" \
+&& ret=0
+    case $state in
+    (clipcat-notify)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:clipcat-notify-command-$line[1]:"
+        case $line[1] in
+            (version)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(completions)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':shell:_files' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_clipcat-notify_commands] )) ||
+_clipcat-notify_commands() {
+    local commands; commands=(
+        "version:Prints version information" \
+"completions:Outputs shell completion code for the specified shell (bash, zsh, fish)" \
+"help:Prints this message or the help of the given subcommand(s)" \
+    )
+    _describe -t commands 'clipcat-notify commands' commands "$@"
+}
+(( $+functions[_clipcat-notify__completions_commands] )) ||
+_clipcat-notify__completions_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-notify completions commands' commands "$@"
+}
+(( $+functions[_clipcat-notify__help_commands] )) ||
+_clipcat-notify__help_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-notify help commands' commands "$@"
+}
+(( $+functions[_clipcat-notify__version_commands] )) ||
+_clipcat-notify__version_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-notify version commands' commands "$@"
+}
+
+_clipcat-notify "$@"
