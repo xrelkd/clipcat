@@ -1,6 +1,6 @@
 use crate::{
     config,
-    selector::{external::ExternalProgram, SelectionMode},
+    selector::{external::ExternalProgram, SelectionMode, SelectorStream},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -23,7 +23,9 @@ impl ExternalProgram for Dmenu {
     fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
         vec!["-l".to_owned(), self.menu_length.to_string()]
     }
+}
 
+impl SelectorStream for Dmenu {
     fn line_length(&self) -> Option<usize> { Some(self.line_length) }
 
     fn menu_length(&self) -> Option<usize> { Some(self.menu_length) }

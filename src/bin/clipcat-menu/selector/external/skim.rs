@@ -1,4 +1,4 @@
-use crate::selector::{external::ExternalProgram, SelectionMode};
+use crate::selector::{external::ExternalProgram, SelectionMode, SelectorStream};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Skim;
@@ -18,3 +18,5 @@ impl ExternalProgram for Skim {
         }
     }
 }
+
+impl SelectorStream for Skim {}

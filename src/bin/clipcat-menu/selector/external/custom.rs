@@ -1,6 +1,6 @@
 use crate::{
     config,
-    selector::{external::ExternalProgram, SelectionMode},
+    selector::{external::ExternalProgram, SelectionMode, SelectorStream},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -22,3 +22,5 @@ impl ExternalProgram for Custom {
 
     fn args(&self, _seletion_mode: SelectionMode) -> Vec<String> { self.args.clone() }
 }
+
+impl SelectorStream for Custom {}

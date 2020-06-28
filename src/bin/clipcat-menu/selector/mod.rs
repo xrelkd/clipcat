@@ -8,9 +8,10 @@ use crate::{config::Config, error::Error};
 
 mod error;
 mod external;
+mod selector_stream;
 
-pub use self::error::SelectorError;
 use self::external::{Custom, Dmenu, ExternalProgram, Fzf, Rofi, Skim};
+pub use self::{error::SelectorError, selector_stream::SelectorStream};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum SelectionMode {
@@ -90,7 +91,37 @@ impl SelectorRunner {
         Ok(SelectorRunner { external })
     }
 
-    pub async fn run(
+    pub async fn single_select(
+        self,
+        clips: &[ClipboardData],
+    ) -> Result<Option<(usize, ClipboardData)>, SelectorError> {
+        let selected_indices = self.select(clips, SelectionMode::Single).await?;
+        if selected_indices.is_empty() {
+            return Ok(None);
+        }
+
+        let selected_index =
+            selected_indices.first().expect("selected_indices is not empty").clone();
+        let selected_data = &clips[selected_index as usize];
+
+        Ok(Some((selected_index, selected_data.clone())))
+    }
+
+    pub async fn multiple_select(
+        self,
+        clips: &[ClipboardData],
+    ) -> Result<Vec<(usize, ClipboardData)>, SelectorError> {
+        let selected_indices = self.select(clips, SelectionMode::Multiple).await?;
+        if selected_indices.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let clips =
+            selected_indices.into_iter().map(|index| (index, clips[index].clone())).collect();
+        Ok(clips)
+    }
+
+    pub async fn select(
         self,
         clips: &[ClipboardData],
         selection_mode: SelectionMode,

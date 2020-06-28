@@ -1,6 +1,6 @@
 use std::cmp::{Ord, Ordering, PartialEq, PartialOrd};
 
-use crate::ClipboardType;
+use crate::{ClipboardData, ClipboardType};
 
 #[derive(Debug, Clone, Eq, Hash)]
 pub struct ClipboardEvent {
@@ -15,6 +15,13 @@ impl ClipboardEvent {
 
     pub fn new_primary<S: ToString>(data: S) -> ClipboardEvent {
         ClipboardEvent { data: data.to_string(), clipboard_type: ClipboardType::Primary }
+    }
+}
+
+impl From<ClipboardData> for ClipboardEvent {
+    fn from(data: ClipboardData) -> ClipboardEvent {
+        let ClipboardData { data, clipboard_type, .. } = data;
+        ClipboardEvent { data, clipboard_type }
     }
 }
 

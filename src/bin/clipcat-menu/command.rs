@@ -9,7 +9,7 @@ use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
 use crate::{
     config::Config,
     error::{self, Error},
-    selector::{ExternalSelector, SelectionMode, SelectorRunner},
+    selector::{ExternalSelector, SelectorRunner},
 };
 
 #[derive(Debug, Clone, StructOpt)]
@@ -129,48 +129,46 @@ impl Command {
             let mut client = GrpcClient::new(grpc_addr).await?;
             let clips = client.list().await?;
 
-            let selection_mode = match subcommand {
-                Some(SubCommand::Insert) | Some(SubCommand::Edit { .. }) | None => {
-                    SelectionMode::Single
-                }
-                Some(SubCommand::Remove) => SelectionMode::Multiple,
-                _ => unreachable!(),
-            };
-
-            let selected_indices = selector_runner.run(&clips, selection_mode).await?;
-            if selected_indices.is_empty() {
-                println!("Nothing is selected");
-                return Ok(());
-            }
-
-            let ids: Vec<u64> = selected_indices.iter().map(|index| clips[*index].id).collect();
-
-            let selected_index = *selected_indices.first().expect("selected_indices is not empty");
-            let id = clips[selected_index].id;
-            let selected_data = &clips[selected_index as usize];
-
             match subcommand {
                 Some(SubCommand::Remove) => {
-                    client.batch_remove(&ids).await?;
+                    let selections = selector_runner.multiple_select(&clips).await?;
+                    let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
+                    let removed_ids = client.batch_remove(&ids).await?;
+                    for id in removed_ids {
+                        println!("{:016x}", id);
+                    }
                 }
                 Some(SubCommand::Insert) | None => {
                     const LINE_LENGTH: usize = 100;
-                    println!(
-                        "index: {}, content: {:?}",
-                        selected_index,
-                        selected_data.printable_data(Some(LINE_LENGTH)),
-                    );
-                    client.mark_as_clipboard(id).await?;
+                    let selection = selector_runner.single_select(&clips).await?;
+                    if let Some((index, clip)) = selection {
+                        println!(
+                            "index: {}, id: {}, content: {:?}",
+                            index,
+                            clip.id,
+                            clip.printable_data(Some(LINE_LENGTH)),
+                        );
+                        client.mark_as_clipboard(clip.id).await?;
+                    } else {
+                        println!("Nothing is selected");
+                        return Ok(());
+                    }
                 }
                 Some(SubCommand::Edit { editor }) => {
-                    let editor = ExternalEditor::new(editor);
-                    let new_data =
-                        editor.execute(&selected_data.data).await.context(error::CallEditor)?;
-                    let (ok, new_id) = client.update(id, &new_data).await?;
-                    if ok {
-                        println!("{:016x}", new_id);
+                    let selection = selector_runner.single_select(&clips).await?;
+                    if let Some((_index, clip)) = selection {
+                        let editor = ExternalEditor::new(editor);
+                        let new_data =
+                            editor.execute(&clip.data).await.context(error::CallEditor)?;
+                        let (ok, new_id) = client.update(clip.id, &new_data).await?;
+                        if ok {
+                            println!("{:016x}", new_id);
+                        }
+                        client.mark_as_clipboard(new_id).await?;
+                    } else {
+                        println!("Nothing is selected");
+                        return Ok(());
                     }
-                    client.mark_as_clipboard(new_id).await?;
                 }
                 _ => unreachable!(),
             }
