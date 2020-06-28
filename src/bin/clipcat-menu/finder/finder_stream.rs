@@ -3,7 +3,7 @@ use clipcat::ClipboardData;
 pub const ENTRY_SEPARATOR: &'static str = "\n";
 pub const INDEX_SEPARATOR: char = ':';
 
-pub trait SelectorStream: Send + Sync {
+pub trait FinderStream: Send + Sync {
     fn generate_input(&self, clips: &[ClipboardData]) -> String {
         clips
             .iter()
@@ -42,10 +42,10 @@ pub trait SelectorStream: Send + Sync {
 mod test {
     use clipcat::ClipboardData;
 
-    use crate::selector::SelectorStream;
+    use crate::finder::FinderStream;
 
     struct Dummy;
-    impl SelectorStream for Dummy {}
+    impl FinderStream for Dummy {}
 
     #[test]
     fn test_generate_input() {

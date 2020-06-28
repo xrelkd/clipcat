@@ -2,8 +2,8 @@ use clipcat::ClipboardData;
 
 use crate::{
     config,
-    selector::{
-        external::ExternalProgram, selector_stream::ENTRY_SEPARATOR, SelectionMode, SelectorStream,
+    finder::{
+        external::ExternalProgram, finder_stream::ENTRY_SEPARATOR, FinderStream, SelectionMode,
     },
 };
 
@@ -49,7 +49,7 @@ impl ExternalProgram for Rofi {
     }
 }
 
-impl SelectorStream for Rofi {
+impl FinderStream for Rofi {
     fn generate_input(&self, clips: &[ClipboardData]) -> String {
         clips
             .iter()
@@ -79,7 +79,7 @@ impl SelectorStream for Rofi {
 mod test {
     use crate::{
         config,
-        selector::{external::ExternalProgram, Rofi, SelectionMode},
+        finder::{external::ExternalProgram, Rofi, SelectionMode},
     };
 
     #[test]

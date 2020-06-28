@@ -5,16 +5,16 @@ use std::{
 
 use app_dirs::AppDataType;
 
-use crate::selector::ExternalSelector;
+use crate::finder::FinderType;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
     pub server_host: IpAddr,
     pub server_port: u16,
-    pub selector: ExternalSelector,
+    pub finder: FinderType,
     pub rofi: Option<Rofi>,
     pub dmenu: Option<Dmenu>,
-    pub custom_selector: Option<CustomSelector>,
+    pub custom_finder: Option<CustomFinder>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ pub struct Dmenu {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct CustomSelector {
+pub struct CustomFinder {
     pub program: String,
     pub args: Vec<String>,
 }
@@ -40,10 +40,10 @@ impl Default for Config {
         Config {
             server_host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
             server_port: clipcat::DEFAULT_GRPC_PORT,
-            selector: ExternalSelector::Rofi,
+            finder: FinderType::Rofi,
             rofi: Some(Rofi::default()),
             dmenu: Some(Dmenu::default()),
-            custom_selector: Some(CustomSelector::default()),
+            custom_finder: Some(CustomFinder::default()),
         }
     }
 }
@@ -56,8 +56,8 @@ impl Default for Dmenu {
     fn default() -> Dmenu { Dmenu { line_length: 100, menu_length: 30 } }
 }
 
-impl Default for CustomSelector {
-    fn default() -> CustomSelector { CustomSelector { program: "fzf".to_string(), args: vec![] } }
+impl Default for CustomFinder {
+    fn default() -> CustomFinder { CustomFinder { program: "fzf".to_string(), args: vec![] } }
 }
 
 impl Config {

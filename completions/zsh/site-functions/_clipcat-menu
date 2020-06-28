@@ -17,12 +17,12 @@ _clipcat-menu() {
     _arguments "${_arguments_options[@]}" \
 '-c+[Specifies a configuration file]' \
 '--config=[Specifies a configuration file]' \
-'-s+[Specifies a external selector]' \
-'--selector=[Specifies a external selector]' \
-'-m+[Specifies the menu length of selector]' \
-'--menu-length=[Specifies the menu length of selector]' \
-'-l+[Specifies the length of a line showing on selector]' \
-'--line-length=[Specifies the length of a line showing on selector]' \
+'-f+[Specifies a finder]' \
+'--finder=[Specifies a finder]' \
+'-m+[Specifies the menu length of finder]' \
+'--menu-length=[Specifies the menu length of finder]' \
+'-l+[Specifies the length of a line showing on finder]' \
+'--line-length=[Specifies the length of a line showing on finder]' \
 '-h[Prints help information]' \
 '--help[Prints help information]' \
 '-V[Prints version information]' \
@@ -53,7 +53,7 @@ _arguments "${_arguments_options[@]}" \
 ':shell:_files' \
 && ret=0
 ;;
-(list-selector)
+(default-config)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
 '--help[Prints help information]' \
@@ -61,7 +61,7 @@ _arguments "${_arguments_options[@]}" \
 '--version[Prints version information]' \
 && ret=0
 ;;
-(default-config)
+(list-finder)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
 '--help[Prints help information]' \
@@ -137,8 +137,8 @@ _clipcat-menu_commands() {
     local commands; commands=(
         "version:Prints version information" \
 "completions:Outputs shell completion code for the specified shell (bash, zsh, fish)" \
-"list-selector:Prints available text selectors" \
 "default-config:Outputs default configuration" \
+"list-finder:Prints available text finders" \
 "insert:Insert selected clip into clipboard" \
 "remove:Removes selected clip" \
 "edit:Edit selected clip" \
@@ -209,12 +209,12 @@ _clipcat-menu__insert_commands() {
     )
     _describe -t commands 'clipcat-menu insert commands' commands "$@"
 }
-(( $+functions[_clipcat-menu__list-selector_commands] )) ||
-_clipcat-menu__list-selector_commands() {
+(( $+functions[_clipcat-menu__list-finder_commands] )) ||
+_clipcat-menu__list-finder_commands() {
     local commands; commands=(
         
     )
-    _describe -t commands 'clipcat-menu list-selector commands' commands "$@"
+    _describe -t commands 'clipcat-menu list-finder commands' commands "$@"
 }
 (( $+functions[_clipcat-menu__remove_commands] )) ||
 _clipcat-menu__remove_commands() {

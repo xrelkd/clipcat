@@ -12,10 +12,11 @@ app = ["app_dirs", "structopt", "toml", "env_logger"]
 monitor = ["x11-clipboard"]
 daemon = ["daemonize", "libc", "syslog", "tokio/signal", "serde_json", "bincode", "rocksdb"]
 external_editor = ["tokio/process"]
+builtin_finder = ["skim"]
 
 clipcatd = ["app", "monitor", "daemon"]
 clipcatctl = ["app", "tokio/process", "tokio/fs", "external_editor"]
-clipcat-menu = ["app", "tokio/process", "external_editor"]
+clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
 clipcat-notify = ["structopt", "monitor"]
 
 [lib]
@@ -69,6 +70,8 @@ bincode = { version = "1", optional = true }
 
 libc = { version = "0.2", optional = true }
 daemonize = { version = "0.4", optional = true }
+
+skim = { version = "0.8", optional = true }
 
 [build-dependencies]
 tonic-build = { version = "0.2", features = ["prost"] }

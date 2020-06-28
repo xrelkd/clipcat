@@ -1,6 +1,6 @@
 use crate::{
     config,
-    selector::{external::ExternalProgram, SelectionMode, SelectorStream},
+    finder::{external::ExternalProgram, FinderStream, SelectionMode},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -25,7 +25,7 @@ impl ExternalProgram for Dmenu {
     }
 }
 
-impl SelectorStream for Dmenu {
+impl FinderStream for Dmenu {
     fn line_length(&self) -> Option<usize> { Some(self.line_length) }
 
     fn menu_length(&self) -> Option<usize> { Some(self.menu_length) }

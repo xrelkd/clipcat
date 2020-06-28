@@ -1,4 +1,4 @@
-use crate::selector::{external::ExternalProgram, SelectionMode, SelectorStream};
+use crate::finder::{external::ExternalProgram, FinderStream, SelectionMode};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Fzf;
@@ -19,4 +19,4 @@ impl ExternalProgram for Fzf {
     }
 }
 
-impl SelectorStream for Fzf {}
+impl FinderStream for Fzf {}

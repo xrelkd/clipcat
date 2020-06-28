@@ -9,7 +9,7 @@ use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
 use crate::{
     config::Config,
     error::{self, Error},
-    selector::{ExternalSelector, SelectorRunner},
+    finder::{FinderRunner, FinderType},
 };
 
 #[derive(Debug, Clone, StructOpt)]
@@ -21,13 +21,13 @@ pub struct Command {
     #[structopt(long = "config", short = "c", help = "Specifies a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[structopt(long, short = "s", help = "Specifies a external selector")]
-    selector: Option<ExternalSelector>,
+    #[structopt(long, short = "f", help = "Specifies a finder")]
+    finder: Option<FinderType>,
 
-    #[structopt(long, short = "m", help = "Specifies the menu length of selector")]
+    #[structopt(long, short = "m", help = "Specifies the menu length of finder")]
     menu_length: Option<usize>,
 
-    #[structopt(long, short = "l", help = "Specifies the length of a line showing on selector")]
+    #[structopt(long, short = "l", help = "Specifies the length of a line showing on finder")]
     line_length: Option<usize>,
 }
 
@@ -39,11 +39,11 @@ pub enum SubCommand {
     #[structopt(about = "Outputs shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: structopt::clap::Shell },
 
-    #[structopt(about = "Prints available text selectors")]
-    ListSelector,
-
     #[structopt(about = "Outputs default configuration")]
     DefaultConfig,
+
+    #[structopt(about = "Prints available text finders")]
+    ListFinder,
 
     #[structopt(about = "Insert selected clip into clipboard")]
     Insert,
@@ -84,19 +84,20 @@ impl Command {
                 );
                 return Ok(());
             }
-            Some(SubCommand::ListSelector) => {
-                println!("{}", ExternalSelector::Rofi.to_string());
-                println!("{}", ExternalSelector::Dmenu.to_string());
-                println!("{}", ExternalSelector::Fzf.to_string());
-                println!("{}", ExternalSelector::Skim.to_string());
-                println!("{}", ExternalSelector::Custom.to_string());
-                return Ok(());
-            }
             Some(SubCommand::DefaultConfig) => {
                 println!(
                     "{}",
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable")
                 );
+                return Ok(());
+            }
+            Some(SubCommand::ListFinder) => {
+                println!("{}", FinderType::Builtin.to_string());
+                println!("{}", FinderType::Rofi.to_string());
+                println!("{}", FinderType::Dmenu.to_string());
+                println!("{}", FinderType::Fzf.to_string());
+                println!("{}", FinderType::Skim.to_string());
+                println!("{}", FinderType::Custom.to_string());
                 return Ok(());
             }
             _ => {}
@@ -109,18 +110,20 @@ impl Command {
 
         let mut config =
             Config::load_or_default(&self.config_file.unwrap_or(Config::default_path()));
-        let selector_runner = {
-            if let Some(selector) = self.selector {
-                config.selector = selector;
+        let finder = {
+            if let Some(finder) = self.finder {
+                config.finder = finder;
             }
-            let mut runner = SelectorRunner::from_config(&config)?;
+
+            let mut finder = FinderRunner::from_config(&config)?;
             if let Some(line_length) = self.line_length {
-                runner.set_line_length(line_length);
+                finder.set_line_length(line_length);
             }
+
             if let Some(menu_length) = self.menu_length {
-                runner.set_menu_length(menu_length);
+                finder.set_menu_length(menu_length);
             }
-            runner
+            finder
         };
 
         let subcommand = self.subcommand;
@@ -131,7 +134,7 @@ impl Command {
 
             match subcommand {
                 Some(SubCommand::Remove) => {
-                    let selections = selector_runner.multiple_select(&clips).await?;
+                    let selections = finder.multiple_select(&clips).await?;
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
@@ -140,10 +143,10 @@ impl Command {
                 }
                 Some(SubCommand::Insert) | None => {
                     const LINE_LENGTH: usize = 100;
-                    let selection = selector_runner.single_select(&clips).await?;
+                    let selection = finder.single_select(&clips).await?;
                     if let Some((index, clip)) = selection {
                         println!(
-                            "index: {}, id: {}, content: {:?}",
+                            "index: {}, id: {:016x}, content: {:?}",
                             index,
                             clip.id,
                             clip.printable_data(Some(LINE_LENGTH)),
@@ -155,7 +158,7 @@ impl Command {
                     }
                 }
                 Some(SubCommand::Edit { editor }) => {
-                    let selection = selector_runner.single_select(&clips).await?;
+                    let selection = finder.single_select(&clips).await?;
                     if let Some((_index, clip)) = selection {
                         let editor = ExternalEditor::new(editor);
                         let new_data =

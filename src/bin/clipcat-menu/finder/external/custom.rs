@@ -1,6 +1,6 @@
 use crate::{
     config,
-    selector::{external::ExternalProgram, SelectionMode, SelectorStream},
+    finder::{external::ExternalProgram, FinderStream, SelectionMode},
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -11,8 +11,8 @@ pub struct Custom {
 
 impl Custom {
     #[inline]
-    pub fn from_config(config: &config::CustomSelector) -> Custom {
-        let config::CustomSelector { program, args } = config;
+    pub fn from_config(config: &config::CustomFinder) -> Custom {
+        let config::CustomFinder { program, args } = config;
         Custom { program: program.clone(), args: args.clone() }
     }
 }
@@ -23,4 +23,4 @@ impl ExternalProgram for Custom {
     fn args(&self, _seletion_mode: SelectionMode) -> Vec<String> { self.args.clone() }
 }
 
-impl SelectorStream for Custom {}
+impl FinderStream for Custom {}

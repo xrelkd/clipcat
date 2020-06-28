@@ -2,12 +2,15 @@ use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
-pub enum SelectorError {
-    #[snafu(display("Invalid selector: {}", selector))]
-    InvalidSelector { selector: String },
+pub enum FinderError {
+    #[snafu(display("Invalid finder: {}", finder))]
+    InvalidFinder { finder: String },
 
     #[snafu(display("Could not spawn external process, error: {}", source))]
     SpawnExternalProcess { source: std::io::Error },
+
+    #[snafu(display("Could not join spawned task, error: {}", source))]
+    JoinTask { source: tokio::task::JoinError },
 
     #[snafu(display("Could not open stdin"))]
     OpenStdin,

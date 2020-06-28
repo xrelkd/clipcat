@@ -2,7 +2,7 @@ use snafu::Snafu;
 
 use clipcat::{editor::EditorError, grpc::GrpcClientError};
 
-use crate::selector::SelectorError;
+use crate::finder::FinderError;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
@@ -20,8 +20,8 @@ pub enum Error {
         source: std::io::Error,
     },
 
-    RunSelector {
-        source: SelectorError,
+    RunFinder {
+        source: FinderError,
     },
 
     #[snafu(display("Could not call external editor, error: {}", source))]
@@ -34,8 +34,8 @@ impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Error { Error::StdIo { source: err } }
 }
 
-impl From<SelectorError> for Error {
-    fn from(err: SelectorError) -> Error { Error::RunSelector { source: err } }
+impl From<FinderError> for Error {
+    fn from(err: FinderError) -> Error { Error::RunFinder { source: err } }
 }
 
 impl From<GrpcClientError> for Error {

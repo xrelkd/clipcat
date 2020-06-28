@@ -13,7 +13,7 @@ extern crate serde;
 mod command;
 mod config;
 mod error;
-mod selector;
+mod finder;
 
 use self::command::Command;
 
