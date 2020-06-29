@@ -140,7 +140,7 @@ impl GrpcClient {
             .map(|data| {
                 let timestamp = std::time::UNIX_EPOCH
                     .checked_add(std::time::Duration::from_millis(data.timestamp))
-                    .unwrap_or(std::time::SystemTime::now());
+                    .unwrap_or_else(std::time::SystemTime::now);
                 ClipboardData {
                     id: data.id,
                     data: data.data,

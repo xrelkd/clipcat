@@ -109,7 +109,7 @@ impl Command {
         env_logger::init();
 
         let mut config =
-            Config::load_or_default(&self.config_file.unwrap_or(Config::default_path()));
+            Config::load_or_default(&self.config_file.unwrap_or_else(Config::default_path));
         let finder = {
             if let Some(finder) = self.finder {
                 config.finder = finder;

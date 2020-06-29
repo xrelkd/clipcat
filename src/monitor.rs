@@ -25,14 +25,6 @@ impl Default for ClipboardMonitorOptions {
     }
 }
 
-impl Drop for ClipboardMonitor {
-    fn drop(&mut self) {
-        drop(&mut self.clipboard_thread);
-        drop(&mut self.primary_thread);
-        drop(&mut self.event_receiver);
-    }
-}
-
 impl ClipboardMonitor {
     pub fn new(opts: ClipboardMonitorOptions) -> Result<ClipboardMonitor, ClipboardError> {
         let (sender, event_receiver) = mpsc::unbounded_channel::<ClipboardEvent>();
@@ -67,8 +59,8 @@ fn build_thread(
 ) -> Result<thread::JoinHandle<()>, ClipboardError> {
     let send_event = move |data: &str| {
         let event = match clipboard_type {
-            ClipboardType::Clipboard => ClipboardEvent::new_clipboard(data.clone()),
-            ClipboardType::Primary => ClipboardEvent::new_primary(data.clone()),
+            ClipboardType::Clipboard => ClipboardEvent::new_clipboard(data),
+            ClipboardType::Primary => ClipboardEvent::new_primary(data),
         };
         sender.send(event)
     };

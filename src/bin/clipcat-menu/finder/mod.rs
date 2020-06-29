@@ -111,8 +111,7 @@ impl FinderRunner {
             return Ok(None);
         }
 
-        let selected_index =
-            selected_indices.first().expect("selected_indices is not empty").clone();
+        let selected_index = *selected_indices.first().expect("selected_indices is not empty");
         let selected_data = &clips[selected_index as usize];
 
         Ok(Some((selected_index, selected_data.clone())))

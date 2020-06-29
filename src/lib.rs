@@ -7,7 +7,11 @@ extern crate serde;
 #[macro_use]
 extern crate snafu;
 
-use std::{cmp::Ordering, time::SystemTime};
+use std::{
+    cmp::Ordering,
+    hash::{Hash, Hasher},
+    time::SystemTime,
+};
 
 #[cfg(feature = "app")]
 use app_dirs::AppInfo;
@@ -31,28 +35,28 @@ pub use self::manager::ClipboardManager;
 #[cfg(feature = "monitor")]
 pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
 
-pub const PROJECT_NAME: &'static str = "clipcat";
+pub const PROJECT_NAME: &str = "clipcat";
 
 #[cfg(feature = "app")]
 pub const APP_INFO: AppInfo = AppInfo { name: PROJECT_NAME, author: PROJECT_NAME };
 
-pub const DAEMON_PROGRAM_NAME: &'static str = "clipcatd";
-pub const DAEMON_CONFIG_NAME: &'static str = "clipcatd.toml";
-pub const DAEMON_HISTORY_FILE_NAME: &'static str = "clipcatd/db";
+pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
+pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";
+pub const DAEMON_HISTORY_FILE_NAME: &str = "clipcatd/db";
 
-pub const CTL_PROGRAM_NAME: &'static str = "clipcatctl";
-pub const CTL_CONFIG_NAME: &'static str = "clipcatctl.toml";
+pub const CTL_PROGRAM_NAME: &str = "clipcatctl";
+pub const CTL_CONFIG_NAME: &str = "clipcatctl.toml";
 
-pub const MENU_PROGRAM_NAME: &'static str = "clipcat-menu";
-pub const MENU_CONFIG_NAME: &'static str = "clipcat-menu.toml";
+pub const MENU_PROGRAM_NAME: &str = "clipcat-menu";
+pub const MENU_CONFIG_NAME: &str = "clipcat-menu.toml";
 
-pub const NOTIFY_PROGRAM_NAME: &'static str = "clipcat-notify";
+pub const NOTIFY_PROGRAM_NAME: &str = "clipcat-notify";
 
 pub const DEFAULT_GRPC_PORT: u16 = 45045;
-pub const DEFAULT_GRPC_HOST: &'static str = "127.0.0.1";
+pub const DEFAULT_GRPC_HOST: &str = "127.0.0.1";
 
 pub const DEFAULT_WEBUI_PORT: u16 = 45046;
-pub const DEFAULT_WEBUI_HOST: &'static str = "127.0.0.1";
+pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
 
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Hash)]
 pub enum ClipboardType {
@@ -64,12 +68,13 @@ impl From<i32> for ClipboardType {
     fn from(n: i32) -> ClipboardType {
         match n {
             0 => ClipboardType::Clipboard,
-            1 | _ => ClipboardType::Primary,
+            1 => ClipboardType::Primary,
+            _ => ClipboardType::Primary,
         }
     }
 }
 
-#[derive(Debug, Eq, Hash, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct ClipboardData {
     pub id: u64,
     pub data: String,
@@ -105,10 +110,7 @@ impl ClipboardData {
 
     #[inline]
     pub fn compute_id(data: &str) -> u64 {
-        use std::{
-            collections::hash_map::DefaultHasher,
-            hash::{Hash, Hasher},
-        };
+        use std::collections::hash_map::DefaultHasher;
         let mut s = DefaultHasher::new();
         data.hash(&mut s);
         s.finish()
@@ -194,4 +196,8 @@ impl Ord for ClipboardData {
             ord => ord,
         }
     }
+}
+
+impl Hash for ClipboardData {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.data.hash(state); }
 }

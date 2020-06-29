@@ -60,7 +60,7 @@ impl Command {
     pub fn new() -> Command { StructOpt::from_args() }
 
     fn load_config(&self) -> Result<Config, ConfigError> {
-        let config_file = &self.config_file.clone().unwrap_or(Config::default_path());
+        let config_file = &self.config_file.clone().unwrap_or_else(Config::default_path);
         let mut config = Config::load(&config_file)?;
 
         config.daemonize = !self.no_daemon;
@@ -101,7 +101,7 @@ impl Command {
                 let config_text =
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable");
                 std::io::stdout()
-                    .write(&config_text.as_bytes())
+                    .write_all(&config_text.as_bytes())
                     .expect("failed to write to stdout");
                 return Ok(());
             }

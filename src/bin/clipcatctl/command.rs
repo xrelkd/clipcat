@@ -119,7 +119,7 @@ impl Command {
 
     fn load_config(&self) -> Config {
         let mut config =
-            Config::load_or_default(&self.config_file.clone().unwrap_or(Config::default_path()));
+            Config::load_or_default(&self.config_file.clone().unwrap_or_else(Config::default_path));
         if let Some(host) = self.server_host {
             config.server_host = host;
         }
@@ -162,7 +162,7 @@ impl Command {
                 let config_text =
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable");
                 std::io::stdout()
-                    .write(&config_text.as_bytes())
+                    .write_all(&config_text.as_bytes())
                     .expect("Failed to write to stdout");
                 return Ok(0);
             }
@@ -181,7 +181,7 @@ impl Command {
 
             match self.subcommand {
                 SubCommand::Get { id } => {
-                    let data = match id {
+                    let data: String = match id {
                         Some(id) => client.get(id).await?,
                         None => {
                             let clips = client.list().await?;
@@ -191,7 +191,7 @@ impl Command {
                                     entry.clipboard_type == clipcat::ClipboardType::Clipboard
                                 })
                                 .map(|v| v.data)
-                                .unwrap_or(String::new())
+                                .unwrap_or_default()
                         }
                     };
                     println!("{}", data);

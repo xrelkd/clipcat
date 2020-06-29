@@ -62,9 +62,7 @@ impl Clipcat for GrpcService {
         let ids = request.into_inner().ids;
         let ids = {
             let mut manager = self.manager.lock().await;
-            ids.into_iter()
-                .filter_map(|id| if manager.remove(id) { Some(id) } else { None })
-                .collect()
+            ids.into_iter().filter(|id| manager.remove(*id)).collect()
         };
         Ok(Response::new(BatchRemoveResponse { ids }))
     }

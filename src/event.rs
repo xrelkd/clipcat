@@ -1,8 +1,11 @@
-use std::cmp::{Ord, Ordering, PartialEq, PartialOrd};
+use std::{
+    cmp::{Ord, Ordering, PartialEq, PartialOrd},
+    hash::{Hash, Hasher},
+};
 
 use crate::{ClipboardData, ClipboardType};
 
-#[derive(Debug, Clone, Eq, Hash)]
+#[derive(Debug, Clone, Eq)]
 pub struct ClipboardEvent {
     pub data: String,
     pub clipboard_type: ClipboardType,
@@ -35,4 +38,8 @@ impl PartialOrd for ClipboardEvent {
 
 impl Ord for ClipboardEvent {
     fn cmp(&self, other: &Self) -> Ordering { self.clipboard_type.cmp(&other.clipboard_type) }
+}
+
+impl Hash for ClipboardEvent {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.data.hash(state); }
 }

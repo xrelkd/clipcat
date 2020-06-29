@@ -1,6 +1,6 @@
 use clipcat::ClipboardData;
 
-pub const ENTRY_SEPARATOR: &'static str = "\n";
+pub const ENTRY_SEPARATOR: &str = "\n";
 pub const INDEX_SEPARATOR: char = ':';
 
 pub trait FinderStream: Send + Sync {

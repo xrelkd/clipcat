@@ -4,9 +4,15 @@ use snafu::ResultExt;
 
 use crate::{error, ClipboardData, ClipboardError, ClipboardType};
 
+const DEFAULT_CAPACITY: usize = 40;
+
 pub struct ClipboardManager {
     clips: HashMap<u64, ClipboardData>,
     capacity: usize,
+}
+
+impl Default for ClipboardManager {
+    fn default() -> ClipboardManager { Self::with_capacity(DEFAULT_CAPACITY) }
 }
 
 impl ClipboardManager {
@@ -15,7 +21,7 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn new() -> ClipboardManager { Self::with_capacity(40) }
+    pub fn new() -> ClipboardManager { Self::default() }
 
     #[inline]
     pub fn capacity(&self) -> usize { self.capacity }
@@ -39,7 +45,7 @@ impl ClipboardManager {
     pub fn list(&self) -> Vec<ClipboardData> { self.iter().cloned().collect() }
 
     #[inline]
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a ClipboardData> { self.clips.values() }
+    pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> { self.clips.values() }
 
     #[inline]
     pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
@@ -69,12 +75,15 @@ impl ClipboardManager {
     #[inline]
     pub fn len(&self) -> usize { self.clips.len() }
 
+    #[inline]
+    pub fn is_empty(&self) -> bool { self.clips.is_empty() }
+
     fn remove_oldest(&mut self) {
         while self.clips.len() > self.capacity {
             let (_, oldest_id) =
                 self.clips.iter().fold((SystemTime::now(), 0), |oldest, (id, clip)| {
-                    if &clip.timestamp < &oldest.0 {
-                        (clip.timestamp.clone(), id.clone())
+                    if clip.timestamp < oldest.0 {
+                        (clip.timestamp, *id)
                     } else {
                         oldest
                     }

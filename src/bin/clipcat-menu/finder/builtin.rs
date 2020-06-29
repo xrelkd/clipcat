@@ -35,15 +35,9 @@ impl BuiltinFinder {
             // `run_with` would read and show items from the stream
             let selected_items = Skim::run_with(&options, Some(items))
                 .map(|out| out.selected_items)
-                .unwrap_or_else(|| Vec::new());
+                .unwrap_or_else(Vec::new);
 
-            let output = selected_items
-                .iter()
-                .map(|item| item.text())
-                .collect::<Vec<_>>()
-                .join(ENTRY_SEPARATOR);
-
-            output
+            selected_items.iter().map(|item| item.text()).collect::<Vec<_>>().join(ENTRY_SEPARATOR)
         })
         .await
         .context(error::JoinTask)?;

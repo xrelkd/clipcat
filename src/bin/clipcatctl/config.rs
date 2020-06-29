@@ -41,7 +41,7 @@ impl Config {
 
     #[inline]
     pub fn load_or_default<P: AsRef<Path>>(path: P) -> Config {
-        Self::load(path).unwrap_or(Default::default())
+        Self::load(path).unwrap_or_default()
     }
 
     #[inline]

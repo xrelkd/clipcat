@@ -107,8 +107,9 @@ impl Config {
 
     #[inline]
     pub fn default_pid_file_path() -> PathBuf {
-        let mut path =
-            std::env::var("XDG_RUNTIME_DIR").map(PathBuf::from).unwrap_or(std::env::temp_dir());
+        let mut path = std::env::var("XDG_RUNTIME_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| std::env::temp_dir());
         path.push(format!("{}.pid", clipcat::DAEMON_PROGRAM_NAME));
         path
     }
