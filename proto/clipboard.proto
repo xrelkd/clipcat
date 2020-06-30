@@ -3,15 +3,25 @@ syntax = "proto3";
 package clipboard;
 
 service Clipcat {
-  rpc Insert(InsertRequest) returns (InsertResponse);
-  rpc Get(GetRequest) returns (GetResponse);
   rpc List(ListRequest) returns (ListResponse);
+
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc GetCurrentClipboard(GetCurrentClipboardRequest)
+      returns (GetCurrentClipboardResponse);
+  rpc GetCurrentPrimary(GetCurrentPrimaryRequest)
+      returns (GetCurrentPrimaryResponse);
+
   rpc Remove(RemoveRequest) returns (RemoveResponse);
   rpc BatchRemove(BatchRemoveRequest) returns (BatchRemoveResponse);
-  rpc Update(UpdateRequest) returns (UpdateResponse);
-  rpc MarkAsClipboard(MarkAsClipboardRequest) returns (MarkAsClipboardResponse);
-  rpc Length(LengthRequest) returns (LengthResponse);
   rpc Clear(ClearRequest) returns (ClearResponse);
+
+  rpc Insert(InsertRequest) returns (InsertResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+
+  rpc MarkAsClipboard(MarkAsClipboardRequest) returns (MarkAsClipboardResponse);
+  rpc MarkAsPrimary(MarkAsPrimaryRequest) returns (MarkAsPrimaryResponse);
+
+  rpc Length(LengthRequest) returns (LengthResponse);
 }
 
 enum ClipboardType {
@@ -35,6 +45,12 @@ message InsertResponse { uint64 id = 1; }
 message GetRequest { uint64 id = 1; }
 message GetResponse { ClipboardData data = 1; }
 
+message GetCurrentClipboardRequest {}
+message GetCurrentClipboardResponse { ClipboardData data = 1; }
+
+message GetCurrentPrimaryRequest {}
+message GetCurrentPrimaryResponse { ClipboardData data = 1; }
+
 message ListRequest {}
 message ListResponse { repeated ClipboardData data = 1; }
 
@@ -50,14 +66,17 @@ message UpdateResponse {
 message MarkAsClipboardRequest { uint64 id = 1; }
 message MarkAsClipboardResponse { bool ok = 1; }
 
+message MarkAsPrimaryRequest { uint64 id = 1; }
+message MarkAsPrimaryResponse { bool ok = 1; }
+
 message LengthRequest {}
 message LengthResponse { uint64 length = 1; }
-
-message ClearRequest {}
-message ClearResponse {}
 
 message RemoveRequest { uint64 id = 1; }
 message RemoveResponse { bool ok = 1; }
 
 message BatchRemoveRequest { repeated uint64 ids = 1; }
 message BatchRemoveResponse { repeated uint64 ids = 1; }
+
+message ClearRequest {}
+message ClearResponse {}

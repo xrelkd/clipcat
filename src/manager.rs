@@ -9,6 +9,8 @@ const DEFAULT_CAPACITY: usize = 40;
 pub struct ClipboardManager {
     clips: HashMap<u64, ClipboardData>,
     capacity: usize,
+    current_clipboard: Option<ClipboardData>,
+    current_primary: Option<ClipboardData>,
 }
 
 impl Default for ClipboardManager {
@@ -17,7 +19,12 @@ impl Default for ClipboardManager {
 
 impl ClipboardManager {
     pub fn with_capacity(capacity: usize) -> ClipboardManager {
-        ClipboardManager { clips: Default::default(), capacity }
+        ClipboardManager {
+            capacity,
+            clips: HashMap::default(),
+            current_clipboard: None,
+            current_primary: None,
+        }
     }
 
     #[inline]
@@ -51,6 +58,14 @@ impl ClipboardManager {
     pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
+    pub fn get_current_clipboard(&self) -> Option<&ClipboardData> {
+        self.current_clipboard.as_ref()
+    }
+
+    #[inline]
+    pub fn get_current_primary(&self) -> Option<&ClipboardData> { self.current_primary.as_ref() }
+
+    #[inline]
     pub fn insert(&mut self, data: ClipboardData) -> u64 { self.insert_inner(data) }
 
     #[inline]
@@ -67,6 +82,14 @@ impl ClipboardManager {
 
     fn insert_inner(&mut self, clipboard_data: ClipboardData) -> u64 {
         let id = clipboard_data.id;
+        match clipboard_data.clipboard_type {
+            ClipboardType::Clipboard => {
+                self.current_clipboard = Some(clipboard_data.clone());
+            }
+            ClipboardType::Primary => {
+                self.current_primary = Some(clipboard_data.clone());
+            }
+        }
         self.clips.insert(clipboard_data.id, clipboard_data);
         self.remove_oldest();
         id
@@ -89,15 +112,33 @@ impl ClipboardManager {
                     }
                 });
 
-            self.clips.remove(&oldest_id);
+            self.remove(oldest_id);
         }
     }
 
     #[inline]
-    pub fn remove(&mut self, id: u64) -> bool { self.clips.remove(&id).is_some() }
+    pub fn remove(&mut self, id: u64) -> bool {
+        if let Some(clip) = self.current_clipboard.as_ref() {
+            if clip.id == id {
+                self.current_clipboard.take();
+            }
+        }
+
+        if let Some(clip) = self.current_primary.as_ref() {
+            if clip.id == id {
+                self.current_primary.take();
+            }
+        }
+
+        self.clips.remove(&id).is_some()
+    }
 
     #[inline]
-    pub fn clear(&mut self) { self.clips.clear(); }
+    pub fn clear(&mut self) {
+        self.current_clipboard.take();
+        self.current_primary.take();
+        self.clips.clear();
+    }
 
     pub fn replace(&mut self, old_id: u64, data: &str) -> (bool, u64) {
         let (clipboard_type, timestamp) = match self.clips.remove(&old_id) {
@@ -105,8 +146,9 @@ impl ClipboardManager {
             None => (ClipboardType::Primary, SystemTime::now()),
         };
 
-        let new_id = ClipboardData::compute_id(&data);
-        let data = ClipboardData { id: new_id, data: data.to_owned(), timestamp, clipboard_type };
+        let new_id = ClipboardData::compute_id(data);
+        let data = data.to_owned();
+        let data = ClipboardData { id: new_id, data, timestamp, clipboard_type };
 
         self.insert_inner(data);
         (true, new_id)
@@ -116,16 +158,31 @@ impl ClipboardManager {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark_as_clipboard();
             let clipboard_content = clip.data.clone();
-            Self::update_clipboard(&clipboard_content).await?;
+            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard).await?;
         }
         Ok(())
     }
 
-    async fn update_clipboard(data: &str) -> Result<(), ClipboardError> {
+    pub async fn mark_as_primary(&mut self, id: u64) -> Result<(), ClipboardError> {
+        if let Some(clip) = self.clips.get_mut(&id) {
+            clip.mark_as_primary();
+            let clipboard_content = clip.data.clone();
+            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Primary).await?;
+        }
+        Ok(())
+    }
+
+    async fn update_sys_clipboard(
+        data: &str,
+        clipboard_type: ClipboardType,
+    ) -> Result<(), ClipboardError> {
         use x11_clipboard::Clipboard;
         let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
 
-        let atom_clipboard = clipboard.setter.atoms.clipboard;
+        let atom_clipboard = match clipboard_type {
+            ClipboardType::Clipboard => clipboard.setter.atoms.clipboard,
+            ClipboardType::Primary => clipboard.setter.atoms.primary,
+        };
         let atom_utf8string = clipboard.setter.atoms.utf8_string;
         let data = data.to_owned();
 
@@ -145,15 +202,37 @@ impl ClipboardManager {
 mod test {
     use std::collections::HashSet;
 
-    use crate::{manager::ClipboardManager, ClipboardData, ClipboardType};
+    use crate::{
+        manager::{ClipboardManager, DEFAULT_CAPACITY},
+        ClipboardData, ClipboardType,
+    };
 
     fn create_clips(n: usize) -> Vec<ClipboardData> {
         (0..n).map(|i| ClipboardData::new_primary(&i.to_string())).collect()
     }
 
     #[test]
+    fn test_construction() {
+        let mgr = ClipboardManager::new();
+        assert!(mgr.is_empty());
+        assert_eq!(mgr.len(), 0);
+        assert_eq!(mgr.capacity(), DEFAULT_CAPACITY);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
+
+        let cap = 20;
+        let mgr = ClipboardManager::with_capacity(cap);
+        assert!(mgr.is_empty());
+        assert_eq!(mgr.len(), 0);
+        assert_eq!(mgr.capacity(), cap);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
+    }
+
+    #[test]
     fn test_zero_capacity() {
         let mut mgr = ClipboardManager::with_capacity(0);
+        assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), 0);
 
@@ -163,13 +242,19 @@ mod test {
             mgr.insert(clip);
         });
 
+        assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
 
         let n = 20;
         let clips = create_clips(n);
         mgr.import(&clips);
 
+        assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
     }
 
     #[test]
@@ -204,7 +289,10 @@ mod test {
         clips.iter().for_each(|clip| {
             mgr.insert(clip.clone());
         });
-        assert_eq!(n, mgr.len());
+
+        assert!(mgr.get_current_primary().is_some());
+        assert_eq!(mgr.get_current_primary(), clips.last());
+        assert_eq!(mgr.len(), n);
 
         let dumped: HashSet<_> = mgr.list().into_iter().collect();
         let clips: HashSet<_> = clips.into_iter().collect();
@@ -219,6 +307,10 @@ mod test {
         let mut mgr = ClipboardManager::with_capacity(20);
 
         mgr.import(&clips);
+        assert_eq!(mgr.len(), n);
+
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
         assert_eq!(mgr.len(), n);
 
         let dumped: HashSet<_> = mgr.list().into_iter().collect();
@@ -255,10 +347,14 @@ mod test {
         let clip = ClipboardData::new_primary("АБВГДЕ");
         let id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_some());
 
         let ok = mgr.remove(id);
         assert!(ok);
         assert_eq!(mgr.len(), 0);
+        assert!(mgr.get_current_clipboard().is_none());
+        assert!(mgr.get_current_primary().is_none());
 
         let ok = mgr.remove(id);
         assert!(!ok);
@@ -271,9 +367,11 @@ mod test {
         let mut mgr = ClipboardManager::new();
 
         mgr.import(&clips);
+        assert!(!mgr.is_empty());
         assert_eq!(mgr.len(), n);
 
         mgr.clear();
+        assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
     }
 }

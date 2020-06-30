@@ -6,8 +6,10 @@ use tonic::{
 
 use crate::{
     grpc::protobuf::{
-        clipcat_client::ClipcatClient, BatchRemoveRequest, ClearRequest, GetRequest, InsertRequest,
-        LengthRequest, ListRequest, MarkAsClipboardRequest, RemoveRequest, UpdateRequest,
+        clipcat_client::ClipcatClient, BatchRemoveRequest, ClearRequest,
+        GetCurrentClipboardRequest, GetCurrentPrimaryRequest, GetRequest, InsertRequest,
+        LengthRequest, ListRequest, MarkAsClipboardRequest, MarkAsPrimaryRequest, RemoveRequest,
+        UpdateRequest,
     },
     ClipboardData, ClipboardType,
 };
@@ -20,8 +22,14 @@ pub enum GrpcClientError {
     #[snafu(display("Could not list clips, error: {}", source))]
     List { source: TonicStatus },
 
-    #[snafu(display("Could not get clip, error: {}", source))]
-    GetData { source: TonicStatus },
+    #[snafu(display("Could not get clip with id {}, error: {}", id, source))]
+    GetData { id: u64, source: TonicStatus },
+
+    #[snafu(display("Could not get current clip, error: {}", source))]
+    GetCurrentClipboard { source: TonicStatus },
+
+    #[snafu(display("Could not get current primary clip, error: {}", source))]
+    GetCurrentPrimary { source: TonicStatus },
 
     #[snafu(display("Could not get number of clips, error: {}", source))]
     GetLength { source: TonicStatus },
@@ -32,8 +40,15 @@ pub enum GrpcClientError {
     #[snafu(display("Could not update clip, error: {}", source))]
     UpdateData { source: TonicStatus },
 
-    #[snafu(display("Could not replace clipboard with , error: {}", source))]
-    MarkAsClipboard { source: TonicStatus },
+    #[snafu(display("Could not replace content of clipboard with id {}, error: {}", id, source))]
+    MarkAsClipboard { id: u64, source: TonicStatus },
+
+    #[snafu(display(
+        "Could not replace content of primary clipboard with id {}, error: {}",
+        id,
+        source
+    ))]
+    MarkAsPrimary { id: u64, source: TonicStatus },
 
     #[snafu(display("Could not remove clip, error: {}", source))]
     RemoveData { source: TonicStatus },
@@ -44,7 +59,7 @@ pub enum GrpcClientError {
     #[snafu(display("Could not clear clips, error: {}", source))]
     Clear { source: TonicStatus },
 
-    #[snafu(display(", error"))]
+    #[snafu(display("Empty response"))]
     Empty,
 }
 
@@ -81,9 +96,28 @@ impl GrpcClient {
 
     pub async fn get(&mut self, id: u64) -> Result<String, GrpcClientError> {
         let request = Request::new(GetRequest { id });
-        let response = self.client.get(request).await.context(GetData)?;
-        match &response.get_ref().data {
-            Some(data) => Ok(data.data.clone()),
+        let response = self.client.get(request).await.context(GetData { id })?;
+        match response.into_inner().data {
+            Some(data) => Ok(data.data),
+            None => Err(GrpcClientError::Empty),
+        }
+    }
+
+    pub async fn get_current_clipboard(&mut self) -> Result<String, GrpcClientError> {
+        let request = Request::new(GetCurrentClipboardRequest {});
+        let response =
+            self.client.get_current_clipboard(request).await.context(GetCurrentClipboard)?;
+        match response.into_inner().data {
+            Some(data) => Ok(data.data),
+            None => Err(GrpcClientError::Empty),
+        }
+    }
+
+    pub async fn get_current_primary(&mut self) -> Result<String, GrpcClientError> {
+        let request = Request::new(GetCurrentPrimaryRequest {});
+        let response = self.client.get_current_primary(request).await.context(GetCurrentPrimary)?;
+        match response.into_inner().data {
+            Some(data) => Ok(data.data),
             None => Err(GrpcClientError::Empty),
         }
     }
@@ -92,16 +126,20 @@ impl GrpcClient {
         let data = data.to_owned();
         let request = Request::new(UpdateRequest { id, data });
         let response = self.client.update(request).await.context(UpdateData)?;
-        let (ok, new_id) = {
-            let response_ref = response.get_ref();
-            (response_ref.ok, response_ref.new_id)
-        };
-        Ok((ok, new_id))
+        let response = response.into_inner();
+        Ok((response.ok, response.new_id))
     }
 
     pub async fn mark_as_clipboard(&mut self, id: u64) -> Result<bool, GrpcClientError> {
         let request = Request::new(MarkAsClipboardRequest { id });
-        let response = self.client.mark_as_clipboard(request).await.context(MarkAsClipboard)?;
+        let response =
+            self.client.mark_as_clipboard(request).await.context(MarkAsClipboard { id })?;
+        Ok(response.into_inner().ok)
+    }
+
+    pub async fn mark_as_primary(&mut self, id: u64) -> Result<bool, GrpcClientError> {
+        let request = Request::new(MarkAsPrimaryRequest { id });
+        let response = self.client.mark_as_primary(request).await.context(MarkAsPrimary { id })?;
         Ok(response.into_inner().ok)
     }
 

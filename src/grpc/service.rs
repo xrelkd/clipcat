@@ -7,9 +7,11 @@ use tonic::{Request, Response, Status};
 use crate::{
     grpc::protobuf::{
         clipcat_server::Clipcat, BatchRemoveRequest, BatchRemoveResponse, ClearRequest,
-        ClearResponse, GetRequest, GetResponse, InsertRequest, InsertResponse, LengthRequest,
-        LengthResponse, ListRequest, ListResponse, MarkAsClipboardRequest, MarkAsClipboardResponse,
-        RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse,
+        ClearResponse, GetCurrentClipboardRequest, GetCurrentClipboardResponse,
+        GetCurrentPrimaryRequest, GetCurrentPrimaryResponse, GetRequest, GetResponse,
+        InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
+        MarkAsClipboardRequest, MarkAsClipboardResponse, MarkAsPrimaryRequest,
+        MarkAsPrimaryResponse, RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse,
     },
     ClipboardManager,
 };
@@ -87,6 +89,28 @@ impl Clipcat for GrpcService {
         Ok(Response::new(GetResponse { data }))
     }
 
+    async fn get_current_clipboard(
+        &self,
+        _request: Request<GetCurrentClipboardRequest>,
+    ) -> Result<Response<GetCurrentClipboardResponse>, Status> {
+        let data = {
+            let manager = self.manager.lock().await;
+            manager.get_current_clipboard().map(|clip| clip.clone().into())
+        };
+        Ok(Response::new(GetCurrentClipboardResponse { data }))
+    }
+
+    async fn get_current_primary(
+        &self,
+        _request: Request<GetCurrentPrimaryRequest>,
+    ) -> Result<Response<GetCurrentPrimaryResponse>, Status> {
+        let data = {
+            let manager = self.manager.lock().await;
+            manager.get_current_primary().map(|clip| clip.clone().into())
+        };
+        Ok(Response::new(GetCurrentPrimaryResponse { data }))
+    }
+
     async fn list(&self, _request: Request<ListRequest>) -> Result<Response<ListResponse>, Status> {
         let data = {
             let manager = self.manager.lock().await;
@@ -117,6 +141,18 @@ impl Clipcat for GrpcService {
             manager.mark_as_clipboard(id).await.is_ok()
         };
         Ok(Response::new(MarkAsClipboardResponse { ok }))
+    }
+
+    async fn mark_as_primary(
+        &self,
+        request: Request<MarkAsPrimaryRequest>,
+    ) -> Result<Response<MarkAsPrimaryResponse>, Status> {
+        let MarkAsPrimaryRequest { id } = request.into_inner();
+        let ok = {
+            let mut manager = self.manager.lock().await;
+            manager.mark_as_primary(id).await.is_ok()
+        };
+        Ok(Response::new(MarkAsPrimaryResponse { ok }))
     }
 
     async fn length(
