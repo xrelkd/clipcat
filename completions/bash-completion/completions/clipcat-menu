@@ -34,6 +34,9 @@ _clipcat-menu() {
             insert)
                 cmd+="__insert"
                 ;;
+            insert-primary)
+                cmd+="__insert__primary"
+                ;;
             list-finder)
                 cmd+="__list__finder"
                 ;;
@@ -53,7 +56,7 @@ _clipcat-menu() {
 
     case "${cmd}" in
         clipcat-menu)
-            opts=" -h -V -c -f -m -l  --help --version --config --finder --menu-length --line-length   version completions default-config list-finder insert remove edit help  rm delete del"
+            opts=" -h -V -c -f -m -l  --help --version --config --finder --menu-length --line-length   version completions default-config list-finder insert insert-primary remove edit help  rm delete del"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -199,6 +202,21 @@ _clipcat-menu() {
             return 0
             ;;
         clipcat__menu__insert)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcat__menu__insert__primary)
             opts=" -h -V  --help --version  "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )

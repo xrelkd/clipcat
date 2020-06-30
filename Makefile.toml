@@ -7,6 +7,11 @@ command = "cargo"
 args = ["build"]
 dependencies = ["format"]
 
+[tasks.build-all]
+command = "cargo"
+args = ["build", "--features=all"]
+dependencies = ["format"]
+
 [tasks.build-release]
 command = "cargo"
 args = ["build", "--release", "--features=all"]
@@ -45,7 +50,7 @@ mkdir -p completions/{bash-completion/completions,fish/completions,zsh/site-func
 ./target/release/clipcat-notify completions zsh > "completions/zsh/site-functions/_clipcat-notify"
 '''
 ]
-dependencies = ["build-release"]
+dependencies = ["build-all"]
 
 [tasks.clean]
 command = "cargo"

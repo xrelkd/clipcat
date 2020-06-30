@@ -155,6 +155,64 @@ _arguments "${_arguments_options[@]}" \
 '--version[Prints version information]' \
 && ret=0
 ;;
+(paste)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(paste)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':data:_files' \
+&& ret=0
+;;
+(save)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(paste-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(paste-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(save-primary)
+_arguments "${_arguments_options[@]}" \
+'-f+[]' \
+'--file=[]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
 (get)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
@@ -284,6 +342,15 @@ _arguments "${_arguments_options[@]}" \
 ':id:_files' \
 && ret=0
 ;;
+(promote-primary)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':id:_files' \
+&& ret=0
+;;
 (remove-all)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
@@ -347,12 +414,15 @@ _clipcatctl_commands() {
 "insert-primary:Inserts new clip into primary clipboard" \
 "load:Loads file into clipboard" \
 "load-primary:Loads file into primary clipboard" \
+"save:Pastes content of current clipboard into file" \
+"save-primary:Pastes content of current primary clipboard into file" \
 "get:Prints clip with <id>" \
-"list:Prints content of clipboard" \
+"list:Prints history of clipboard" \
 "update:Updates clip with <id>" \
 "edit:Edits clip with <id>" \
 "remove:Removes clips with \[ids\]" \
 "promote:Replaces content of clipboard with clip with <id>" \
+"promote-primary:Replaces content of primary clipboard with clip with <id>" \
 "clear:Removes all clips in clipboard" \
 "length:Prints length of clipboard history" \
 "help:Prints this message or the help of the given subcommand(s)" \
@@ -555,12 +625,33 @@ _paste_commands() {
     )
     _describe -t commands 'paste commands' commands "$@"
 }
+(( $+functions[_clipcatctl__paste-primary_commands] )) ||
+_clipcatctl__paste-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl paste-primary commands' commands "$@"
+}
+(( $+functions[_paste-primary_commands] )) ||
+_paste-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'paste-primary commands' commands "$@"
+}
 (( $+functions[_clipcatctl__promote_commands] )) ||
 _clipcatctl__promote_commands() {
     local commands; commands=(
         
     )
     _describe -t commands 'clipcatctl promote commands' commands "$@"
+}
+(( $+functions[_clipcatctl__promote-primary_commands] )) ||
+_clipcatctl__promote-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl promote-primary commands' commands "$@"
 }
 (( $+functions[_clipcatctl__remove_commands] )) ||
 _clipcatctl__remove_commands() {
@@ -596,6 +687,20 @@ _rm_commands() {
         
     )
     _describe -t commands 'rm commands' commands "$@"
+}
+(( $+functions[_clipcatctl__save_commands] )) ||
+_clipcatctl__save_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl save commands' commands "$@"
+}
+(( $+functions[_clipcatctl__save-primary_commands] )) ||
+_clipcatctl__save-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl save-primary commands' commands "$@"
 }
 (( $+functions[_clipcatctl__update_commands] )) ||
 _clipcatctl__update_commands() {

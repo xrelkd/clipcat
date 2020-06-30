@@ -77,6 +77,14 @@ _arguments "${_arguments_options[@]}" \
 '--version[Prints version information]' \
 && ret=0
 ;;
+(insert-primary)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
 (rm)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
@@ -140,6 +148,7 @@ _clipcat-menu_commands() {
 "default-config:Outputs default configuration" \
 "list-finder:Prints available text finders" \
 "insert:Insert selected clip into clipboard" \
+"insert-primary:Insert selected clip into primary clipboard" \
 "remove:Removes selected clip" \
 "edit:Edit selected clip" \
 "help:Prints this message or the help of the given subcommand(s)" \
@@ -208,6 +217,13 @@ _clipcat-menu__insert_commands() {
         
     )
     _describe -t commands 'clipcat-menu insert commands' commands "$@"
+}
+(( $+functions[_clipcat-menu__insert-primary_commands] )) ||
+_clipcat-menu__insert-primary_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcat-menu insert-primary commands' commands "$@"
 }
 (( $+functions[_clipcat-menu__list-finder_commands] )) ||
 _clipcat-menu__list-finder_commands() {

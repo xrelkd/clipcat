@@ -73,8 +73,14 @@ _clipcatctl() {
             paste)
                 cmd+="__paste"
                 ;;
+            paste-primary)
+                cmd+="__paste__primary"
+                ;;
             promote)
                 cmd+="__promote"
+                ;;
+            promote-primary)
+                cmd+="__promote__primary"
                 ;;
             remove)
                 cmd+="__remove"
@@ -84,6 +90,12 @@ _clipcatctl() {
                 ;;
             rm)
                 cmd+="__rm"
+                ;;
+            save)
+                cmd+="__save"
+                ;;
+            save-primary)
+                cmd+="__save__primary"
                 ;;
             update)
                 cmd+="__update"
@@ -98,7 +110,7 @@ _clipcatctl() {
 
     case "${cmd}" in
         clipcatctl)
-            opts=" -V -c -h -p  --help --version --config --host --port --log-level   version completions default-config insert insert-primary load load-primary get list update edit remove promote clear length help  paste paste  cut cut  cut-primary cut-primary  ls ls  rm delete del rm delete del  remove-all  count len"
+            opts=" -V -c -h -p  --help --version --config --host --port --log-level   version completions default-config insert insert-primary load load-primary save save-primary get list update edit remove promote promote-primary clear length help  paste paste  cut cut  cut-primary cut-primary  paste paste  paste-primary paste-primary  ls ls  rm delete del rm delete del  remove-all  count len"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -481,7 +493,45 @@ _clipcatctl() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        clipcatctl__paste__primary)
+            opts=" -h -V -f  --help --version --file  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                --file)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                    -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         clipcatctl__promote)
+            opts=" -h -V  --help --version  <id> "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__promote__primary)
             opts=" -h -V  --help --version  <id> "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -534,6 +584,52 @@ _clipcatctl() {
             fi
             case "${prev}" in
                 
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__save)
+            opts=" -h -V -f  --help --version --file  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                --file)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                    -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__save__primary)
+            opts=" -h -V -f  --help --version --file  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                --file)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                    -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;
