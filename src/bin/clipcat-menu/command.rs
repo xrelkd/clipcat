@@ -4,13 +4,15 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardData, ClipboardType};
 
 use crate::{
     config::Config,
     error::{self, Error},
     finder::{FinderRunner, FinderType},
 };
+
+const LINE_LENGTH: usize = 100;
 
 #[derive(Debug, Clone, StructOpt)]
 #[structopt(name = clipcat::MENU_PROGRAM_NAME)]
@@ -47,6 +49,9 @@ pub enum SubCommand {
 
     #[structopt(about = "Insert selected clip into clipboard")]
     Insert,
+
+    #[structopt(about = "Insert selected clip into primary clipboard")]
+    InsertPrimary,
 
     #[structopt(
         aliases = &["rm", "delete", "del"],
@@ -133,28 +138,18 @@ impl Command {
             let clips = client.list().await?;
 
             match subcommand {
+                Some(SubCommand::Insert) | None => {
+                    insert_clip(&clips, finder, client, ClipboardType::Clipboard).await?
+                }
+                Some(SubCommand::InsertPrimary) => {
+                    insert_clip(&clips, finder, client, ClipboardType::Primary).await?
+                }
                 Some(SubCommand::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
                         println!("{:016x}", id);
-                    }
-                }
-                Some(SubCommand::Insert) | None => {
-                    const LINE_LENGTH: usize = 100;
-                    let selection = finder.single_select(&clips).await?;
-                    if let Some((index, clip)) = selection {
-                        println!(
-                            "index: {}, id: {:016x}, content: {:?}",
-                            index,
-                            clip.id,
-                            clip.printable_data(Some(LINE_LENGTH)),
-                        );
-                        client.mark_as_clipboard(clip.id).await?;
-                    } else {
-                        println!("Nothing is selected");
-                        return Ok(());
                     }
                 }
                 Some(SubCommand::Edit { editor }) => {
@@ -182,4 +177,32 @@ impl Command {
         let mut runtime = Runtime::new().context(error::CreateTokioRuntime)?;
         runtime.block_on(fut)
     }
+}
+
+async fn insert_clip(
+    clips: &[ClipboardData],
+    finder: FinderRunner,
+    mut client: GrpcClient,
+    clipboard_type: ClipboardType,
+) -> Result<(), Error> {
+    let selection = finder.single_select(&clips).await?;
+    if let Some((index, clip)) = selection {
+        println!(
+            "index: {}, id: {:016x}, content: {:?}",
+            index,
+            clip.id,
+            clip.printable_data(Some(LINE_LENGTH)),
+        );
+        match clipboard_type {
+            ClipboardType::Clipboard => {
+                client.mark_as_clipboard(clip.id).await?;
+            }
+            ClipboardType::Primary => {
+                client.mark_as_primary(clip.id).await?;
+            }
+        }
+    } else {
+        println!("Nothing is selected");
+    }
+    Ok(())
 }
