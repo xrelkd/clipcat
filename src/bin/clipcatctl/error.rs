@@ -8,6 +8,12 @@ pub enum Error {
     #[snafu(display("Could not read file {}, error: {}", filename.display(), source))]
     ReadFile { filename: PathBuf, source: std::io::Error },
 
+    #[snafu(display("Could not read from stdin, error: {}", source))]
+    ReadStdin { source: std::io::Error },
+
+    #[snafu(display("Could not write to stdout, error: {}", source))]
+    WriteStdout { source: std::io::Error },
+
     #[snafu(display("Could not create tokio runtime, error: {}", source))]
     CreateTokioRuntime { source: std::io::Error },
 

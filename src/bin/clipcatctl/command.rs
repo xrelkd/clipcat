@@ -15,7 +15,7 @@ use crate::{
 #[structopt(name = clipcat::CTL_PROGRAM_NAME)]
 pub struct Command {
     #[structopt(subcommand)]
-    subcommand: SubCommand,
+    subcommand: Option<SubCommand>,
 
     #[structopt(long = "config", short = "c", help = "Specifies a configuration file")]
     config_file: Option<PathBuf>,
@@ -52,13 +52,25 @@ pub enum SubCommand {
     #[structopt(aliases = &["cut"], about = "Loads file into clipboard")]
     Load {
         #[structopt(long = "file", short = "f")]
-        file_path: PathBuf,
+        file_path: Option<PathBuf>,
     },
 
     #[structopt(aliases = &["cut-primary"], about = "Loads file into primary clipboard")]
     LoadPrimary {
         #[structopt(long = "file", short = "f")]
-        file_path: PathBuf,
+        file_path: Option<PathBuf>,
+    },
+
+    #[structopt(aliases = &["paste"], about = "Pastes content of current clipboard into file")]
+    Save {
+        #[structopt(long = "file", short = "f")]
+        file_path: Option<PathBuf>,
+    },
+
+    #[structopt(aliases = &["paste-primary"], about = "Pastes content of current primary clipboard into file")]
+    SavePrimary {
+        #[structopt(long = "file", short = "f")]
+        file_path: Option<PathBuf>,
     },
 
     #[structopt(about = "Prints clip with <id>")]
@@ -69,7 +81,7 @@ pub enum SubCommand {
 
     #[structopt(
         aliases = &["ls"],
-        about = "Prints content of clipboard")]
+        about = "Prints history of clipboard")]
     List {
         #[structopt(long)]
         no_id: bool,
@@ -98,6 +110,15 @@ pub enum SubCommand {
 
     #[structopt(name = "promote", about = "Replaces content of clipboard with clip with <id>")]
     MarkAsClipboard {
+        #[structopt(parse(try_from_str = parse_hex))]
+        id: u64,
+    },
+
+    #[structopt(
+        name = "promote-primary",
+        about = "Replaces content of primary clipboard with clip with <id>"
+    )]
+    MarkAsPrimary {
         #[structopt(parse(try_from_str = parse_hex))]
         id: u64,
     },
@@ -143,13 +164,13 @@ impl Command {
 
     pub fn run(self) -> Result<i32, Error> {
         match self.subcommand {
-            SubCommand::Version => {
+            Some(SubCommand::Version) => {
                 Self::clap()
                     .write_long_version(&mut std::io::stdout())
                     .expect("Failed to write to stdout");
                 return Ok(0);
             }
-            SubCommand::Completions { shell } => {
+            Some(SubCommand::Completions { shell }) => {
                 Self::clap().gen_completions_to(
                     clipcat::CTL_PROGRAM_NAME,
                     shell,
@@ -157,7 +178,7 @@ impl Command {
                 );
                 return Ok(0);
             }
-            SubCommand::DefaultConfig => {
+            Some(SubCommand::DefaultConfig) => {
                 use std::io::Write;
                 let config_text =
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable");
@@ -180,7 +201,13 @@ impl Command {
                     .await?;
 
             match self.subcommand {
-                SubCommand::Get { id } => {
+                None => {
+                    print_list(&mut client, false).await?;
+                }
+                Some(SubCommand::List { no_id }) => {
+                    print_list(&mut client, no_id).await?;
+                }
+                Some(SubCommand::Get { id }) => {
                     let data: String = match id {
                         Some(id) => client.get(id).await?,
                         None => {
@@ -196,41 +223,33 @@ impl Command {
                     };
                     println!("{}", data);
                 }
-                SubCommand::Insert { data } => {
+                Some(SubCommand::Insert { data }) => {
                     client.insert_clipboard(&data).await?;
                 }
-                SubCommand::InsertPrimary { data } => {
+                Some(SubCommand::InsertPrimary { data }) => {
                     client.insert_primary(&data).await?;
                 }
-                SubCommand::Length => {
+                Some(SubCommand::Length) => {
                     let len = client.length().await?;
                     println!("{}", len);
                 }
-                SubCommand::Load { file_path } => {
-                    let data = tokio::fs::read_to_string(&file_path)
-                        .await
-                        .context(error::ReadFile { filename: file_path.to_owned() })?;
+                Some(SubCommand::Load { file_path }) => {
+                    let data = load_file_or_read_stdin(file_path).await?;
                     client.insert_clipboard(&data).await?;
                 }
-                SubCommand::LoadPrimary { file_path } => {
-                    let data = tokio::fs::read_to_string(&file_path)
-                        .await
-                        .context(error::ReadFile { filename: file_path.to_owned() })?;
+                Some(SubCommand::LoadPrimary { file_path }) => {
+                    let data = load_file_or_read_stdin(file_path).await?;
                     client.insert_primary(&data).await?;
                 }
-                SubCommand::List { no_id } => {
-                    const LINE_LENGTH: Option<usize> = Some(100);
-
-                    let list = client.list().await?;
-                    for data in list {
-                        if no_id {
-                            println!("{}", data.printable_data(LINE_LENGTH));
-                        } else {
-                            println!("{:016x}: {}", data.id, data.printable_data(LINE_LENGTH));
-                        }
-                    }
+                Some(SubCommand::Save { file_path }) => {
+                    let data = client.get_current_clipboard().await?;
+                    save_file_or_write_stdout(file_path, data).await?;
                 }
-                SubCommand::Remove { ids } => {
+                Some(SubCommand::SavePrimary { file_path }) => {
+                    let data = client.get_current_primary().await?;
+                    save_file_or_write_stdout(file_path, data).await?;
+                }
+                Some(SubCommand::Remove { ids }) => {
                     let ids: Vec<u64> = ids
                         .into_iter()
                         .filter_map(|id| match parse_hex(&id) {
@@ -248,10 +267,10 @@ impl Command {
                     }
                     client.batch_remove(&ids).await?;
                 }
-                SubCommand::Clear => {
+                Some(SubCommand::Clear) => {
                     client.clear().await?;
                 }
-                SubCommand::Edit { id, editor } => {
+                Some(SubCommand::Edit { id, editor }) => {
                     let data = client.get(id).await?;
                     let editor = ExternalEditor::new(editor);
                     let data = editor.execute(&data).await.context(error::CallEditor)?;
@@ -261,14 +280,19 @@ impl Command {
                     }
                     client.mark_as_clipboard(new_id).await?;
                 }
-                SubCommand::Update { id, data } => {
+                Some(SubCommand::Update { id, data }) => {
                     let (ok, new_id) = client.update(id, &data).await?;
                     if ok {
                         println!("{:016x}", new_id);
                     }
                 }
-                SubCommand::MarkAsClipboard { id } => {
+                Some(SubCommand::MarkAsClipboard { id }) => {
                     if client.mark_as_clipboard(id).await? {
+                        println!("Ok");
+                    }
+                }
+                Some(SubCommand::MarkAsPrimary { id }) => {
+                    if client.mark_as_primary(id).await? {
                         println!("Ok");
                     }
                 }
@@ -284,3 +308,44 @@ impl Command {
 
 #[inline]
 fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
+
+async fn print_list(client: &mut GrpcClient, no_id: bool) -> Result<(), Error> {
+    const LINE_LENGTH: Option<usize> = Some(100);
+
+    let list = client.list().await?;
+    for data in list {
+        if no_id {
+            println!("{}", data.printable_data(LINE_LENGTH));
+        } else {
+            println!("{:016x}: {}", data.id, data.printable_data(LINE_LENGTH));
+        }
+    }
+    Ok(())
+}
+
+async fn load_file_or_read_stdin(file_path: Option<PathBuf>) -> Result<String, Error> {
+    use tokio::io::AsyncReadExt;
+    match file_path {
+        Some(file_path) => tokio::fs::read_to_string(&file_path)
+            .await
+            .context(error::ReadFile { filename: file_path.to_owned() }),
+        None => {
+            let mut data = String::new();
+            tokio::io::stdin().read_to_string(&mut data).await.context(error::ReadStdin)?;
+            Ok(data)
+        }
+    }
+}
+
+async fn save_file_or_write_stdout<C: AsRef<[u8]> + Unpin>(
+    file_path: Option<PathBuf>,
+    data: C,
+) -> Result<(), Error> {
+    use tokio::io::AsyncWriteExt;
+    match file_path {
+        Some(file_path) => tokio::fs::write(&file_path, data)
+            .await
+            .context(error::ReadFile { filename: file_path.to_owned() }),
+        None => tokio::io::stdout().write_all(data.as_ref()).await.context(error::WriteStdout),
+    }
+}

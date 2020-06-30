@@ -15,7 +15,7 @@ external_editor = ["tokio/process"]
 builtin_finder = ["skim"]
 
 clipcatd = ["app", "monitor", "daemon"]
-clipcatctl = ["app", "tokio/process", "tokio/fs", "external_editor"]
+clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
 clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
 clipcat-notify = ["structopt", "monitor"]
 
