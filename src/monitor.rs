@@ -122,7 +122,7 @@ fn build_thread(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use tokio::runtime::Runtime;
 
     use crate::monitor::{ClipboardMonitor, ClipboardMonitorOptions};

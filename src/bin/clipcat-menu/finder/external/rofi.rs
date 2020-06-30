@@ -76,7 +76,7 @@ impl FinderStream for Rofi {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{
         config,
         finder::{external::ExternalProgram, Rofi, SelectionMode},

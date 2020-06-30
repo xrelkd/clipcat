@@ -199,7 +199,7 @@ impl ClipboardManager {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::collections::HashSet;
 
     use crate::{

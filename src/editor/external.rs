@@ -60,7 +60,7 @@ impl ExternalEditor {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::editor::ExternalEditor;
 
     #[test]

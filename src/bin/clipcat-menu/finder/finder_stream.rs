@@ -39,7 +39,7 @@ pub trait FinderStream: Send + Sync {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use clipcat::ClipboardData;
 
     use crate::finder::FinderStream;
