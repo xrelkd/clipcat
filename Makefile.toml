@@ -50,7 +50,7 @@ mkdir -p completions/{bash-completion/completions,fish/completions,zsh/site-func
 ./target/release/clipcat-notify completions zsh > "completions/zsh/site-functions/_clipcat-notify"
 '''
 ]
-dependencies = ["build-all"]
+dependencies = ["build-release"]
 
 [tasks.clean]
 command = "cargo"

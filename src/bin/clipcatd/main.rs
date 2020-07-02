@@ -7,13 +7,17 @@ extern crate snafu;
 #[macro_use]
 extern crate serde;
 
+use std::sync::atomic;
+
 mod command;
 mod config;
 mod error;
 mod history;
-mod lifecycle;
+mod worker;
 
 use self::command::Command;
+
+pub static SHUTDOWN: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
 fn main() {
     let command = Command::new();

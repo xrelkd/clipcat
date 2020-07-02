@@ -1,22 +1,17 @@
 use std::{
     net::IpAddr,
     path::{Path, PathBuf},
-    sync::Arc,
     time::Duration,
 };
 
-use futures::FutureExt;
 use snafu::ResultExt;
 use structopt::StructOpt;
-use tokio::{runtime::Runtime, sync::Mutex};
-
-use clipcat::{ClipboardManager, ClipboardMonitor};
+use tokio::runtime::Runtime;
 
 use crate::{
     config::{Config, ConfigError},
     error::{self, Error},
-    history::HistoryManager,
-    lifecycle::{self, LifecycleManager},
+    worker,
 };
 
 #[derive(StructOpt, Clone)]
@@ -123,8 +118,9 @@ fn kill_other(pid: u64) -> Result<(), Error> {
 }
 
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
-    let pid_file = PidFile::from(config.pid_file);
-    if config.daemonize {
+    let daemonize = config.daemonize;
+    let pid_file = PidFile::from(config.pid_file.clone());
+    if daemonize {
         if pid_file.exists() && replace {
             let pid = pid_file.try_load()?;
             kill_other(pid)?;
@@ -144,115 +140,10 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
 
     info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
 
-    let (mut lifecycle_manager, internal_shutdown_signal) = LifecycleManager::new();
-
-    let grpc_addr = format!("{}:{}", config.grpc.host, config.grpc.port)
-        .parse()
-        .context(error::ParseSockAddr)?;
-
-    let (clipboard_manager, history_manager) = {
-        let file_path = config.history_file_path;
-
-        info!("History file path: {:?}", file_path);
-        let history_manager =
-            HistoryManager::new(&file_path).context(error::CreateHistoryManager)?;
-
-        info!("Load history from {:?}", history_manager.path());
-        let history_clips = history_manager.load().context(error::LoadHistoryManager)?;
-        let clip_count = history_clips.len();
-        info!("{} clip(s) loaded", clip_count);
-
-        info!("Initialize ClipboardManager with capacity {}", config.max_history);
-        let mut clipboard_manager = ClipboardManager::with_capacity(config.max_history);
-
-        info!("Import {} clip(s) into ClipboardManager", clip_count);
-        clipboard_manager.import(&history_clips);
-
-        (Arc::new(Mutex::new(clipboard_manager)), Arc::new(Mutex::new(history_manager)))
-    };
-
-    let clipboard_monitor_fut = {
-        use clipcat::{ClipboardData, ClipboardType};
-
-        let (shutdown_signal, mut shutdown_slot) = lifecycle::shutdown_handle();
-        let monitor_opts = config.monitor.into();
-        let mut clipboard_monitor =
-            ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitor)?;
-        lifecycle_manager
-            .register("Clipboard Monitor", Box::new(move || shutdown_signal.shutdown()));
-        let clipboard_manager = clipboard_manager.clone();
-
-        async move {
-            loop {
-                let event = futures::select! {
-                    event = clipboard_monitor.recv().fuse() => event,
-                    _ = shutdown_slot.wait().fuse() => break,
-                };
-
-                match event {
-                    Some(event) => {
-                        match event.clipboard_type {
-                            ClipboardType::Clipboard => info!("Clipboard [{:?}]", event.data),
-                            ClipboardType::Primary => info!("Primary [{:?}]", event.data),
-                        }
-
-                        let data = ClipboardData::from(event);
-                        clipboard_manager.lock().await.insert(data.clone());
-                        let _ = history_manager.lock().await.put(&data);
-                    }
-                    None => {
-                        info!("ClipboardMonitor is closing, no further values will be received");
-                        drop(clipboard_monitor);
-                        info!("Internal shutdown signal is sent");
-                        internal_shutdown_signal.shutdown();
-                        break;
-                    }
-                }
-            }
-
-            let (clips, history_capacity) = {
-                let cm = clipboard_manager.lock().await;
-                (cm.list(), cm.capacity())
-            };
-
-            {
-                let mut hm = history_manager.lock().await;
-
-                info!("Save history and shrink to capacity {}", history_capacity);
-                if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity) {
-                    warn!("Failed to save history, error: {:?}", err);
-                }
-            }
-            info!("ClipboardMonitor is down");
-        }
-    };
-
-    let grpc_server_fut = {
-        use clipcat::grpc::{GrpcServer, GrpcService};
-
-        let (shutdown_signal, mut shutdown_slot) = lifecycle::shutdown_handle();
-        lifecycle_manager.register("gRPC Server", Box::new(move || shutdown_signal.shutdown()));
-
-        let grpc_service = GrpcService::new(clipboard_manager);
-
-        async move {
-            let server =
-                tonic::transport::Server::builder().add_service(GrpcServer::new(grpc_service));
-
-            info!("gRPC service listening on {}", grpc_addr);
-            futures::select! {
-                _ = server.serve(grpc_addr).fuse() => {},
-                _ = shutdown_slot.wait().fuse() => {},
-            }
-            info!("gRPC service is down");
-        }
-    };
-
     let mut runtime = Runtime::new().context(error::InitializeTokioRuntime)?;
-    runtime.spawn(clipboard_monitor_fut);
-    runtime.block_on(lifecycle_manager.block_on(grpc_server_fut));
+    runtime.block_on(worker::start(config))?;
 
-    if config.daemonize {
+    if daemonize {
         pid_file.remove()?;
     }
 

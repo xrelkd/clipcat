@@ -45,4 +45,7 @@ pub enum Error {
 
     #[snafu(display("Failed to send SIGTERM to PID {}", pid))]
     SendSignalTerminal { pid: u64 },
+
+    #[snafu(display("Failed to serve gRPC, error: {}", source))]
+    ServeGrpc { source: tonic::transport::Error },
 }
