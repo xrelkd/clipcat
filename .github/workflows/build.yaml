@@ -1,0 +1,140 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
+
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  all:
+    name: All
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+
+    runs-on: ${{matrix.os}}
+
+    env:
+      RUSTFLAGS: "-D warnings"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y \
+            libx11-xcb-dev \
+            libxcb-xfixes0-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev
+
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{runner.os}}-cargo-registry-${{hashFiles('**/Cargo.lock')}}
+
+      - name: Cache cargo index
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{runner.os}}-cargo-index-${{hashFiles('**/Cargo.lock')}}
+
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{runner.os}}-cargo-build-target-${{hashFiles('**/Cargo.lock')}}
+
+      - name: Install Main Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{matrix.target}}
+          profile: minimal
+          components: clippy, rustfmt
+          override: true
+
+      - name: Version
+        run: |
+          rustup --version
+          cargo --version
+          cargo clippy --version
+
+      - name: Build
+        run: cargo build --all --verbose
+
+      - name: Test
+        run: cargo test --all --verbose
+
+      - name: Clippy
+        run: cargo clippy --all
+
+      - name: Install Rustfmt Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: ${{matrix.target}}
+          profile: minimal
+          components: rustfmt
+
+      - name: Format
+        run: cargo +nightly fmt --all -- --check
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          target=${{matrix.target}}
+
+          cargo build --release --verbose --target $target
+
+      - name: Package
+        id: package
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          src=`pwd`
+          dist=$src/dist
+
+          github_ref=${{github.ref}}
+          version=${github_ref#"refs/tags/"}
+          target=${{matrix.target}}
+          archive="clipcat-$version-$target.tar.gz"
+
+          mkdir $dist
+          cp \
+            README.md \
+            LICENSE \
+            target/$target/release/clipcatd \
+            target/$target/release/clipcatctl \
+            target/$target/release/clipcat-menu \
+            target/$target/release/clipcat-notify \
+            $dist
+
+          cd $dist
+          tar cvf ../$archive *
+          echo "::set-output name=archive::$archive"
+
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: false
+          files: ${{ steps.package.outputs.archive }}
+          prerelease: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
