@@ -17,6 +17,7 @@ pub enum Message {
     Shutdown,
 }
 
+#[allow(clippy::never_loop)]
 pub fn start(
     grpc_addr: std::net::SocketAddr,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,

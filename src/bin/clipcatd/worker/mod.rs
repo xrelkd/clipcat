@@ -21,6 +21,7 @@ pub enum CtlMessage {
 
 pub type CtlMessageSender = mpsc::UnboundedSender<CtlMessage>;
 
+#[allow(clippy::never_loop)]
 pub async fn start(config: Config) -> Result<(), Error> {
     let grpc_addr = format!("{}:{}", config.grpc.host, config.grpc.port)
         .parse()
