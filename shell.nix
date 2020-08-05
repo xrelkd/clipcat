@@ -1,16 +1,10 @@
-with import <nixpkgs> { };
-
-stdenv.mkDerivation {
-  name = "clipcat-dev";
-
-  RUST_BACKTRACE = 1;
-
-  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
-
-  PROTOC = "${protobuf}/bin/protoc";
-  PROTOC_INCLUDE = "${protobuf}/include";
-
-  nativeBuildInputs = [
+let
+  sources = import ./nix/sources.nix;
+  pkgs = import sources.nixpkgs { };
+  inherit (pkgs) stdenv;
+in pkgs.mkShell {
+  nativeBuildInputs = with pkgs; [
+    git
     rustup
     cargo-make
 
@@ -23,5 +17,12 @@ stdenv.mkDerivation {
     python3
   ];
 
-  buildInputs = [ xorg.libxcb ];
+  buildInputs = with pkgs; [ xorg.libxcb ];
+
+  RUST_BACKTRACE = 1;
+
+  LIBCLANG_PATH = "${pkgs.llvmPackages.libclang}/lib";
+
+  PROTOC = "${pkgs.protobuf}/bin/protoc";
+  PROTOC_INCLUDE = "${pkgs.protobuf}/include";
 }
