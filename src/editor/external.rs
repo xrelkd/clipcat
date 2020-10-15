@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use snafu::ResultExt;
 use tokio::process::Command;
 
-use crate::editor::error::*;
+use crate::editor::{error, error::EditorError};
 
 pub struct ExternalEditor {
     editor: String,
@@ -23,7 +23,7 @@ impl ExternalEditor {
     }
 
     pub fn from_env() -> Result<ExternalEditor, EditorError> {
-        let editor = std::env::var("EDITOR").context(GetEnvEditor)?;
+        let editor = std::env::var("EDITOR").context(error::GetEnvEditor)?;
         Ok(ExternalEditor { editor })
     }
 
@@ -39,21 +39,21 @@ impl ExternalEditor {
 
         let _ = tokio::fs::write(&tmp_file, data)
             .await
-            .context(CreateTemporaryFile { filename: tmp_file.to_owned() })?;
+            .context(error::CreateTemporaryFile { filename: tmp_file.to_owned() })?;
 
         Command::new(&self.editor)
             .arg(&tmp_file)
             .spawn()
-            .context(CallExternalTextEditor { program: self.editor.to_owned() })?
+            .context(error::CallExternalTextEditor { program: self.editor.to_owned() })?
             .await
-            .context(ExecuteExternalTextEditor { program: self.editor.to_owned() })?;
+            .context(error::ExecuteExternalTextEditor { program: self.editor.to_owned() })?;
 
         let data = tokio::fs::read_to_string(&tmp_file)
             .await
-            .context(ReadTemporaryFile { filename: tmp_file.to_owned() })?;
+            .context(error::ReadTemporaryFile { filename: tmp_file.to_owned() })?;
         let _ = tokio::fs::remove_file(&tmp_file.to_owned())
             .await
-            .context(RemoveTemporaryFile { filename: tmp_file.to_owned() })?;
+            .context(error::RemoveTemporaryFile { filename: tmp_file.to_owned() })?;
 
         Ok(data)
     }
