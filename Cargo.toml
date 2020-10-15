@@ -1,6 +1,6 @@
 [package]
 name = "clipcat"
-version = "0.4.18"
+version = "0.4.19"
 authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
 edition = "2018"
 
@@ -49,7 +49,7 @@ tokio = { version = "0.2", features = ["sync"] }
 
 snafu = "0.6"
 
-tonic = "0.2"
+tonic = "0.3"
 prost = "0.6"
 
 log = { version = "0.4", features = ["serde"] }
@@ -65,7 +65,7 @@ serde_json = { version = "1", optional = true }
 
 x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
 
-rocksdb = { version = "0.14", optional = true }
+rocksdb = { version = "0.15", optional = true }
 bincode = { version = "1", optional = true }
 
 libc = { version = "0.2", optional = true }
@@ -74,7 +74,7 @@ daemonize = { version = "0.4", optional = true }
 skim = { version = "0.8", optional = true }
 
 [build-dependencies]
-tonic-build = { version = "0.2", features = ["prost"] }
+tonic-build = { version = "0.3", features = ["prost"] }
 
 [profile.release]
 opt-level = 3
