@@ -72,7 +72,7 @@ impl Command {
             ClipboardMonitorOptions { load_current: false, enable_clipboard, enable_primary };
         let mut monitor =
             ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
-        let mut runtime = Runtime::new().context(InitializeTokioRuntime)?;
+        let runtime = Runtime::new().context(InitializeTokioRuntime)?;
         runtime.block_on(async {
             while let Some(event) = monitor.recv().await {
                 match event.clipboard_type {

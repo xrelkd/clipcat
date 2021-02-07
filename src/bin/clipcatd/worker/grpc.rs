@@ -27,14 +27,14 @@ pub fn start(
     let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
 
     let join_handle = tokio::spawn(async move {
-        info!("gRPC service listening on {}", grpc_addr);
+        tracing::info!("gRPC service listening on {}", grpc_addr);
 
         server
             .serve_with_shutdown(grpc_addr, async move {
                 while let Some(msg) = rx.recv().await {
                     match msg {
                         Message::Shutdown => {
-                            info!("gRPC service is shutting down gracefully");
+                            tracing::info!("gRPC service is shutting down gracefully");
                             return;
                         }
                     }

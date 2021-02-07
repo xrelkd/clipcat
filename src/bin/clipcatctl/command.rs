@@ -27,7 +27,7 @@ pub struct Command {
     server_port: Option<u16>,
 
     #[structopt(long = "log-level", help = "Specifies a log level")]
-    log_level: Option<log::LevelFilter>,
+    log_level: Option<tracing::Level>,
 }
 
 #[derive(StructOpt)]
@@ -150,9 +150,8 @@ impl Command {
         }
 
         if let Ok(log_level) = std::env::var("RUST_LOG") {
-            use log::LevelFilter;
             use std::str::FromStr;
-            config.log_level = LevelFilter::from_str(&log_level).unwrap_or(LevelFilter::Info);
+            config.log_level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
         }
 
         if let Some(log_level) = self.log_level {
@@ -193,8 +192,21 @@ impl Command {
         let fut = async move {
             let config = self.load_config();
 
-            std::env::set_var("RUST_LOG", config.log_level.to_string());
-            env_logger::init();
+            {
+                use tracing_subscriber::prelude::*;
+
+                let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+                let level_filter =
+                    tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
+
+                let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+                match tracing_journald::layer() {
+                    Ok(layer) => registry.with(layer).init(),
+                    Err(_err) => {
+                        registry.init();
+                    }
+                }
+            }
 
             let mut client =
                 GrpcClient::new(format!("http://{}:{}", config.server_host, config.server_port))
@@ -301,7 +313,7 @@ impl Command {
             Ok(0)
         };
 
-        let mut runtime = Runtime::new().context(error::CreateTokioRuntime)?;
+        let runtime = Runtime::new().context(error::CreateTokioRuntime)?;
         runtime.block_on(fut)
     }
 }

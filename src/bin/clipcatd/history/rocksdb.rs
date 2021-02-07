@@ -50,7 +50,7 @@ impl RocksDBDriver {
                 clipboard_type: ClipboardType::Primary,
             })
             .map_err(|_| {
-                warn!("Failed to deserialize ClipboardValue");
+                tracing::warn!("Failed to deserialize ClipboardValue");
             })
             .ok()
     }

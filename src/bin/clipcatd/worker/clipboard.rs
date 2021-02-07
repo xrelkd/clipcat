@@ -47,9 +47,9 @@ impl ClipboardWorker {
         {
             let mut hm = self.history_manager.lock().await;
 
-            info!("Save history and shrink to capacity {}", history_capacity);
+            tracing::info!("Save history and shrink to capacity {}", history_capacity);
             if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity) {
-                warn!("Failed to save history, error: {:?}", err);
+                tracing::warn!("Failed to save history, error: {:?}", err);
             }
         }
 
@@ -59,17 +59,17 @@ impl ClipboardWorker {
     async fn handle_event(&self, event: Option<ClipboardEvent>) -> bool {
         match event {
             None => {
-                info!("ClipboardMonitor is closing, no further values will be received");
+                tracing::info!("ClipboardMonitor is closing, no further values will be received");
 
-                info!("Internal shutdown signal is sent");
+                tracing::info!("Internal shutdown signal is sent");
                 let _ = self.ctl_tx.send(CtlMessage::Shutdown);
 
                 return true;
             }
             Some(event) => {
                 match event.clipboard_type {
-                    ClipboardType::Clipboard => info!("Clipboard [{:?}]", event.data),
-                    ClipboardType::Primary => info!("Primary [{:?}]", event.data),
+                    ClipboardType::Clipboard => tracing::info!("Clipboard [{:?}]", event.data),
+                    ClipboardType::Primary => tracing::info!("Primary [{:?}]", event.data),
                 }
 
                 let data = ClipboardData::from(event);
@@ -84,7 +84,7 @@ impl ClipboardWorker {
     pub fn handle_message(&self, msg: Option<Message>) -> bool {
         match msg {
             Some(Message::Shutdown) => {
-                info!("ClipboardWorker is shutting down gracefully");
+                tracing::info!("ClipboardWorker is shutting down gracefully");
                 true
             }
             None => true,

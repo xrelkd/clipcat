@@ -135,19 +135,31 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         }
     }
 
-    syslog::init(syslog::Facility::LOG_USER, config.log_level, None)
-        .context(error::InitializeSyslog)?;
+    {
+        use tracing_subscriber::prelude::*;
 
-    info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
+        let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+        let level_filter = tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
 
-    let mut runtime = Runtime::new().context(error::InitializeTokioRuntime)?;
+        let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+        match tracing_journald::layer() {
+            Ok(layer) => registry.with(layer).init(),
+            Err(_err) => {
+                registry.init();
+            }
+        }
+    }
+
+    tracing::info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
+
+    let runtime = Runtime::new().context(error::InitializeTokioRuntime)?;
     runtime.block_on(worker::start(config))?;
 
     if daemonize {
         pid_file.remove()?;
     }
 
-    info!("{} is shutdown", clipcat::DAEMON_PROGRAM_NAME);
+    tracing::info!("{} is shutdown", clipcat::DAEMON_PROGRAM_NAME);
     Ok(())
 }
 
@@ -174,7 +186,7 @@ impl PidFile {
 
     #[inline]
     fn remove(self) -> Result<(), Error> {
-        info!("Remove PID file: {:?}", self.path);
+        tracing::info!("Remove PID file: {:?}", self.path);
         std::fs::remove_file(&self.path).context(error::RemovePidFile { pid_file: self.path })?;
         Ok(())
     }
