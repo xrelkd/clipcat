@@ -45,6 +45,20 @@ pub enum FinderType {
     Custom,
 }
 
+impl FinderType {
+    #[inline]
+    pub fn available_types() -> Vec<FinderType> {
+        vec![
+            FinderType::Builtin,
+            FinderType::Rofi,
+            FinderType::Dmenu,
+            FinderType::Skim,
+            FinderType::Fzf,
+            FinderType::Custom,
+        ]
+    }
+}
+
 impl Default for FinderType {
     fn default() -> FinderType { FinderType::Builtin }
 }

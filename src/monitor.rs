@@ -43,7 +43,7 @@ impl ClipboardMonitor {
         }
 
         if monitor.clipboard_thread.is_none() && monitor.primary_thread.is_none() {
-            warn!("Both clipboard and primary are not monitored");
+            tracing::warn!("Both clipboard and primary are not monitored");
         }
 
         Ok(monitor)
@@ -81,7 +81,7 @@ fn build_thread(
                     let data = String::from_utf8_lossy(&data);
                     if !data.is_empty() {
                         if let Err(SendError(_curr)) = send_event(&data) {
-                            info!("ClipboardEvent receiver is closed.");
+                            tracing::info!("ClipboardEvent receiver is closed.");
                             return;
                         }
                     }
@@ -101,16 +101,17 @@ fn build_thread(
                     if !curr.is_empty() && last != curr {
                         last = curr.into_owned();
                         if let Err(SendError(_curr)) = send_event(&last) {
-                            info!("ClipboardEvent receiver is closed.");
+                            tracing::info!("ClipboardEvent receiver is closed.");
                             return;
                         };
                     }
                 }
                 Err(err) => {
                     drop(clipboard);
-                    error!(
+                    tracing::error!(
                         "Failed to load clipboard, error: {}, ClipboardMonitor({:?}) is closing",
-                        err, clipboard_type
+                        err,
+                        clipboard_type
                     );
                     return;
                 }
@@ -136,7 +137,7 @@ mod tests {
         };
 
         let mut monitor = ClipboardMonitor::new(opts).unwrap();
-        let mut runtime = Runtime::new().unwrap();
+        let runtime = Runtime::new().unwrap();
         assert_eq!(runtime.block_on(async { monitor.recv().await }), None);
     }
 }

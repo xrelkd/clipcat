@@ -20,8 +20,8 @@ pub struct Config {
     #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
-    #[serde(default = "Config::default_log_level_filter")]
-    pub log_level: log::LevelFilter,
+    #[serde(default = "Config::default_log_level", with = "serde_with::rust::display_fromstr")]
+    pub log_level: tracing::Level,
 
     #[serde(default)]
     pub monitor: Monitor,
@@ -49,7 +49,7 @@ impl Default for Config {
             pid_file: Config::default_pid_file_path(),
             max_history: Config::default_max_history(),
             history_file_path: Config::default_history_file_path(),
-            log_level: Config::default_log_level_filter(),
+            log_level: Config::default_log_level(),
             monitor: Default::default(),
             grpc: Default::default(),
         }
@@ -90,7 +90,7 @@ impl Config {
     }
 
     #[inline]
-    fn default_log_level_filter() -> log::LevelFilter { log::LevelFilter::Info }
+    fn default_log_level() -> tracing::Level { tracing::Level::INFO }
 
     #[inline]
     pub fn default_history_file_path() -> PathBuf {

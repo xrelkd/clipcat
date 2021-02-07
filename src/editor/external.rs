@@ -45,6 +45,7 @@ impl ExternalEditor {
             .arg(&tmp_file)
             .spawn()
             .context(error::CallExternalTextEditor { program: self.editor.to_owned() })?
+            .wait()
             .await
             .context(error::ExecuteExternalTextEditor { program: self.editor.to_owned() })?;
 
@@ -80,7 +81,7 @@ mod tests {
     fn test_execute() {
         std::env::set_var("TMPDIR", "/tmp");
 
-        let mut runtime = tokio::runtime::Runtime::new().unwrap();
+        let runtime = tokio::runtime::Runtime::new().unwrap();
         let editor = ExternalEditor::new("echo");
 
         let data = "this is a string.\nЭто вох";

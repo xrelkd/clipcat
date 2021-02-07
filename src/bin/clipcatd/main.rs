@@ -1,7 +1,4 @@
 #[macro_use]
-extern crate log;
-
-#[macro_use]
 extern crate snafu;
 
 #[macro_use]
