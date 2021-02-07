@@ -198,3 +198,18 @@ impl Ord for ClipboardData {
 impl Hash for ClipboardData {
     fn hash<H: Hasher>(&self, state: &mut H) { self.data.hash(state); }
 }
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Hash)]
+pub enum MonitorState {
+    Enabled = 0,
+    Disabled = 1,
+}
+
+impl From<i32> for crate::MonitorState {
+    fn from(state: i32) -> crate::MonitorState {
+        match state {
+            0 => crate::MonitorState::Enabled,
+            _ => crate::MonitorState::Disabled,
+        }
+    }
+}

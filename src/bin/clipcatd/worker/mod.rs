@@ -53,16 +53,18 @@ pub async fn start(config: Config) -> Result<(), Error> {
     let _signal_join = signal::start(ctl_tx.clone());
 
     let monitor_opts = config.monitor.into();
-    let clipboard_monitor =
-        ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitor)?;
+    let clipboard_monitor = {
+        let monitor = ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitor)?;
+        Arc::new(Mutex::new(monitor))
+    };
 
     let (clip_tx, clipboard_join) = clipboard::start(
         ctl_tx.clone(),
-        clipboard_monitor,
+        clipboard_monitor.clone(),
         clipboard_manager.clone(),
         history_manager,
     );
-    let (grpc_tx, grpc_join) = grpc::start(grpc_addr, clipboard_manager);
+    let (grpc_tx, grpc_join) = grpc::start(grpc_addr, clipboard_monitor, clipboard_manager);
 
     while let Some(msg) = ctl_rx.recv().await {
         match msg {

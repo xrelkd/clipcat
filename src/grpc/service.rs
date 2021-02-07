@@ -6,26 +6,30 @@ use tonic::{Request, Response, Status};
 
 use crate::{
     grpc::protobuf::{
-        clipcat_server::Clipcat, BatchRemoveRequest, BatchRemoveResponse, ClearRequest,
-        ClearResponse, GetCurrentClipboardRequest, GetCurrentClipboardResponse,
-        GetCurrentPrimaryRequest, GetCurrentPrimaryResponse, GetRequest, GetResponse,
-        InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
+        manager_server::Manager, monitor_server::Monitor, BatchRemoveRequest, BatchRemoveResponse,
+        ClearRequest, ClearResponse, DisableMonitorRequest, EnableMonitorRequest,
+        GetCurrentClipboardRequest, GetCurrentClipboardResponse, GetCurrentPrimaryRequest,
+        GetCurrentPrimaryResponse, GetMonitorStateRequest, GetRequest, GetResponse, InsertRequest,
+        InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
         MarkAsClipboardRequest, MarkAsClipboardResponse, MarkAsPrimaryRequest,
-        MarkAsPrimaryResponse, RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse,
+        MarkAsPrimaryResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
+        ToggleMonitorRequest, UpdateRequest, UpdateResponse,
     },
-    ClipboardManager,
+    ClipboardManager, ClipboardMonitor,
 };
 
-pub struct GrpcService {
+pub struct ManagerService {
     manager: Arc<Mutex<ClipboardManager>>,
 }
 
-impl GrpcService {
-    pub fn new(manager: Arc<Mutex<ClipboardManager>>) -> GrpcService { GrpcService { manager } }
+impl ManagerService {
+    pub fn new(manager: Arc<Mutex<ClipboardManager>>) -> ManagerService {
+        ManagerService { manager }
+    }
 }
 
 #[tonic::async_trait]
-impl Clipcat for GrpcService {
+impl Manager for ManagerService {
     async fn insert(
         &self,
         request: Request<InsertRequest>,
@@ -164,5 +168,71 @@ impl Clipcat for GrpcService {
             manager.len() as u64
         };
         Ok(Response::new(LengthResponse { length }))
+    }
+}
+
+pub struct MonitorService {
+    monitor: Arc<Mutex<ClipboardMonitor>>,
+}
+
+impl MonitorService {
+    #[inline]
+    pub fn new(monitor: Arc<Mutex<ClipboardMonitor>>) -> MonitorService {
+        MonitorService { monitor }
+    }
+}
+
+#[tonic::async_trait]
+impl Monitor for MonitorService {
+    async fn enable_monitor(
+        &self,
+        _request: Request<EnableMonitorRequest>,
+    ) -> Result<Response<MonitorStateReply>, Status> {
+        let state = {
+            let mut monitor = self.monitor.lock().await;
+            monitor.enable();
+            MonitorStateReply { state: monitor.state().into() }
+        };
+        dbg!(&state);
+
+        Ok(Response::new(state))
+    }
+
+    async fn disable_monitor(
+        &self,
+        _request: Request<DisableMonitorRequest>,
+    ) -> Result<Response<MonitorStateReply>, Status> {
+        let state = {
+            let mut monitor = self.monitor.lock().await;
+            monitor.disable();
+            MonitorStateReply { state: monitor.state().into() }
+        };
+
+        Ok(Response::new(state))
+    }
+
+    async fn toggle_monitor(
+        &self,
+        _request: Request<ToggleMonitorRequest>,
+    ) -> Result<Response<MonitorStateReply>, Status> {
+        let state = {
+            let mut monitor = self.monitor.lock().await;
+            monitor.toggle();
+            MonitorStateReply { state: monitor.state().into() }
+        };
+
+        Ok(Response::new(state))
+    }
+
+    async fn get_monitor_state(
+        &self,
+        _request: Request<GetMonitorStateRequest>,
+    ) -> Result<Response<MonitorStateReply>, Status> {
+        let state = {
+            let monitor = self.monitor.lock().await;
+            MonitorStateReply { state: monitor.state().into() }
+        };
+
+        Ok(Response::new(state))
     }
 }
