@@ -1,13 +1,20 @@
-use std::thread;
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+};
 
 use snafu::ResultExt;
-use tokio::sync::mpsc::{self, error::SendError};
+use tokio::sync::broadcast::{self, error::SendError};
 use x11_clipboard::Clipboard;
 
-use crate::{error, ClipboardError, ClipboardEvent, ClipboardType};
+use crate::{error, ClipboardError, ClipboardEvent, ClipboardType, MonitorState};
 
 pub struct ClipboardMonitor {
-    event_receiver: mpsc::UnboundedReceiver<ClipboardEvent>,
+    is_running: Arc<AtomicBool>,
+    event_sender: broadcast::Sender<ClipboardEvent>,
     clipboard_thread: Option<thread::JoinHandle<()>>,
     primary_thread: Option<thread::JoinHandle<()>>,
 }
@@ -27,18 +34,29 @@ impl Default for ClipboardMonitorOptions {
 
 impl ClipboardMonitor {
     pub fn new(opts: ClipboardMonitorOptions) -> Result<ClipboardMonitor, ClipboardError> {
-        let (sender, event_receiver) = mpsc::unbounded_channel::<ClipboardEvent>();
+        let (event_sender, _event_receiver) = broadcast::channel(16);
 
-        let mut monitor =
-            ClipboardMonitor { event_receiver, clipboard_thread: None, primary_thread: None };
+        let is_running = Arc::new(AtomicBool::new(true));
+        let mut monitor = ClipboardMonitor {
+            is_running: is_running.clone(),
+            event_sender: event_sender.clone(),
+            clipboard_thread: None,
+            primary_thread: None,
+        };
 
         if opts.enable_clipboard {
-            let thread = build_thread(opts.load_current, ClipboardType::Clipboard, sender.clone())?;
+            let thread = build_thread(
+                opts.load_current,
+                is_running.clone(),
+                ClipboardType::Clipboard,
+                event_sender.clone(),
+            )?;
             monitor.clipboard_thread = Some(thread);
         }
 
         if opts.enable_primary {
-            let thread = build_thread(opts.load_current, ClipboardType::Primary, sender)?;
+            let thread =
+                build_thread(opts.load_current, is_running, ClipboardType::Primary, event_sender)?;
             monitor.primary_thread = Some(thread);
         }
 
@@ -49,13 +67,48 @@ impl ClipboardMonitor {
         Ok(monitor)
     }
 
-    pub async fn recv(&mut self) -> Option<ClipboardEvent> { self.event_receiver.recv().await }
+    #[inline]
+    pub fn subscribe(&self) -> broadcast::Receiver<ClipboardEvent> { self.event_sender.subscribe() }
+
+    #[inline]
+    pub fn enable(&mut self) {
+        self.is_running.store(true, Ordering::Release);
+        tracing::info!("ClipboardWorker is monitoring for clipboard");
+    }
+
+    #[inline]
+    pub fn disable(&mut self) {
+        self.is_running.store(false, Ordering::Release);
+        tracing::info!("ClipboardWorker is not monitoring for clipboard");
+    }
+
+    #[inline]
+    pub fn toggle(&mut self) {
+        if self.is_running() {
+            self.disable();
+        } else {
+            self.enable();
+        }
+    }
+
+    #[inline]
+    pub fn is_running(&self) -> bool { self.is_running.load(Ordering::Acquire) }
+
+    #[inline]
+    pub fn state(&self) -> MonitorState {
+        if self.is_running() {
+            MonitorState::Enabled
+        } else {
+            MonitorState::Disabled
+        }
+    }
 }
 
 fn build_thread(
     load_current: bool,
+    is_running: Arc<AtomicBool>,
     clipboard_type: ClipboardType,
-    sender: mpsc::UnboundedSender<ClipboardEvent>,
+    sender: broadcast::Sender<ClipboardEvent>,
 ) -> Result<thread::JoinHandle<()>, ClipboardError> {
     let send_event = move |data: &str| {
         let event = match clipboard_type {
@@ -97,13 +150,15 @@ fn build_thread(
             let result = clipboard.load_wait(atom_clipboard, atom_utf8string, atom_property);
             match result {
                 Ok(curr) => {
-                    let curr = String::from_utf8_lossy(&curr);
-                    if !curr.is_empty() && last != curr {
-                        last = curr.into_owned();
-                        if let Err(SendError(_curr)) = send_event(&last) {
-                            tracing::info!("ClipboardEvent receiver is closed.");
-                            return;
-                        };
+                    if is_running.load(Ordering::Acquire) {
+                        let curr = String::from_utf8_lossy(&curr);
+                        if !curr.is_empty() && last != curr {
+                            last = curr.into_owned();
+                            if let Err(SendError(_curr)) = send_event(&last) {
+                                tracing::info!("ClipboardEvent receiver is closed.");
+                                return;
+                            };
+                        }
                     }
                 }
                 Err(err) => {
@@ -120,24 +175,4 @@ fn build_thread(
     });
 
     Ok(join_handle)
-}
-
-#[cfg(test)]
-mod tests {
-    use tokio::runtime::Runtime;
-
-    use crate::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
-
-    #[test]
-    fn test_dummy() {
-        let opts = ClipboardMonitorOptions {
-            load_current: false,
-            enable_clipboard: false,
-            enable_primary: false,
-        };
-
-        let mut monitor = ClipboardMonitor::new(opts).unwrap();
-        let runtime = Runtime::new().unwrap();
-        assert_eq!(runtime.block_on(async { monitor.recv().await }), None);
-    }
 }

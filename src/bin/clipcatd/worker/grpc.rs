@@ -7,8 +7,8 @@ use tokio::{
 };
 
 use clipcat::{
-    grpc::{GrpcServer, GrpcService},
-    ClipboardManager,
+    grpc::{self, ManagerService, MonitorService},
+    ClipboardManager, ClipboardMonitor,
 };
 
 use crate::error::{self, Error};
@@ -20,10 +20,18 @@ pub enum Message {
 #[allow(clippy::never_loop)]
 pub fn start(
     grpc_addr: std::net::SocketAddr,
+    clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
 ) -> (mpsc::UnboundedSender<Message>, JoinHandle<Result<(), Error>>) {
-    let grpc_service = GrpcService::new(clipboard_manager);
-    let server = tonic::transport::Server::builder().add_service(GrpcServer::new(grpc_service));
+    let server = {
+        let monitor_service = MonitorService::new(clipboard_monitor);
+        let manager_service = ManagerService::new(clipboard_manager);
+
+        tonic::transport::Server::builder()
+            .add_service(grpc::MonitorServer::new(monitor_service))
+            .add_service(grpc::ManagerServer::new(manager_service))
+    };
+
     let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
 
     let join_handle = tokio::spawn(async move {

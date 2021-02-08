@@ -264,6 +264,7 @@ dependencies = [
  "bincode",
  "daemonize",
  "futures",
+ "http",
  "libc",
  "prost",
  "rocksdb",

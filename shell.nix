@@ -1,8 +1,6 @@
-let
-  sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs { };
-  inherit (pkgs) stdenv;
-in pkgs.mkShell {
+{ pkgs ? import ./nix { } }:
+
+pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     git
     rustup

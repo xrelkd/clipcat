@@ -37,11 +37,26 @@ _clipcatctl() {
             delete)
                 cmd+="__delete"
                 ;;
+            disable)
+                cmd+="__disable"
+                ;;
+            disable-monitor)
+                cmd+="__disable__monitor"
+                ;;
             edit)
                 cmd+="__edit"
                 ;;
+            enable)
+                cmd+="__enable"
+                ;;
+            enable-monitor)
+                cmd+="__enable__monitor"
+                ;;
             get)
                 cmd+="__get"
+                ;;
+            get-monitor-state)
+                cmd+="__get__monitor__state"
                 ;;
             help)
                 cmd+="__help"
@@ -70,6 +85,9 @@ _clipcatctl() {
             ls)
                 cmd+="__ls"
                 ;;
+            monitor-state)
+                cmd+="__monitor__state"
+                ;;
             paste)
                 cmd+="__paste"
                 ;;
@@ -97,6 +115,12 @@ _clipcatctl() {
             save-primary)
                 cmd+="__save__primary"
                 ;;
+            toggle)
+                cmd+="__toggle"
+                ;;
+            toggle-monitor)
+                cmd+="__toggle__monitor"
+                ;;
             update)
                 cmd+="__update"
                 ;;
@@ -110,7 +134,7 @@ _clipcatctl() {
 
     case "${cmd}" in
         clipcatctl)
-            opts=" -V -c -h -p  --help --version --config --host --port --log-level   version completions default-config insert insert-primary load load-primary save save-primary get list update edit remove promote promote-primary clear length help  paste paste  cut cut  cut-primary cut-primary  paste paste  paste-primary paste-primary  ls ls  rm delete del rm delete del  remove-all  count len"
+            opts=" -V -c -h -p  --help --version --config --host --port --log-level   version completions default-config insert insert-primary load load-primary save save-primary get list update edit remove promote promote-primary clear length enable-monitor disable-monitor toggle-monitor get-monitor-state help  paste paste  cut cut  cut-primary cut-primary  paste paste  paste-primary paste-primary  ls ls  rm delete del rm delete del  remove-all  count len  enable  disable  toggle  monitor-state"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -289,6 +313,36 @@ _clipcatctl() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        clipcatctl__disable)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__disable__monitor)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         clipcatctl__edit)
             opts=" -h -V -e  --help --version --editor  <id> "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
@@ -312,8 +366,53 @@ _clipcatctl() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
+        clipcatctl__enable)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__enable__monitor)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
         clipcatctl__get)
             opts=" -h -V  --help --version  <id> "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__get__monitor__state)
+            opts=" -h -V  --help --version  "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -465,6 +564,21 @@ _clipcatctl() {
             ;;
         clipcatctl__ls)
             opts=" -h -V  --no-id --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__monitor__state)
+            opts=" -h -V  --help --version  "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -630,6 +744,36 @@ _clipcatctl() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__toggle)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clipcatctl__toggle__monitor)
+            opts=" -h -V  --help --version  "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
                 *)
                     COMPREPLY=()
                     ;;

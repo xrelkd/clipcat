@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, MonitorState};
 
 use crate::{
     config::Config,
@@ -133,6 +133,18 @@ pub enum SubCommand {
         aliases = &["count", "len"],
         about = "Prints length of clipboard history")]
     Length,
+
+    #[structopt(aliases = &["enable"], about = "Enable clipboard monitor")]
+    EnableMonitor,
+
+    #[structopt(aliases = &["disable"], about = "Disable clipboard monitor")]
+    DisableMonitor,
+
+    #[structopt(aliases = &["toggle"], about = "Toggle clipboard monitor")]
+    ToggleMonitor,
+
+    #[structopt(aliases = &["monitor-state"], about = "Get clipboard monitor state")]
+    GetMonitorState,
 }
 
 impl Command {
@@ -162,6 +174,14 @@ impl Command {
     }
 
     pub fn run(self) -> Result<i32, Error> {
+        fn print_monitor_state(state: MonitorState) {
+            let msg = match state {
+                MonitorState::Enabled => "Clipcat monitor is running",
+                MonitorState::Disabled => "Clipcat monitor is not running",
+            };
+            println!("{}", msg);
+        }
+
         match self.subcommand {
             Some(SubCommand::Version) => {
                 Self::clap()
@@ -307,6 +327,22 @@ impl Command {
                     if client.mark_as_primary(id).await? {
                         println!("Ok");
                     }
+                }
+                Some(SubCommand::EnableMonitor) => {
+                    let state = client.enable_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::DisableMonitor) => {
+                    let state = client.disable_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::ToggleMonitor) => {
+                    let state = client.toggle_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::GetMonitorState) => {
+                    let state = client.get_monitor_state().await?;
+                    print_monitor_state(state);
                 }
                 _ => unreachable!(),
             }

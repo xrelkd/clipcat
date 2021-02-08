@@ -1,4 +1,5 @@
-tonic::include_proto!("clipboard");
+tonic::include_proto!("manager");
+tonic::include_proto!("monitor");
 
 impl From<ClipboardType> for crate::ClipboardType {
     fn from(t: ClipboardType) -> crate::ClipboardType {
@@ -35,4 +36,26 @@ impl From<crate::ClipboardData> for ClipboardData {
                 .as_millis() as u64,
         }
     }
+}
+
+impl From<MonitorState> for crate::MonitorState {
+    fn from(state: MonitorState) -> crate::MonitorState {
+        match state {
+            MonitorState::Enabled => crate::MonitorState::Enabled,
+            MonitorState::Disabled => crate::MonitorState::Disabled,
+        }
+    }
+}
+
+impl Into<MonitorState> for crate::MonitorState {
+    fn into(self) -> MonitorState {
+        match self {
+            crate::MonitorState::Enabled => MonitorState::Enabled,
+            crate::MonitorState::Disabled => MonitorState::Disabled,
+        }
+    }
+}
+
+impl From<crate::MonitorState> for i32 {
+    fn from(state: crate::MonitorState) -> i32 { state as i32 }
 }

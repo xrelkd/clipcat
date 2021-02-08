@@ -391,6 +391,70 @@ _arguments "${_arguments_options[@]}" \
 '--version[Prints version information]' \
 && ret=0
 ;;
+(enable)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(enable-monitor)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(disable)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(disable-monitor)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(toggle)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(toggle-monitor)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(monitor-state)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(get-monitor-state)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
 (help)
 _arguments "${_arguments_options[@]}" \
 '-h[Prints help information]' \
@@ -425,6 +489,10 @@ _clipcatctl_commands() {
 "promote-primary:Replaces content of primary clipboard with clip with <id>" \
 "clear:Removes all clips in clipboard" \
 "length:Prints length of clipboard history" \
+"enable-monitor:Enable clipboard monitor" \
+"disable-monitor:Disable clipboard monitor" \
+"toggle-monitor:Toggle clipboard monitor" \
+"get-monitor-state:Get clipboard monitor state" \
 "help:Prints this message or the help of the given subcommand(s)" \
     )
     _describe -t commands 'clipcatctl commands' commands "$@"
@@ -520,6 +588,27 @@ _delete_commands() {
     )
     _describe -t commands 'delete commands' commands "$@"
 }
+(( $+functions[_clipcatctl__disable_commands] )) ||
+_clipcatctl__disable_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl disable commands' commands "$@"
+}
+(( $+functions[_disable_commands] )) ||
+_disable_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'disable commands' commands "$@"
+}
+(( $+functions[_clipcatctl__disable-monitor_commands] )) ||
+_clipcatctl__disable-monitor_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl disable-monitor commands' commands "$@"
+}
 (( $+functions[_clipcatctl__edit_commands] )) ||
 _clipcatctl__edit_commands() {
     local commands; commands=(
@@ -527,12 +616,40 @@ _clipcatctl__edit_commands() {
     )
     _describe -t commands 'clipcatctl edit commands' commands "$@"
 }
+(( $+functions[_clipcatctl__enable_commands] )) ||
+_clipcatctl__enable_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl enable commands' commands "$@"
+}
+(( $+functions[_enable_commands] )) ||
+_enable_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'enable commands' commands "$@"
+}
+(( $+functions[_clipcatctl__enable-monitor_commands] )) ||
+_clipcatctl__enable-monitor_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl enable-monitor commands' commands "$@"
+}
 (( $+functions[_clipcatctl__get_commands] )) ||
 _clipcatctl__get_commands() {
     local commands; commands=(
         
     )
     _describe -t commands 'clipcatctl get commands' commands "$@"
+}
+(( $+functions[_clipcatctl__get-monitor-state_commands] )) ||
+_clipcatctl__get-monitor-state_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl get-monitor-state commands' commands "$@"
 }
 (( $+functions[_clipcatctl__help_commands] )) ||
 _clipcatctl__help_commands() {
@@ -610,6 +727,20 @@ _ls_commands() {
         
     )
     _describe -t commands 'ls commands' commands "$@"
+}
+(( $+functions[_clipcatctl__monitor-state_commands] )) ||
+_clipcatctl__monitor-state_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl monitor-state commands' commands "$@"
+}
+(( $+functions[_monitor-state_commands] )) ||
+_monitor-state_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'monitor-state commands' commands "$@"
 }
 (( $+functions[_clipcatctl__paste_commands] )) ||
 _clipcatctl__paste_commands() {
@@ -701,6 +832,27 @@ _clipcatctl__save-primary_commands() {
         
     )
     _describe -t commands 'clipcatctl save-primary commands' commands "$@"
+}
+(( $+functions[_clipcatctl__toggle_commands] )) ||
+_clipcatctl__toggle_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl toggle commands' commands "$@"
+}
+(( $+functions[_toggle_commands] )) ||
+_toggle_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'toggle commands' commands "$@"
+}
+(( $+functions[_clipcatctl__toggle-monitor_commands] )) ||
+_clipcatctl__toggle-monitor_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'clipcatctl toggle-monitor commands' commands "$@"
 }
 (( $+functions[_clipcatctl__update_commands] )) ||
 _clipcatctl__update_commands() {

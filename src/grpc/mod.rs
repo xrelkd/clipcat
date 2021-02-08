@@ -6,8 +6,9 @@ mod service;
 
 pub use self::{
     client::{GrpcClient, GrpcClientError},
-    protobuf::clipcat_server::ClipcatServer as GrpcServer,
+    protobuf::{manager_server::ManagerServer, monitor_server::MonitorServer},
 };
 
 #[cfg(feature = "monitor")]
-pub use self::service::GrpcService;
+pub use self::service::ManagerService;
+pub use self::service::MonitorService;
