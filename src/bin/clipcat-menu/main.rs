@@ -5,9 +5,6 @@ extern crate app_dirs;
 extern crate structopt;
 
 #[macro_use]
-extern crate log;
-
-#[macro_use]
 extern crate serde;
 
 mod command;

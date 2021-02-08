@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, MonitorState};
 
 use crate::{
     config::Config,
@@ -27,7 +27,7 @@ pub struct Command {
     server_port: Option<u16>,
 
     #[structopt(long = "log-level", help = "Specifies a log level")]
-    log_level: Option<log::LevelFilter>,
+    log_level: Option<tracing::Level>,
 }
 
 #[derive(StructOpt)]
@@ -133,6 +133,18 @@ pub enum SubCommand {
         aliases = &["count", "len"],
         about = "Prints length of clipboard history")]
     Length,
+
+    #[structopt(aliases = &["enable"], about = "Enable clipboard monitor")]
+    EnableMonitor,
+
+    #[structopt(aliases = &["disable"], about = "Disable clipboard monitor")]
+    DisableMonitor,
+
+    #[structopt(aliases = &["toggle"], about = "Toggle clipboard monitor")]
+    ToggleMonitor,
+
+    #[structopt(aliases = &["monitor-state"], about = "Get clipboard monitor state")]
+    GetMonitorState,
 }
 
 impl Command {
@@ -150,9 +162,8 @@ impl Command {
         }
 
         if let Ok(log_level) = std::env::var("RUST_LOG") {
-            use log::LevelFilter;
             use std::str::FromStr;
-            config.log_level = LevelFilter::from_str(&log_level).unwrap_or(LevelFilter::Info);
+            config.log_level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
         }
 
         if let Some(log_level) = self.log_level {
@@ -163,6 +174,14 @@ impl Command {
     }
 
     pub fn run(self) -> Result<i32, Error> {
+        fn print_monitor_state(state: MonitorState) {
+            let msg = match state {
+                MonitorState::Enabled => "Clipcat monitor is running",
+                MonitorState::Disabled => "Clipcat monitor is not running",
+            };
+            println!("{}", msg);
+        }
+
         match self.subcommand {
             Some(SubCommand::Version) => {
                 Self::clap()
@@ -193,8 +212,21 @@ impl Command {
         let fut = async move {
             let config = self.load_config();
 
-            std::env::set_var("RUST_LOG", config.log_level.to_string());
-            env_logger::init();
+            {
+                use tracing_subscriber::prelude::*;
+
+                let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+                let level_filter =
+                    tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
+
+                let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+                match tracing_journald::layer() {
+                    Ok(layer) => registry.with(layer).init(),
+                    Err(_err) => {
+                        registry.init();
+                    }
+                }
+            }
 
             let mut client =
                 GrpcClient::new(format!("http://{}:{}", config.server_host, config.server_port))
@@ -296,12 +328,28 @@ impl Command {
                         println!("Ok");
                     }
                 }
+                Some(SubCommand::EnableMonitor) => {
+                    let state = client.enable_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::DisableMonitor) => {
+                    let state = client.disable_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::ToggleMonitor) => {
+                    let state = client.toggle_monitor().await?;
+                    print_monitor_state(state);
+                }
+                Some(SubCommand::GetMonitorState) => {
+                    let state = client.get_monitor_state().await?;
+                    print_monitor_state(state);
+                }
                 _ => unreachable!(),
             }
             Ok(0)
         };
 
-        let mut runtime = Runtime::new().context(error::CreateTokioRuntime)?;
+        let runtime = Runtime::new().context(error::CreateTokioRuntime)?;
         runtime.block_on(fut)
     }
 }

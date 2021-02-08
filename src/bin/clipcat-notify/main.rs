@@ -70,11 +70,11 @@ impl Command {
 
         let monitor_opts =
             ClipboardMonitorOptions { load_current: false, enable_clipboard, enable_primary };
-        let mut monitor =
-            ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
-        let mut runtime = Runtime::new().context(InitializeTokioRuntime)?;
+        let monitor = ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
+        let runtime = Runtime::new().context(InitializeTokioRuntime)?;
         runtime.block_on(async {
-            while let Some(event) = monitor.recv().await {
+            let mut event_recv = monitor.subscribe();
+            while let Ok(event) = event_recv.recv().await {
                 match event.clipboard_type {
                     ClipboardType::Clipboard if enable_clipboard => return Ok(()),
                     ClipboardType::Primary if enable_primary => return Ok(()),

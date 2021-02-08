@@ -1,6 +1,6 @@
 [package]
 name = "clipcat"
-version = "0.4.19"
+version = "0.5.0"
 authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
 edition = "2018"
 
@@ -8,9 +8,14 @@ edition = "2018"
 all = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
 default = ["clipcatd", "clipcatctl", "clipcat-menu"]
 
-app = ["app_dirs", "structopt", "toml", "env_logger"]
+app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
 monitor = ["x11-clipboard"]
-daemon = ["daemonize", "libc", "syslog", "tokio/signal", "serde_json", "bincode", "rocksdb"]
+daemon = [
+  "daemonize", "libc",
+  "tracing-subscriber", "tracing-journald",
+  "tokio/signal", "serde_json",
+  "bincode", "rocksdb"
+]
 external_editor = ["tokio/process"]
 builtin_finder = ["skim"]
 
@@ -45,22 +50,25 @@ required-features = ["clipcat-notify"]
 
 [dependencies]
 futures = "0.3"
-tokio = { version = "0.2", features = ["sync"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 
 snafu = "0.6"
 
-tonic = "0.3"
-prost = "0.6"
+tonic = "0.4"
+prost = "0.7"
+http = "0.2"
 
-log = { version = "0.4", features = ["serde"] }
-env_logger = { version = "0.7", optional = true }
-syslog = { version = "5", optional = true }
+tracing = "0.1"
+tracing-subscriber = { version = "0.2", optional = true }
+tracing-journald = { version = "0.1", optional = true }
+tracing-futures = { version = "0.2", optional = true }
 
 structopt = { version = "0.3", optional = true }
 app_dirs = { version = "1", optional = true }
 toml = { version = "0.5", optional = true }
 
 serde = { version = "1", features = ["derive"] }
+serde_with = "1"
 serde_json = { version = "1", optional = true }
 
 x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
@@ -71,10 +79,10 @@ bincode = { version = "1", optional = true }
 libc = { version = "0.2", optional = true }
 daemonize = { version = "0.4", optional = true }
 
-skim = { version = "0.8", optional = true }
+skim = { version = "0.9", optional = true }
 
 [build-dependencies]
-tonic-build = { version = "0.3", features = ["prost"] }
+tonic-build = { version = "0.4", features = ["prost"] }
 
 [profile.release]
 opt-level = 3

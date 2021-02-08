@@ -13,9 +13,6 @@ pub enum Error {
     #[snafu(display("Could not load config error: {}", source))]
     LoadConfig { source: ConfigError },
 
-    #[snafu(display("Could not initialize syslog, error: {}", source))]
-    InitializeSyslog { source: syslog::Error },
-
     #[snafu(display("Could not create HistoryManager, error: {}", source))]
     CreateHistoryManager { source: HistoryError },
 

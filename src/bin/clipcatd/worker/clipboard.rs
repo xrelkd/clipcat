@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::FutureExt;
 use tokio::{
-    sync::{mpsc, Mutex},
+    sync::{broadcast, mpsc, Mutex},
     task::JoinHandle,
 };
 
@@ -24,7 +24,7 @@ pub type MessageReceiver = mpsc::UnboundedReceiver<Message>;
 pub struct ClipboardWorker {
     ctl_tx: CtlMessageSender,
     msg_rx: MessageReceiver,
-    clipboard_monitor: ClipboardMonitor,
+    clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     history_manager: Arc<Mutex<HistoryManager>>,
 }
@@ -32,9 +32,14 @@ pub struct ClipboardWorker {
 impl ClipboardWorker {
     async fn run(mut self) -> Result<(), Error> {
         let mut quit = false;
+        let mut event_recv = {
+            let monitor = self.clipboard_monitor.lock().await;
+            monitor.subscribe()
+        };
+
         while !quit {
             quit = futures::select! {
-                event = self.clipboard_monitor.recv().fuse() => self.handle_event(event).await,
+                event = event_recv.recv().fuse() => self.handle_event(event).await,
                 msg = self.msg_rx.recv().fuse() => self.handle_message(msg),
             };
         }
@@ -47,29 +52,33 @@ impl ClipboardWorker {
         {
             let mut hm = self.history_manager.lock().await;
 
-            info!("Save history and shrink to capacity {}", history_capacity);
+            tracing::info!("Save history and shrink to capacity {}", history_capacity);
             if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity) {
-                warn!("Failed to save history, error: {:?}", err);
+                tracing::warn!("Failed to save history, error: {:?}", err);
             }
         }
 
         Ok(())
     }
 
-    async fn handle_event(&self, event: Option<ClipboardEvent>) -> bool {
+    async fn handle_event(
+        &self,
+        event: Result<ClipboardEvent, broadcast::error::RecvError>,
+    ) -> bool {
         match event {
-            None => {
-                info!("ClipboardMonitor is closing, no further values will be received");
+            Err(broadcast::error::RecvError::Closed) => {
+                tracing::info!("ClipboardMonitor is closing, no further values will be received");
 
-                info!("Internal shutdown signal is sent");
+                tracing::info!("Internal shutdown signal is sent");
                 let _ = self.ctl_tx.send(CtlMessage::Shutdown);
 
                 return true;
             }
-            Some(event) => {
+            Err(broadcast::error::RecvError::Lagged(_)) => {}
+            Ok(event) => {
                 match event.clipboard_type {
-                    ClipboardType::Clipboard => info!("Clipboard [{:?}]", event.data),
-                    ClipboardType::Primary => info!("Primary [{:?}]", event.data),
+                    ClipboardType::Clipboard => tracing::info!("Clipboard [{:?}]", event.data),
+                    ClipboardType::Primary => tracing::info!("Primary [{:?}]", event.data),
                 }
 
                 let data = ClipboardData::from(event);
@@ -81,20 +90,22 @@ impl ClipboardWorker {
         false
     }
 
-    pub fn handle_message(&self, msg: Option<Message>) -> bool {
+    pub fn handle_message(&mut self, msg: Option<Message>) -> bool {
         match msg {
-            Some(Message::Shutdown) => {
-                info!("ClipboardWorker is shutting down gracefully");
-                true
-            }
             None => true,
+            Some(msg) => match msg {
+                Message::Shutdown => {
+                    tracing::info!("ClipboardWorker is shutting down gracefully");
+                    true
+                }
+            },
         }
     }
 }
 
 pub fn start(
     ctl_tx: CtlMessageSender,
-    clipboard_monitor: ClipboardMonitor,
+    clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     history_manager: Arc<Mutex<HistoryManager>>,
 ) -> (MessageSender, JoinHandle<Result<(), Error>>) {

@@ -97,24 +97,32 @@ impl Command {
                 return Ok(());
             }
             Some(SubCommand::ListFinder) => {
-                println!("{}", FinderType::Builtin.to_string());
-                println!("{}", FinderType::Rofi.to_string());
-                println!("{}", FinderType::Dmenu.to_string());
-                println!("{}", FinderType::Fzf.to_string());
-                println!("{}", FinderType::Skim.to_string());
-                println!("{}", FinderType::Custom.to_string());
+                for ty in FinderType::available_types() {
+                    println!("{}", ty.to_string());
+                }
                 return Ok(());
             }
             _ => {}
         }
 
-        if std::env::var("RUST_LOG").is_err() {
-            std::env::set_var("RUST_LOG", "info");
+        {
+            use tracing_subscriber::prelude::*;
+
+            let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
+            let level_filter = tracing_subscriber::filter::LevelFilter::INFO;
+
+            let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+            match tracing_journald::layer() {
+                Ok(layer) => registry.with(layer).init(),
+                Err(_err) => {
+                    registry.init();
+                }
+            }
         }
-        env_logger::init();
 
         let mut config =
             Config::load_or_default(&self.config_file.unwrap_or_else(Config::default_path));
+
         let finder = {
             if let Some(finder) = self.finder {
                 config.finder = finder;
@@ -149,7 +157,7 @@ impl Command {
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
-                        println!("{:016x}", id);
+                        tracing::info!("Removing clip (id: {:016x})", id);
                     }
                 }
                 Some(SubCommand::Edit { editor }) => {
@@ -160,11 +168,11 @@ impl Command {
                             editor.execute(&clip.data).await.context(error::CallEditor)?;
                         let (ok, new_id) = client.update(clip.id, &new_data).await?;
                         if ok {
-                            println!("{:016x}", new_id);
+                            tracing::info!("Editing clip (id: {:016x})", new_id);
                         }
                         client.mark_as_clipboard(new_id).await?;
                     } else {
-                        println!("Nothing is selected");
+                        tracing::info!("Nothing is selected");
                         return Ok(());
                     }
                 }
@@ -174,7 +182,7 @@ impl Command {
             Ok(())
         };
 
-        let mut runtime = Runtime::new().context(error::CreateTokioRuntime)?;
+        let runtime = Runtime::new().context(error::CreateTokioRuntime)?;
         runtime.block_on(fut)
     }
 }
@@ -187,8 +195,8 @@ async fn insert_clip(
 ) -> Result<(), Error> {
     let selection = finder.single_select(&clips).await?;
     if let Some((index, clip)) = selection {
-        println!(
-            "index: {}, id: {:016x}, content: {:?}",
+        tracing::info!(
+            "Inserting clip (index: {}, id: {:016x}, content: {:?})",
             index,
             clip.id,
             clip.printable_data(Some(LINE_LENGTH)),
@@ -202,7 +210,8 @@ async fn insert_clip(
             }
         }
     } else {
-        println!("Nothing is selected");
+        tracing::info!("Nothing is selected");
     }
+
     Ok(())
 }

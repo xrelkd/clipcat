@@ -83,7 +83,11 @@ impl Config {
         match Self::load(&path) {
             Ok(config) => config,
             Err(err) => {
-                warn!("Failed to read config file ({:?}), error: {:?}", &path.as_ref(), err);
+                tracing::warn!(
+                    "Failed to read config file ({:?}), error: {:?}",
+                    &path.as_ref(),
+                    err
+                );
                 Config::default()
             }
         }
