@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/xrelkd/clipcat/workflows/Build/badge.svg)](https://github.com/xrelkd/clipcat/actions)
 
-Clipcat is a clipboard manager written in Rust Programming Language.
+`Clipcat` is a clipboard manager written in [Rust Programming Language](https://www.rust-lang.org/).
 
 ## Architecture
 
@@ -35,6 +35,14 @@ A `clipcat` client sends requests to the server for the following manipulations:
 
 ## Quick Start
 
+### Installation
+
+| Linux Distribution                  | Package Manager                     | Package                                                                                             | Command                       |
+| ----------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                              | `yay -S clipcat`              |
+
 ### Usage
 
 0. Setup configurations for `clipcat`.
@@ -60,7 +68,7 @@ $ clipcatd
 | ------------------------- | ------------------------------------------------- |
 | `clipcatctl list`         | List cached clipboard history                     |
 | `clipcatctl promote <id>` | Insert cached clip with `<id>` into X11 clipboard |
-| `clipcatctl remove [ids]` | Remove cahced clips with `[id]` from server       |
+| `clipcatctl remove [ids]` | Remove cahced clips with `[ids]` from server      |
 | `clipcatctl clear`        | Clear cached clipboard history                    |
 
 | Command               | Comment                                 |
@@ -173,7 +181,6 @@ bindsym $mod+o exec $launcher-clipboard-remove
 - `git`
 - `rustc`
 - `cargo`
-- `cargo-make`
 - `pkgconfig`
 - `protobuf`
 - `clang`
@@ -185,7 +192,7 @@ With the above tools and packages already installed, you can simply run:
 ```console
 $ git clone https://github.com/xrelkd/clipcat.git
 $ cd clipcat
-$ cargo make build-release
+$ cargo build --release --features=all
 ```
 
 ## License
