@@ -129,7 +129,7 @@ jobs:
             $dist
 
           cd $dist
-          tar cvf ../$archive *
+          tar czvf ../$archive *
           echo "::set-output name=archive::$archive"
 
       - name: Publish
