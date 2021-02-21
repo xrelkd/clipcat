@@ -15,9 +15,9 @@ pkgs.mkShell {
     python3
   ];
 
-  buildInputs = with pkgs; [ xorg.libxcb ];
+  buildInputs = with pkgs; [ ];
 
-  RUST_BACKTRACE = 1;
+  RUST_BACKTRACE = "full";
 
   LIBCLANG_PATH = "${pkgs.llvmPackages.libclang}/lib";
 

@@ -1,39 +1,64 @@
 tonic::include_proto!("manager");
 tonic::include_proto!("monitor");
 
-impl From<ClipboardType> for crate::ClipboardType {
-    fn from(t: ClipboardType) -> crate::ClipboardType {
+use std::str::FromStr;
+
+impl From<ClipboardMode> for crate::ClipboardMode {
+    fn from(t: ClipboardMode) -> crate::ClipboardMode {
         match t {
-            ClipboardType::Clipboard => crate::ClipboardType::Clipboard,
-            ClipboardType::Primary => crate::ClipboardType::Primary,
+            ClipboardMode::Clipboard => crate::ClipboardMode::Clipboard,
+            ClipboardMode::Selection => crate::ClipboardMode::Selection,
         }
     }
 }
 
-impl From<crate::ClipboardType> for ClipboardType {
-    fn from(t: crate::ClipboardType) -> ClipboardType {
+impl From<crate::ClipboardMode> for ClipboardMode {
+    fn from(t: crate::ClipboardMode) -> ClipboardMode {
         match t {
-            crate::ClipboardType::Clipboard => ClipboardType::Clipboard,
-            crate::ClipboardType::Primary => ClipboardType::Primary,
+            crate::ClipboardMode::Clipboard => ClipboardMode::Clipboard,
+            crate::ClipboardMode::Selection => ClipboardMode::Selection,
         }
     }
 }
 
-impl From<crate::ClipboardType> for i32 {
-    fn from(t: crate::ClipboardType) -> i32 { t as i32 }
+impl From<crate::ClipboardMode> for i32 {
+    fn from(t: crate::ClipboardMode) -> i32 { t as i32 }
 }
 
 impl From<crate::ClipboardData> for ClipboardData {
     fn from(data: crate::ClipboardData) -> ClipboardData {
+        let crate::ClipboardData { id, data, mode, mime, timestamp } = data;
+        let timestamp =
+            timestamp.duration_since(std::time::UNIX_EPOCH).expect("duration since").as_millis()
+                as u64;
+
         ClipboardData {
-            id: data.id as u64,
+            id: id as u64,
+            data,
+            mode: mode.into(),
+            mime: mime.essence_str().to_owned(),
+            timestamp,
+        }
+    }
+}
+
+impl From<ClipboardData> for crate::ClipboardData {
+    fn from(data: ClipboardData) -> crate::ClipboardData {
+        let timestamp = std::time::UNIX_EPOCH
+            .checked_add(std::time::Duration::from_millis(data.timestamp))
+            .unwrap_or_else(std::time::SystemTime::now);
+
+        let mime = match mime::Mime::from_str(&data.mime) {
+            Ok(m) => m,
+            Err(_) => mime::APPLICATION_OCTET_STREAM,
+        };
+
+        crate::ClipboardData {
+            id: data.id,
             data: data.data,
-            clipboard_type: data.clipboard_type.into(),
-            timestamp: data
-                .timestamp
-                .duration_since(std::time::UNIX_EPOCH)
-                .expect("duration since")
-                .as_millis() as u64,
+            mode: data.mode.into(),
+            mime,
+            timestamp,
         }
     }
 }

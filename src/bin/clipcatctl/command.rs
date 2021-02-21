@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient, MonitorState};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardMode, MonitorState};
 
 use crate::{
     config::Config,
@@ -240,26 +240,31 @@ impl Command {
                     print_list(&mut client, no_id).await?;
                 }
                 Some(SubCommand::Get { id }) => {
-                    let data: String = match id {
+                    let data = match id {
                         Some(id) => client.get(id).await?,
                         None => {
                             let clips = client.list().await?;
                             clips
                                 .into_iter()
-                                .find(|entry| {
-                                    entry.clipboard_type == clipcat::ClipboardType::Clipboard
-                                })
-                                .map(|v| v.data)
+                                .find(|entry| entry.mode == ClipboardMode::Clipboard)
                                 .unwrap_or_default()
                         }
                     };
-                    println!("{}", data);
+                    if data.is_utf8_string() {
+                        println!("{}", data.as_utf8_string());
+                    } else {
+                        println!("{}", data.printable_data(None));
+                    }
                 }
                 Some(SubCommand::Insert { data }) => {
-                    client.insert_clipboard(&data).await?;
+                    client
+                        .insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Clipboard)
+                        .await?;
                 }
                 Some(SubCommand::InsertPrimary { data }) => {
-                    client.insert_primary(&data).await?;
+                    client
+                        .insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Selection)
+                        .await?;
                 }
                 Some(SubCommand::Length) => {
                     let len = client.length().await?;
@@ -267,19 +272,23 @@ impl Command {
                 }
                 Some(SubCommand::Load { file_path }) => {
                     let data = load_file_or_read_stdin(file_path).await?;
-                    client.insert_clipboard(&data).await?;
+                    client
+                        .insert(&data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Clipboard)
+                        .await?;
                 }
                 Some(SubCommand::LoadPrimary { file_path }) => {
                     let data = load_file_or_read_stdin(file_path).await?;
-                    client.insert_primary(&data).await?;
+                    client
+                        .insert(&data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Selection)
+                        .await?;
                 }
                 Some(SubCommand::Save { file_path }) => {
-                    let data = client.get_current_clipboard().await?;
-                    save_file_or_write_stdout(file_path, data).await?;
+                    let data = client.get_current_clip(ClipboardMode::Clipboard).await?;
+                    save_file_or_write_stdout(file_path, data.as_bytes()).await?;
                 }
                 Some(SubCommand::SavePrimary { file_path }) => {
-                    let data = client.get_current_primary().await?;
-                    save_file_or_write_stdout(file_path, data).await?;
+                    let data = client.get_current_clip(ClipboardMode::Selection).await?;
+                    save_file_or_write_stdout(file_path, data.as_bytes()).await?;
                 }
                 Some(SubCommand::Remove { ids }) => {
                     let ids: Vec<u64> = ids
@@ -304,27 +313,40 @@ impl Command {
                 }
                 Some(SubCommand::Edit { id, editor }) => {
                     let data = client.get(id).await?;
-                    let editor = ExternalEditor::new(editor);
-                    let data = editor.execute(&data).await.context(error::CallEditor)?;
-                    let (ok, new_id) = client.update(id, &data).await?;
-                    if ok {
-                        println!("{:016x}", new_id);
+                    if data.is_utf8_string() {
+                        let editor = ExternalEditor::new(editor);
+                        let data = editor
+                            .execute(&data.as_utf8_string())
+                            .await
+                            .context(error::CallEditor)?;
+                        let (ok, new_id) =
+                            client.update(id, data.as_bytes(), mime::TEXT_PLAIN_UTF_8).await?;
+                        if ok {
+                            println!("{:016x}", new_id);
+                        }
+                        client.mark(new_id, ClipboardMode::Clipboard).await?;
+                    } else {
+                        println!(
+                            "{:016x} is a {}, you could not edit with text editor",
+                            id,
+                            data.mime_str()
+                        );
                     }
-                    client.mark_as_clipboard(new_id).await?;
                 }
                 Some(SubCommand::Update { id, data }) => {
-                    let (ok, new_id) = client.update(id, &data).await?;
+                    let (ok, new_id) =
+                        client.update(id, data.as_bytes(), mime::TEXT_PLAIN_UTF_8).await?;
                     if ok {
                         println!("{:016x}", new_id);
                     }
                 }
                 Some(SubCommand::MarkAsClipboard { id }) => {
-                    if client.mark_as_clipboard(id).await? {
+                    if client.mark(id, ClipboardMode::Clipboard).await? {
                         println!("Ok");
                     }
                 }
                 Some(SubCommand::MarkAsPrimary { id }) => {
-                    if client.mark_as_primary(id).await? {
+                    if client.mark(id, ClipboardMode::Clipboard).await? {
                         println!("Ok");
                     }
                 }

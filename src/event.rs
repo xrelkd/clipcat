@@ -3,28 +3,29 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use crate::{ClipboardData, ClipboardType};
+use caracal::MimeData;
+
+use crate::{ClipboardData, ClipboardMode};
 
 #[derive(Debug, Clone, Eq)]
 pub struct ClipboardEvent {
-    pub data: String,
-    pub clipboard_type: ClipboardType,
+    pub data: Vec<u8>,
+    pub mime: mime::Mime,
+    pub mode: ClipboardMode,
 }
 
 impl ClipboardEvent {
-    pub fn new_clipboard<S: ToString>(data: S) -> ClipboardEvent {
-        ClipboardEvent { data: data.to_string(), clipboard_type: ClipboardType::Clipboard }
-    }
-
-    pub fn new_primary<S: ToString>(data: S) -> ClipboardEvent {
-        ClipboardEvent { data: data.to_string(), clipboard_type: ClipboardType::Primary }
+    #[inline]
+    pub fn new(data: MimeData, mode: ClipboardMode) -> ClipboardEvent {
+        let (mime, data) = data.destruct();
+        ClipboardEvent { data, mime, mode }
     }
 }
 
 impl From<ClipboardData> for ClipboardEvent {
     fn from(data: ClipboardData) -> ClipboardEvent {
-        let ClipboardData { data, clipboard_type, .. } = data;
-        ClipboardEvent { data, clipboard_type }
+        let ClipboardData { data, mime, mode, .. } = data;
+        ClipboardEvent { data, mime, mode }
     }
 }
 
@@ -37,7 +38,7 @@ impl PartialOrd for ClipboardEvent {
 }
 
 impl Ord for ClipboardEvent {
-    fn cmp(&self, other: &Self) -> Ordering { self.clipboard_type.cmp(&other.clipboard_type) }
+    fn cmp(&self, other: &Self) -> Ordering { self.mode.cmp(&other.mode) }
 }
 
 impl Hash for ClipboardEvent {

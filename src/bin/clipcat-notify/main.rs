@@ -2,15 +2,15 @@ use snafu::{ResultExt, Snafu};
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{ClipboardMonitor, ClipboardMonitorOptions, ClipboardType};
+use clipcat::ClipboardMode;
 
 #[derive(Debug, Snafu)]
 enum Error {
     #[snafu(display("Could not initialize tokio Runtime, error: {}", source))]
     InitializeTokioRuntime { source: std::io::Error },
 
-    #[snafu(display("Could not create ClipboardMonitor, error: {}", source))]
-    InitializeClipboardMonitor { source: clipcat::ClipboardError },
+    #[snafu(display("Could not create ClipboardDriver, error: {}", source))]
+    InitializeClipboardDriver { source: clipcat::ClipboardError },
 
     #[snafu(display("Could not wait for clipboard event"))]
     WaitForClipboardEvent,
@@ -68,19 +68,19 @@ impl Command {
             return Err(Error::MonitorNothing);
         }
 
-        let monitor_opts =
-            ClipboardMonitorOptions { load_current: false, enable_clipboard, enable_primary };
-        let monitor = ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
         let runtime = Runtime::new().context(InitializeTokioRuntime)?;
         runtime.block_on(async {
-            let mut event_recv = monitor.subscribe();
-            while let Ok(event) = event_recv.recv().await {
-                match event.clipboard_type {
-                    ClipboardType::Clipboard if enable_clipboard => return Ok(()),
-                    ClipboardType::Primary if enable_primary => return Ok(()),
+            let clipboard_driver = clipcat::driver::new().context(InitializeClipboardDriver)?;
+            let mut subscriber = clipboard_driver.subscribe().unwrap();
+            while let Some(mode) = subscriber.next().await {
+                match mode {
+                    ClipboardMode::Clipboard if enable_clipboard => return Ok(()),
+                    ClipboardMode::Selection if enable_primary => return Ok(()),
                     _ => continue,
                 }
             }
+
+            drop(clipboard_driver);
 
             Err(Error::WaitForClipboardEvent)
         })?;

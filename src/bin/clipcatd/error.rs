@@ -13,6 +13,9 @@ pub enum Error {
     #[snafu(display("Could not load config error: {}", source))]
     LoadConfig { source: ConfigError },
 
+    #[snafu(display("Could not create clipboard driver, error: {}", source))]
+    CreateClipboardDriver { source: clipcat::ClipboardError },
+
     #[snafu(display("Could not create HistoryManager, error: {}", source))]
     CreateHistoryManager { source: HistoryError },
 

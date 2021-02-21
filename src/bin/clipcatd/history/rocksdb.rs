@@ -10,10 +10,61 @@ use clipcat::ClipboardData;
 
 use crate::history::{HistoryDriver, HistoryError};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ClipboardValue {
-    pub data: String,
-    pub timestamp: SystemTime,
+mod v2 {
+    use std::time::SystemTime;
+
+    use clipcat::{deserialize_mime, serialize_mime, ClipboardData, ClipboardMode};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ClipboardValue {
+        pub data: Vec<u8>,
+        #[serde(serialize_with = "serialize_mime", deserialize_with = "deserialize_mime")]
+        pub mime: mime::Mime,
+        pub timestamp: SystemTime,
+    }
+
+    impl ClipboardValue {
+        pub fn into_data(self, id: u64) -> ClipboardData {
+            ClipboardData {
+                id,
+                data: self.data,
+                mime: self.mime,
+                timestamp: self.timestamp,
+                mode: ClipboardMode::Selection,
+            }
+        }
+    }
+
+    impl From<ClipboardData> for ClipboardValue {
+        fn from(data: ClipboardData) -> ClipboardValue {
+            let ClipboardData { data, mime, timestamp, .. } = data;
+            ClipboardValue { data, mime, timestamp }
+        }
+    }
+}
+
+mod v1 {
+    use std::time::SystemTime;
+
+    use clipcat::{ClipboardData, ClipboardMode};
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ClipboardValue {
+        pub data: String,
+        pub timestamp: SystemTime,
+    }
+
+    impl ClipboardValue {
+        pub fn into_data(self, id: u64) -> ClipboardData {
+            ClipboardData {
+                id,
+                data: Vec::from(self.data.as_bytes()),
+                mime: mime::TEXT_PLAIN_UTF_8,
+                timestamp: self.timestamp,
+                mode: ClipboardMode::Selection,
+            }
+        }
+    }
 }
 
 pub struct RocksDBDriver {
@@ -40,23 +91,23 @@ impl RocksDBDriver {
     }
 
     fn deserialize_data(id: u64, raw_data: &[u8]) -> Option<ClipboardData> {
-        use clipcat::ClipboardType;
+        if let Ok(data) =
+            bincode::deserialize::<v2::ClipboardValue>(&raw_data).map(|value| value.into_data(id))
+        {
+            return Some(data);
+        }
 
-        bincode::deserialize::<ClipboardValue>(&raw_data)
-            .map(|value| ClipboardData {
-                id,
-                data: value.data.clone(),
-                timestamp: value.timestamp,
-                clipboard_type: ClipboardType::Primary,
-            })
+        tracing::info!("Try to deserialize with v1::ClipboardValue");
+        bincode::deserialize::<v1::ClipboardValue>(&raw_data)
+            .map(|value| value.into_data(id))
             .map_err(|_| {
-                tracing::warn!("Failed to deserialize ClipboardValue");
+                tracing::warn!("Failed to deserialize v1::ClipboardValue");
             })
             .ok()
     }
 
     fn serialize_data(data: &ClipboardData) -> Vec<u8> {
-        let value = ClipboardValue { data: data.data.clone(), timestamp: data.timestamp };
+        let value = v2::ClipboardValue::from(data.clone());
         bincode::serialize(&value).expect("ClipboardData is serializable")
     }
 
