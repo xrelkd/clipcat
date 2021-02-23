@@ -3,7 +3,7 @@ use std::sync::Arc;
 use snafu::ResultExt;
 use tokio::sync::{mpsc, Mutex};
 
-use clipcat::{ClipboardManager, ClipboardMonitor};
+use clipcat::{driver, ClipboardManager, ClipboardMonitor};
 
 use crate::{
     config::Config,
@@ -27,6 +27,8 @@ pub async fn start(config: Config) -> Result<(), Error> {
         .parse()
         .context(error::ParseSockAddr)?;
 
+    let clipboard_driver = driver::new_shared().context(error::CreateClipboardDriver)?;
+
     let (clipboard_manager, history_manager) = {
         let file_path = config.history_file_path;
 
@@ -40,7 +42,8 @@ pub async fn start(config: Config) -> Result<(), Error> {
         tracing::info!("{} clip(s) loaded", clip_count);
 
         tracing::info!("Initialize ClipboardManager with capacity {}", config.max_history);
-        let mut clipboard_manager = ClipboardManager::with_capacity(config.max_history);
+        let mut clipboard_manager =
+            ClipboardManager::with_capacity(clipboard_driver.clone(), config.max_history);
 
         tracing::info!("Import {} clip(s) into ClipboardManager", clip_count);
         clipboard_manager.import(&history_clips);
@@ -54,7 +57,8 @@ pub async fn start(config: Config) -> Result<(), Error> {
 
     let monitor_opts = config.monitor.into();
     let clipboard_monitor = {
-        let monitor = ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitor)?;
+        let monitor = ClipboardMonitor::new(clipboard_driver.clone(), monitor_opts)
+            .context(error::CreateClipboardMonitor)?;
         Arc::new(Mutex::new(monitor))
     };
 

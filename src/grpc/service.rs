@@ -1,18 +1,15 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use tokio::sync::Mutex;
-
 use tonic::{Request, Response, Status};
 
 use crate::{
     grpc::protobuf::{
         manager_server::Manager, monitor_server::Monitor, BatchRemoveRequest, BatchRemoveResponse,
         ClearRequest, ClearResponse, DisableMonitorRequest, EnableMonitorRequest,
-        GetCurrentClipboardRequest, GetCurrentClipboardResponse, GetCurrentPrimaryRequest,
-        GetCurrentPrimaryResponse, GetMonitorStateRequest, GetRequest, GetResponse, InsertRequest,
-        InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse,
-        MarkAsClipboardRequest, MarkAsClipboardResponse, MarkAsPrimaryRequest,
-        MarkAsPrimaryResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
+        GetCurrentClipRequest, GetCurrentClipResponse, GetMonitorStateRequest, GetRequest,
+        GetResponse, InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest,
+        ListResponse, MarkRequest, MarkResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
         ToggleMonitorRequest, UpdateRequest, UpdateResponse,
     },
     ClipboardManager, ClipboardMonitor,
@@ -34,16 +31,12 @@ impl Manager for ManagerService {
         &self,
         request: Request<InsertRequest>,
     ) -> Result<Response<InsertResponse>, Status> {
-        let InsertRequest { data, clipboard_type } = request.into_inner();
-        let clipboard_type = clipboard_type.into();
+        let InsertRequest { data, mime, mode } = request.into_inner();
         let id = {
+            let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            let id = manager.insert(crate::ClipboardData::new(&data, clipboard_type));
-
-            if clipboard_type == crate::ClipboardType::Clipboard {
-                let _ = manager.mark_as_clipboard(id).await;
-            }
-
+            let id = manager.insert(crate::ClipboardData::new(&data, mime, mode.into()));
+            let _ = manager.mark(id, mode.into()).await;
             id
         };
         Ok(Response::new(InsertResponse { id }))
@@ -93,26 +86,16 @@ impl Manager for ManagerService {
         Ok(Response::new(GetResponse { data }))
     }
 
-    async fn get_current_clipboard(
+    async fn get_current_clip(
         &self,
-        _request: Request<GetCurrentClipboardRequest>,
-    ) -> Result<Response<GetCurrentClipboardResponse>, Status> {
+        request: Request<GetCurrentClipRequest>,
+    ) -> Result<Response<GetCurrentClipResponse>, Status> {
         let data = {
+            let mode = request.into_inner().mode.into();
             let manager = self.manager.lock().await;
-            manager.get_current_clipboard().map(|clip| clip.clone().into())
+            manager.get_current_clip(mode).map(|clip| clip.clone().into())
         };
-        Ok(Response::new(GetCurrentClipboardResponse { data }))
-    }
-
-    async fn get_current_primary(
-        &self,
-        _request: Request<GetCurrentPrimaryRequest>,
-    ) -> Result<Response<GetCurrentPrimaryResponse>, Status> {
-        let data = {
-            let manager = self.manager.lock().await;
-            manager.get_current_primary().map(|clip| clip.clone().into())
-        };
-        Ok(Response::new(GetCurrentPrimaryResponse { data }))
+        Ok(Response::new(GetCurrentClipResponse { data }))
     }
 
     async fn list(&self, _request: Request<ListRequest>) -> Result<Response<ListResponse>, Status> {
@@ -127,36 +110,22 @@ impl Manager for ManagerService {
         &self,
         request: Request<UpdateRequest>,
     ) -> Result<Response<UpdateResponse>, Status> {
-        let UpdateRequest { id, data } = request.into_inner();
+        let UpdateRequest { id, data, mime } = request.into_inner();
         let (ok, new_id) = {
+            let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            manager.replace(id, &data)
+            manager.replace(id, &data, mime)
         };
         Ok(Response::new(UpdateResponse { ok, new_id }))
     }
 
-    async fn mark_as_clipboard(
-        &self,
-        request: Request<MarkAsClipboardRequest>,
-    ) -> Result<Response<MarkAsClipboardResponse>, Status> {
-        let MarkAsClipboardRequest { id } = request.into_inner();
+    async fn mark(&self, request: Request<MarkRequest>) -> Result<Response<MarkResponse>, Status> {
+        let MarkRequest { id, mode } = request.into_inner();
         let ok = {
             let mut manager = self.manager.lock().await;
-            manager.mark_as_clipboard(id).await.is_ok()
+            manager.mark(id, mode.into()).await.is_ok()
         };
-        Ok(Response::new(MarkAsClipboardResponse { ok }))
-    }
-
-    async fn mark_as_primary(
-        &self,
-        request: Request<MarkAsPrimaryRequest>,
-    ) -> Result<Response<MarkAsPrimaryResponse>, Status> {
-        let MarkAsPrimaryRequest { id } = request.into_inner();
-        let ok = {
-            let mut manager = self.manager.lock().await;
-            manager.mark_as_primary(id).await.is_ok()
-        };
-        Ok(Response::new(MarkAsPrimaryResponse { ok }))
+        Ok(Response::new(MarkResponse { ok }))
     }
 
     async fn length(
@@ -193,7 +162,6 @@ impl Monitor for MonitorService {
             monitor.enable();
             MonitorStateReply { state: monitor.state().into() }
         };
-        dbg!(&state);
 
         Ok(Response::new(state))
     }

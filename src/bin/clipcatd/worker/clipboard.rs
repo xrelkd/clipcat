@@ -6,7 +6,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-use clipcat::{ClipboardData, ClipboardEvent, ClipboardManager, ClipboardMonitor, ClipboardType};
+use clipcat::{ClipboardData, ClipboardEvent, ClipboardManager, ClipboardMode, ClipboardMonitor};
 
 use crate::{
     error::Error,
@@ -76,12 +76,22 @@ impl ClipboardWorker {
             }
             Err(broadcast::error::RecvError::Lagged(_)) => {}
             Ok(event) => {
-                match event.clipboard_type {
-                    ClipboardType::Clipboard => tracing::info!("Clipboard [{:?}]", event.data),
-                    ClipboardType::Primary => tracing::info!("Primary [{:?}]", event.data),
+                let data = ClipboardData::from(event);
+                match data.mode {
+                    ClipboardMode::Clipboard => {
+                        tracing::info!(
+                            "On new event: Clipboard [{}]",
+                            data.printable_data(Some(20))
+                        )
+                    }
+                    ClipboardMode::Selection => {
+                        tracing::info!(
+                            "On new event: Selection [{}]",
+                            data.printable_data(Some(20))
+                        )
+                    }
                 }
 
-                let data = ClipboardData::from(event);
                 self.clipboard_manager.lock().await.insert(data.clone());
                 let _ = self.history_manager.lock().await.put(&data);
             }

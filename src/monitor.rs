@@ -1,22 +1,20 @@
 use std::{
+    collections::HashMap,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread,
 };
 
-use snafu::ResultExt;
-use tokio::sync::broadcast::{self, error::SendError};
-use x11_clipboard::Clipboard;
+use caracal::MimeData;
+use snafu::OptionExt;
+use tokio::{sync::broadcast, task};
 
-use crate::{error, ClipboardError, ClipboardEvent, ClipboardType, MonitorState};
+use crate::{error, ClipboardDriver, ClipboardError, ClipboardEvent, ClipboardMode, MonitorState};
 
 pub struct ClipboardMonitor {
-    is_running: Arc<AtomicBool>,
+    is_monitoring: Arc<AtomicBool>,
     event_sender: broadcast::Sender<ClipboardEvent>,
-    clipboard_thread: Option<thread::JoinHandle<()>>,
-    primary_thread: Option<thread::JoinHandle<()>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -33,38 +31,97 @@ impl Default for ClipboardMonitorOptions {
 }
 
 impl ClipboardMonitor {
-    pub fn new(opts: ClipboardMonitorOptions) -> Result<ClipboardMonitor, ClipboardError> {
-        let (event_sender, _event_receiver) = broadcast::channel(16);
+    pub fn new(
+        driver: Arc<dyn ClipboardDriver>,
+        opts: ClipboardMonitorOptions,
+    ) -> Result<ClipboardMonitor, ClipboardError> {
+        let enabled_modes = {
+            let mut modes = Vec::new();
 
-        let is_running = Arc::new(AtomicBool::new(true));
-        let mut monitor = ClipboardMonitor {
-            is_running: is_running.clone(),
-            event_sender: event_sender.clone(),
-            clipboard_thread: None,
-            primary_thread: None,
+            if opts.enable_clipboard {
+                modes.push(ClipboardMode::Clipboard)
+            }
+
+            if opts.enable_primary {
+                modes.push(ClipboardMode::Selection)
+            }
+
+            if modes.is_empty() {
+                tracing::warn!("Both clipboard and selection are not monitored");
+            }
+
+            modes
         };
 
-        if opts.enable_clipboard {
-            let thread = build_thread(
-                opts.load_current,
-                is_running.clone(),
-                ClipboardType::Clipboard,
-                event_sender.clone(),
-            )?;
-            monitor.clipboard_thread = Some(thread);
-        }
+        let (event_sender, _event_receiver) = broadcast::channel(16);
+        let is_monitoring = Arc::new(AtomicBool::new(true));
 
-        if opts.enable_primary {
-            let thread =
-                build_thread(opts.load_current, is_running, ClipboardType::Primary, event_sender)?;
-            monitor.primary_thread = Some(thread);
-        }
+        let _: task::JoinHandle<Result<(), ClipboardError>> = task::spawn({
+            let event_sender = event_sender.clone();
+            let is_monitoring = is_monitoring.clone();
 
-        if monitor.clipboard_thread.is_none() && monitor.primary_thread.is_none() {
-            tracing::warn!("Both clipboard and primary are not monitored");
-        }
+            let mut subscriber = driver.subscribe()?;
+            async move {
+                let mut current_data: HashMap<ClipboardMode, MimeData> = HashMap::new();
+                if opts.load_current {
+                    for mode in &enabled_modes {
+                        match driver.load_mime_data(*mode).await {
+                            Ok(data) => {
+                                current_data.insert(*mode, data.clone());
+                                if let Err(_err) =
+                                    event_sender.send(ClipboardEvent::new(data, *mode))
+                                {
+                                    tracing::info!("ClipboardEvent receiver is closed.");
+                                    return Err(ClipboardError::SendClipboardEvent);
+                                }
+                            }
+                            Err(ClipboardError::EmptyClipboard) => continue,
+                            Err(ClipboardError::MatchMime { .. }) => continue,
+                            Err(ClipboardError::UnknownContentType) => continue,
+                            Err(err) => return Err(err),
+                        }
+                    }
+                }
 
-        Ok(monitor)
+                loop {
+                    let mode = subscriber.next().await.context(error::SubscriberClosed)?;
+
+                    if is_monitoring.load(Ordering::Relaxed) && enabled_modes.contains(&mode) {
+                        let new_data = match driver.load_mime_data(mode).await {
+                            Ok(new_data) => match current_data.get(&mode) {
+                                Some(current_data) if new_data != *current_data => new_data,
+                                None => new_data,
+                                _ => continue,
+                            },
+                            Err(ClipboardError::EmptyClipboard) => continue,
+                            Err(ClipboardError::MatchMime { .. }) => continue,
+                            Err(ClipboardError::UnknownContentType) => continue,
+                            Err(err) => {
+                                tracing::error!(
+                                    "Failed to load clipboard, error: {}, ClipboardMonitor({:?}) \
+                                     is closing",
+                                    err,
+                                    mode
+                                );
+                                return Err(err);
+                            }
+                        };
+
+                        let send_event_result = {
+                            current_data.insert(mode, new_data.clone());
+                            event_sender.send(ClipboardEvent::new(new_data, mode))
+                        };
+
+                        if let Err(_err) = send_event_result {
+                            tracing::info!("ClipboardEvent receiver is closed.");
+                            return Err(ClipboardError::SendClipboardEvent);
+                        }
+                    }
+                }
+            }
+        });
+
+        Ok(ClipboardMonitor { is_monitoring, event_sender })
     }
 
     #[inline]
@@ -72,19 +129,19 @@ impl ClipboardMonitor {
 
     #[inline]
     pub fn enable(&mut self) {
-        self.is_running.store(true, Ordering::Release);
+        self.is_monitoring.store(true, Ordering::Release);
         tracing::info!("ClipboardWorker is monitoring for clipboard");
     }
 
     #[inline]
     pub fn disable(&mut self) {
-        self.is_running.store(false, Ordering::Release);
+        self.is_monitoring.store(false, Ordering::Release);
         tracing::info!("ClipboardWorker is not monitoring for clipboard");
     }
 
     #[inline]
     pub fn toggle(&mut self) {
-        if self.is_running() {
+        if self.is_monitoring() {
             self.disable();
         } else {
             self.enable();
@@ -92,87 +149,14 @@ impl ClipboardMonitor {
     }
 
     #[inline]
-    pub fn is_running(&self) -> bool { self.is_running.load(Ordering::Acquire) }
+    pub fn is_monitoring(&self) -> bool { self.is_monitoring.load(Ordering::Acquire) }
 
     #[inline]
     pub fn state(&self) -> MonitorState {
-        if self.is_running() {
+        if self.is_monitoring() {
             MonitorState::Enabled
         } else {
             MonitorState::Disabled
         }
     }
-}
-
-fn build_thread(
-    load_current: bool,
-    is_running: Arc<AtomicBool>,
-    clipboard_type: ClipboardType,
-    sender: broadcast::Sender<ClipboardEvent>,
-) -> Result<thread::JoinHandle<()>, ClipboardError> {
-    let send_event = move |data: &str| {
-        let event = match clipboard_type {
-            ClipboardType::Clipboard => ClipboardEvent::new_clipboard(data),
-            ClipboardType::Primary => ClipboardEvent::new_primary(data),
-        };
-        sender.send(event)
-    };
-
-    let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
-    let atom_clipboard = match clipboard_type {
-        ClipboardType::Clipboard => clipboard.getter.atoms.clipboard,
-        ClipboardType::Primary => clipboard.getter.atoms.primary,
-    };
-    let atom_utf8string = clipboard.getter.atoms.utf8_string;
-    let atom_property = clipboard.getter.atoms.property;
-
-    let join_handle = thread::spawn(move || {
-        let mut last = if load_current {
-            let result = clipboard.load(atom_clipboard, atom_utf8string, atom_property, None);
-            match result {
-                Ok(data) => {
-                    let data = String::from_utf8_lossy(&data);
-                    if !data.is_empty() {
-                        if let Err(SendError(_curr)) = send_event(&data) {
-                            tracing::info!("ClipboardEvent receiver is closed.");
-                            return;
-                        }
-                    }
-                    data.into_owned()
-                }
-                Err(_) => String::new(),
-            }
-        } else {
-            String::new()
-        };
-
-        loop {
-            let result = clipboard.load_wait(atom_clipboard, atom_utf8string, atom_property);
-            match result {
-                Ok(curr) => {
-                    if is_running.load(Ordering::Acquire) {
-                        let curr = String::from_utf8_lossy(&curr);
-                        if !curr.is_empty() && last != curr {
-                            last = curr.into_owned();
-                            if let Err(SendError(_curr)) = send_event(&last) {
-                                tracing::info!("ClipboardEvent receiver is closed.");
-                                return;
-                            };
-                        }
-                    }
-                }
-                Err(err) => {
-                    drop(clipboard);
-                    tracing::error!(
-                        "Failed to load clipboard, error: {}, ClipboardMonitor({:?}) is closing",
-                        err,
-                        clipboard_type
-                    );
-                    return;
-                }
-            }
-        }
-    });
-
-    Ok(join_handle)
 }

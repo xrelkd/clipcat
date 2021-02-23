@@ -7,8 +7,11 @@ extern crate snafu;
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
+    str::FromStr,
     time::SystemTime,
 };
+
+use serde::{Deserialize, Deserializer, Serializer};
 
 #[cfg(feature = "app")]
 use app_dirs::AppInfo;
@@ -19,6 +22,8 @@ mod error;
 mod event;
 
 #[cfg(feature = "monitor")]
+pub mod driver;
+#[cfg(feature = "monitor")]
 mod manager;
 #[cfg(feature = "monitor")]
 mod monitor;
@@ -27,6 +32,8 @@ pub mod editor;
 
 pub use self::{error::ClipboardError, event::ClipboardEvent};
 
+#[cfg(feature = "monitor")]
+pub use self::driver::{ClipboardDriver, MockClipboardDriver, Subscriber, X11ClipboardDriver};
 #[cfg(feature = "monitor")]
 pub use self::manager::ClipboardManager;
 #[cfg(feature = "monitor")]
@@ -56,17 +63,41 @@ pub const DEFAULT_WEBUI_PORT: u16 = 45046;
 pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
 
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Hash)]
-pub enum ClipboardType {
+pub enum ClipboardMode {
     Clipboard = 0,
-    Primary = 1,
+    Selection = 1,
 }
 
-impl From<i32> for ClipboardType {
-    fn from(n: i32) -> ClipboardType {
+impl ClipboardMode {
+    fn as_str(&self) -> &str {
+        match self {
+            ClipboardMode::Clipboard => "Clipboard",
+            ClipboardMode::Selection => "Selection",
+        }
+    }
+}
+
+impl std::fmt::Display for ClipboardMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl From<caracal::Mode> for ClipboardMode {
+    fn from(mode: caracal::Mode) -> ClipboardMode {
+        match mode {
+            caracal::Mode::Clipboard => ClipboardMode::Clipboard,
+            caracal::Mode::Selection => ClipboardMode::Selection,
+        }
+    }
+}
+
+impl From<i32> for ClipboardMode {
+    fn from(n: i32) -> ClipboardMode {
         match n {
-            0 => ClipboardType::Clipboard,
-            1 => ClipboardType::Primary,
-            _ => ClipboardType::Primary,
+            0 => ClipboardMode::Clipboard,
+            1 => ClipboardMode::Selection,
+            _ => ClipboardMode::Selection,
         }
     }
 }
@@ -74,44 +105,48 @@ impl From<i32> for ClipboardType {
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct ClipboardData {
     pub id: u64,
-    pub data: String,
-    pub clipboard_type: ClipboardType,
+    pub data: Vec<u8>,
+    pub mode: ClipboardMode,
     pub timestamp: SystemTime,
+
+    #[serde(serialize_with = "serialize_mime", deserialize_with = "deserialize_mime")]
+    pub mime: mime::Mime,
 }
 
 impl ClipboardData {
-    pub fn new(data: &str, clipboard_type: ClipboardType) -> ClipboardData {
-        match clipboard_type {
-            ClipboardType::Clipboard => Self::new_clipboard(data),
-            ClipboardType::Primary => Self::new_primary(data),
-        }
-    }
-
-    pub fn new_clipboard(data: &str) -> ClipboardData {
+    #[inline]
+    pub fn new(data: &[u8], mime: mime::Mime, clipboard_mode: ClipboardMode) -> ClipboardData {
+        let id = Self::compute_id(data);
         ClipboardData {
-            id: Self::compute_id(data),
-            data: data.to_owned(),
-            clipboard_type: ClipboardType::Clipboard,
-            timestamp: SystemTime::now(),
-        }
-    }
-
-    pub fn new_primary(data: &str) -> ClipboardData {
-        ClipboardData {
-            id: Self::compute_id(data),
-            data: data.to_owned(),
-            clipboard_type: ClipboardType::Primary,
+            id,
+            data: data.into(),
+            mime,
+            mode: clipboard_mode,
             timestamp: SystemTime::now(),
         }
     }
 
     #[inline]
-    pub fn compute_id(data: &str) -> u64 {
+    pub fn from_string<S: ToString>(s: S, clipboard_mode: ClipboardMode) -> ClipboardData {
+        Self::new(s.to_string().as_bytes(), mime::TEXT_PLAIN_UTF_8, clipboard_mode)
+    }
+
+    #[inline]
+    pub fn compute_id(data: &[u8]) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         let mut s = DefaultHasher::new();
         data.hash(&mut s);
         s.finish()
     }
+
+    #[inline]
+    pub fn is_text(&self) -> bool { self.mime.type_() == mime::TEXT }
+
+    #[inline]
+    pub fn is_utf8_string(&self) -> bool { self.mime.get_param(mime::CHARSET) == Some(mime::UTF_8) }
+
+    #[inline]
+    pub fn as_utf8_string(&self) -> String { String::from_utf8_lossy(&self.data).into() }
 
     pub fn printable_data(&self, line_length: Option<usize>) -> String {
         fn truncate(s: &str, max_chars: usize) -> &str {
@@ -121,7 +156,19 @@ impl ClipboardData {
             }
         }
 
-        let data = self.data.clone();
+        let data: String = {
+            if self.is_utf8_string() || self.is_text() {
+                self.as_utf8_string()
+            } else {
+                format!(
+                    "type: {}, size: {}, time: {:?}",
+                    self.mime.essence_str(),
+                    self.data.len(),
+                    self.timestamp
+                )
+            }
+        };
+
         let data = match line_length {
             None | Some(0) => data,
             Some(limit) => {
@@ -146,24 +193,27 @@ impl ClipboardData {
     }
 
     #[inline]
-    pub fn mark_as_clipboard(&mut self) {
-        self.clipboard_type = ClipboardType::Clipboard;
+    pub fn mark(&mut self, clipboard_mode: ClipboardMode) {
+        self.mode = clipboard_mode;
         self.timestamp = SystemTime::now();
     }
 
     #[inline]
-    pub fn mark_as_primary(&mut self) {
-        self.clipboard_type = ClipboardType::Primary;
-        self.timestamp = SystemTime::now();
-    }
+    pub fn as_bytes(&self) -> &[u8] { &self.data }
+
+    #[inline]
+    pub fn mime(&self) -> &mime::Mime { &self.mime }
+
+    #[inline]
+    pub fn mime_str(&self) -> &str { &self.mime.essence_str() }
 }
 
 impl From<ClipboardEvent> for ClipboardData {
     fn from(event: ClipboardEvent) -> ClipboardData {
-        let ClipboardEvent { data, clipboard_type } = event;
+        let ClipboardEvent { data, mime, mode } = event;
         let id = Self::compute_id(&data);
         let timestamp = SystemTime::now();
-        ClipboardData { id, data, clipboard_type, timestamp }
+        ClipboardData { id, data, mime, mode, timestamp }
     }
 }
 
@@ -172,7 +222,8 @@ impl Default for ClipboardData {
         ClipboardData {
             id: 0,
             data: Default::default(),
-            clipboard_type: ClipboardType::Primary,
+            mime: mime::TEXT_PLAIN_UTF_8,
+            mode: ClipboardMode::Selection,
             timestamp: SystemTime::UNIX_EPOCH,
         }
     }
@@ -189,7 +240,7 @@ impl PartialOrd for ClipboardData {
 impl Ord for ClipboardData {
     fn cmp(&self, other: &Self) -> Ordering {
         match other.timestamp.cmp(&self.timestamp) {
-            Ordering::Equal => self.clipboard_type.cmp(&other.clipboard_type),
+            Ordering::Equal => self.mode.cmp(&other.mode),
             ord => ord,
         }
     }
@@ -212,4 +263,20 @@ impl From<i32> for crate::MonitorState {
             _ => crate::MonitorState::Disabled,
         }
     }
+}
+
+pub fn serialize_mime<S>(mime: &mime::Mime, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(mime.essence_str())
+}
+
+pub fn deserialize_mime<'de, D>(deserializer: D) -> Result<mime::Mime, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let mime = mime::Mime::from_str(s.as_str()).unwrap_or(mime::APPLICATION_OCTET_STREAM);
+    Ok(mime)
 }

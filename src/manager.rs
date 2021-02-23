@@ -1,34 +1,32 @@
-use std::{collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, sync::Arc, time::SystemTime};
 
-use snafu::ResultExt;
+use caracal::MimeData;
 
-use crate::{error, ClipboardData, ClipboardError, ClipboardType};
+use crate::{driver::ClipboardDriver, ClipboardData, ClipboardError, ClipboardMode};
 
 const DEFAULT_CAPACITY: usize = 40;
 
 pub struct ClipboardManager {
+    driver: Arc<dyn ClipboardDriver>,
     clips: HashMap<u64, ClipboardData>,
     capacity: usize,
-    current_clipboard: Option<ClipboardData>,
-    current_primary: Option<ClipboardData>,
-}
-
-impl Default for ClipboardManager {
-    fn default() -> ClipboardManager { Self::with_capacity(DEFAULT_CAPACITY) }
+    current_clips: HashMap<ClipboardMode, ClipboardData>,
 }
 
 impl ClipboardManager {
-    pub fn with_capacity(capacity: usize) -> ClipboardManager {
+    pub fn with_capacity(driver: Arc<dyn ClipboardDriver>, capacity: usize) -> ClipboardManager {
         ClipboardManager {
+            driver,
             capacity,
             clips: HashMap::default(),
-            current_clipboard: None,
-            current_primary: None,
+            current_clips: HashMap::default(),
         }
     }
 
     #[inline]
-    pub fn new() -> ClipboardManager { Self::default() }
+    pub fn new(driver: Arc<dyn ClipboardDriver>) -> ClipboardManager {
+        Self::with_capacity(driver, DEFAULT_CAPACITY)
+    }
 
     #[inline]
     pub fn capacity(&self) -> usize { self.capacity }
@@ -58,38 +56,28 @@ impl ClipboardManager {
     pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
-    pub fn get_current_clipboard(&self) -> Option<&ClipboardData> {
-        self.current_clipboard.as_ref()
+    pub fn get_current_clip(&self, t: ClipboardMode) -> Option<&ClipboardData> {
+        self.current_clips.get(&t)
     }
-
-    #[inline]
-    pub fn get_current_primary(&self) -> Option<&ClipboardData> { self.current_primary.as_ref() }
 
     #[inline]
     pub fn insert(&mut self, data: ClipboardData) -> u64 { self.insert_inner(data) }
 
     #[inline]
-    pub fn insert_clipboard(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_clipboard(&data);
+    pub fn insert_clipboard(&mut self, data: &[u8], mime: mime::Mime) -> u64 {
+        let data = ClipboardData::new(data, mime, ClipboardMode::Clipboard);
         self.insert_inner(data)
     }
 
     #[inline]
-    pub fn insert_primary(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_primary(&data);
+    pub fn insert_primary(&mut self, data: &[u8], mime: mime::Mime) -> u64 {
+        let data = ClipboardData::new(data, mime, ClipboardMode::Selection);
         self.insert_inner(data)
     }
 
     fn insert_inner(&mut self, clipboard_data: ClipboardData) -> u64 {
         let id = clipboard_data.id;
-        match clipboard_data.clipboard_type {
-            ClipboardType::Clipboard => {
-                self.current_clipboard = Some(clipboard_data.clone());
-            }
-            ClipboardType::Primary => {
-                self.current_primary = Some(clipboard_data.clone());
-            }
-        }
+        self.current_clips.insert(clipboard_data.mode, clipboard_data.clone());
         self.clips.insert(clipboard_data.id, clipboard_data);
         self.remove_oldest();
         id
@@ -118,15 +106,11 @@ impl ClipboardManager {
 
     #[inline]
     pub fn remove(&mut self, id: u64) -> bool {
-        if let Some(clip) = self.current_clipboard.as_ref() {
-            if clip.id == id {
-                self.current_clipboard.take();
-            }
-        }
-
-        if let Some(clip) = self.current_primary.as_ref() {
-            if clip.id == id {
-                self.current_primary.take();
+        for t in &[ClipboardMode::Clipboard, ClipboardMode::Selection] {
+            if let Some(clip) = self.current_clips.get(t) {
+                if clip.id == id {
+                    self.current_clips.remove(t);
+                }
             }
         }
 
@@ -135,103 +119,76 @@ impl ClipboardManager {
 
     #[inline]
     pub fn clear(&mut self) {
-        self.current_clipboard.take();
-        self.current_primary.take();
+        self.current_clips.clear();
         self.clips.clear();
     }
 
-    pub fn replace(&mut self, old_id: u64, data: &str) -> (bool, u64) {
-        let (clipboard_type, timestamp) = match self.clips.remove(&old_id) {
-            Some(v) => (v.clipboard_type, v.timestamp),
-            None => (ClipboardType::Primary, SystemTime::now()),
+    pub fn replace(&mut self, old_id: u64, data: &[u8], mime: mime::Mime) -> (bool, u64) {
+        let (mode, timestamp) = match self.clips.remove(&old_id) {
+            Some(v) => (v.mode, v.timestamp),
+            None => (ClipboardMode::Selection, SystemTime::now()),
         };
 
         let new_id = ClipboardData::compute_id(data);
         let data = data.to_owned();
-        let data = ClipboardData { id: new_id, data, timestamp, clipboard_type };
+        let data = ClipboardData { id: new_id, data, mode, mime, timestamp };
 
         self.insert_inner(data);
         (true, new_id)
     }
 
-    pub async fn mark_as_clipboard(&mut self, id: u64) -> Result<(), ClipboardError> {
-        if let Some(clip) = self.clips.get_mut(&id) {
-            clip.mark_as_clipboard();
-            let clipboard_content = clip.data.clone();
-            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard).await?;
-        }
-        Ok(())
-    }
-
-    pub async fn mark_as_primary(&mut self, id: u64) -> Result<(), ClipboardError> {
-        if let Some(clip) = self.clips.get_mut(&id) {
-            clip.mark_as_primary();
-            let clipboard_content = clip.data.clone();
-            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Primary).await?;
-        }
-        Ok(())
-    }
-
-    async fn update_sys_clipboard(
-        data: &str,
-        clipboard_type: ClipboardType,
+    pub async fn mark(
+        &mut self,
+        id: u64,
+        clipboard_mode: ClipboardMode,
     ) -> Result<(), ClipboardError> {
-        use x11_clipboard::Clipboard;
-        let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
+        if let Some(clip) = self.clips.get_mut(&id) {
+            clip.mark(clipboard_mode);
+            let data = MimeData::new(clip.mime.clone(), clip.data.clone());
+            self.driver.store_mime_data(data, clipboard_mode).await?;
+        }
 
-        let atom_clipboard = match clipboard_type {
-            ClipboardType::Clipboard => clipboard.setter.atoms.clipboard,
-            ClipboardType::Primary => clipboard.setter.atoms.primary,
-        };
-        let atom_utf8string = clipboard.setter.atoms.utf8_string;
-        let data = data.to_owned();
-
-        tokio::task::spawn_blocking(move || -> Result<(), ClipboardError> {
-            clipboard
-                .store(atom_clipboard, atom_utf8string, data.as_bytes())
-                .context(error::PasteToX11Clipboard)?;
-            Ok(())
-        })
-        .await
-        .context(error::SpawnBlockingTask)??;
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
+    use std::{collections::HashSet, sync::Arc};
 
     use crate::{
         manager::{ClipboardManager, DEFAULT_CAPACITY},
-        ClipboardData, ClipboardType,
+        ClipboardData, ClipboardMode, MockClipboardDriver,
     };
 
     fn create_clips(n: usize) -> Vec<ClipboardData> {
-        (0..n).map(|i| ClipboardData::new_primary(&i.to_string())).collect()
+        (0..n).map(|i| ClipboardData::from_string(&i, ClipboardMode::Selection)).collect()
     }
 
     #[test]
     fn test_construction() {
-        let mgr = ClipboardManager::new();
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mgr = ClipboardManager::new(driver);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), DEFAULT_CAPACITY);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
 
         let cap = 20;
-        let mgr = ClipboardManager::with_capacity(cap);
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mgr = ClipboardManager::with_capacity(driver, cap);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
     }
 
     #[test]
     fn test_zero_capacity() {
-        let mut mgr = ClipboardManager::with_capacity(0);
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mut mgr = ClipboardManager::with_capacity(driver, 0);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), 0);
@@ -244,8 +201,8 @@ mod tests {
 
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
 
         let n = 20;
         let clips = create_clips(n);
@@ -253,14 +210,15 @@ mod tests {
 
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
     }
 
     #[test]
     fn test_capacity() {
+        let driver = Arc::new(MockClipboardDriver::new());
         let cap = 10;
-        let mut mgr = ClipboardManager::with_capacity(cap);
+        let mut mgr = ClipboardManager::with_capacity(driver, cap);
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
 
@@ -285,13 +243,14 @@ mod tests {
     fn test_insert() {
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new();
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mut mgr = ClipboardManager::new(driver);
         clips.iter().for_each(|clip| {
             mgr.insert(clip.clone());
         });
 
-        assert!(mgr.get_current_primary().is_some());
-        assert_eq!(mgr.get_current_primary(), clips.last());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_some());
+        assert_eq!(mgr.get_current_clip(ClipboardMode::Selection), clips.last());
         assert_eq!(mgr.len(), n);
 
         let dumped: HashSet<_> = mgr.list().into_iter().collect();
@@ -304,13 +263,14 @@ mod tests {
     fn test_import() {
         let n = 10;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::with_capacity(20);
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mut mgr = ClipboardManager::with_capacity(driver, 20);
 
         mgr.import(&clips);
         assert_eq!(mgr.len(), n);
 
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
         assert_eq!(mgr.len(), n);
 
         let dumped: HashSet<_> = mgr.list().into_iter().collect();
@@ -321,40 +281,44 @@ mod tests {
 
     #[test]
     fn test_replace() {
+        const MIME: mime::Mime = mime::TEXT_PLAIN_UTF_8;
+
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
-        let clip = ClipboardData::new_clipboard(data1);
-        let mut mgr = ClipboardManager::new();
+        let clip = ClipboardData::new(data1.as_bytes(), MIME, ClipboardMode::Clipboard);
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mut mgr = ClipboardManager::new(driver);
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
 
-        let (ok, new_id) = mgr.replace(old_id, data2);
+        let (ok, new_id) = mgr.replace(old_id, data2.as_bytes(), MIME);
         assert!(ok);
         assert_ne!(old_id, new_id);
         assert_eq!(mgr.len(), 1);
 
         let clip = mgr.get(new_id).unwrap();
-        assert_eq!(clip.data, data2);
-        assert_eq!(clip.clipboard_type, ClipboardType::Clipboard);
+        assert_eq!(&clip.data, data2.as_bytes());
+        assert_eq!(clip.mode, ClipboardMode::Clipboard);
     }
 
     #[test]
     fn test_remove() {
-        let mut mgr = ClipboardManager::new();
+        let driver = Arc::new(MockClipboardDriver::new());
+        let mut mgr = ClipboardManager::new(driver);
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.remove(43), false);
 
-        let clip = ClipboardData::new_primary("АБВГДЕ");
+        let clip = ClipboardData::from_string("АБВГДЕ", ClipboardMode::Selection);
         let id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_some());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_some());
 
         let ok = mgr.remove(id);
         assert!(ok);
         assert_eq!(mgr.len(), 0);
-        assert!(mgr.get_current_clipboard().is_none());
-        assert!(mgr.get_current_primary().is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());
+        assert!(mgr.get_current_clip(ClipboardMode::Selection).is_none());
 
         let ok = mgr.remove(id);
         assert!(!ok);
@@ -362,9 +326,10 @@ mod tests {
 
     #[test]
     fn test_clear() {
+        let driver = Arc::new(MockClipboardDriver::new());
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new();
+        let mut mgr = ClipboardManager::new(driver);
 
         mgr.import(&clips);
         assert!(!mgr.is_empty());

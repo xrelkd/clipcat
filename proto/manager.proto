@@ -6,10 +6,7 @@ service Manager {
   rpc List(ListRequest) returns (ListResponse);
 
   rpc Get(GetRequest) returns (GetResponse);
-  rpc GetCurrentClipboard(GetCurrentClipboardRequest)
-      returns (GetCurrentClipboardResponse);
-  rpc GetCurrentPrimary(GetCurrentPrimaryRequest)
-      returns (GetCurrentPrimaryResponse);
+  rpc GetCurrentClip(GetCurrentClipRequest) returns (GetCurrentClipResponse);
 
   rpc Remove(RemoveRequest) returns (RemoveResponse);
   rpc BatchRemove(BatchRemoveRequest) returns (BatchRemoveResponse);
@@ -18,56 +15,55 @@ service Manager {
   rpc Insert(InsertRequest) returns (InsertResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
 
-  rpc MarkAsClipboard(MarkAsClipboardRequest) returns (MarkAsClipboardResponse);
-  rpc MarkAsPrimary(MarkAsPrimaryRequest) returns (MarkAsPrimaryResponse);
+  rpc Mark(MarkRequest) returns (MarkResponse);
 
   rpc Length(LengthRequest) returns (LengthResponse);
 }
 
-enum ClipboardType {
+enum ClipboardMode {
   Clipboard = 0;
-  Primary = 1;
+  Selection = 1;
 }
 
 message ClipboardData {
   uint64 id = 1;
-  string data = 2;
-  ClipboardType clipboard_type = 3;
-  uint64 timestamp = 4;
+  bytes data = 2;
+  string mime = 3;
+  ClipboardMode mode = 4;
+  uint64 timestamp = 5;
 }
 
 message InsertRequest {
-  ClipboardType clipboard_type = 1;
-  string data = 2;
+  ClipboardMode mode = 1;
+  bytes data = 2;
+  string mime = 3;
 }
 message InsertResponse { uint64 id = 1; }
 
 message GetRequest { uint64 id = 1; }
 message GetResponse { ClipboardData data = 1; }
 
-message GetCurrentClipboardRequest {}
-message GetCurrentClipboardResponse { ClipboardData data = 1; }
-
-message GetCurrentPrimaryRequest {}
-message GetCurrentPrimaryResponse { ClipboardData data = 1; }
+message GetCurrentClipRequest { ClipboardMode mode = 1; }
+message GetCurrentClipResponse { ClipboardData data = 1; }
 
 message ListRequest {}
 message ListResponse { repeated ClipboardData data = 1; }
 
 message UpdateRequest {
   uint64 id = 1;
-  string data = 2;
+  bytes data = 2;
+  string mime = 3;
 }
 message UpdateResponse {
   bool ok = 1;
   uint64 new_id = 2;
 }
 
-message MarkAsClipboardRequest { uint64 id = 1; }
-message MarkAsClipboardResponse { bool ok = 1; }
-
-message MarkAsPrimaryRequest { uint64 id = 1; }
-message MarkAsPrimaryResponse { bool ok = 1; }
+message MarkRequest {
+  uint64 id = 1;
+  ClipboardMode mode = 2;
+}
+message MarkResponse { bool ok = 1; }
 
 message LengthRequest {}
 message LengthResponse { uint64 length = 1; }

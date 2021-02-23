@@ -36,32 +36,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install -y \
-            libx11-xcb-dev \
-            libxcb-xfixes0-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev
-
-      - name: Cache cargo registry
-        uses: actions/cache@v1
+      - name: Cache Cargo
+        uses: actions/cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{runner.os}}-cargo-registry-${{hashFiles('**/Cargo.lock')}}
-
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{runner.os}}-cargo-index-${{hashFiles('**/Cargo.lock')}}
-
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{runner.os}}-cargo-build-target-${{hashFiles('**/Cargo.lock')}}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install Main Toolchain
         uses: actions-rs/toolchain@v1
@@ -69,15 +51,10 @@ jobs:
           toolchain: stable
           target: ${{matrix.target}}
           profile: minimal
-          components: clippy, rustfmt
+          components: clippy
           override: true
 
-      - name: Version
-        run: |
-          rustup --version
-          cargo --version
-
-      - name: Install Rustfmt Toolchain
+      - name: Install Rustfmt (Nightly)
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -85,16 +62,21 @@ jobs:
           profile: minimal
           components: rustfmt
 
-      - name: Format
-        run: cargo +nightly fmt --all -- --check
-
-      - name: Clippy
+      - name: Show Toolchain Version
         run: |
-          cargo clippy --all
+          rustup --version
+          cargo --version
+          cargo +nightly fmt --version
           cargo clippy --version
 
+      - name: Check Format
+        run: cargo +nightly fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --all
+
       - name: Build
-        run: cargo build --all --verbose
+        run: cargo build --features=all --verbose
 
       - name: Test
         run: cargo test --all --verbose

@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardData, ClipboardType};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardData, ClipboardMode};
 
 use crate::{
     config::Config,
@@ -147,10 +147,10 @@ impl Command {
 
             match subcommand {
                 Some(SubCommand::Insert) | None => {
-                    insert_clip(&clips, finder, client, ClipboardType::Clipboard).await?
+                    insert_clip(&clips, finder, client, ClipboardMode::Clipboard).await?
                 }
                 Some(SubCommand::InsertPrimary) => {
-                    insert_clip(&clips, finder, client, ClipboardType::Primary).await?
+                    insert_clip(&clips, finder, client, ClipboardMode::Selection).await?
                 }
                 Some(SubCommand::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
@@ -163,14 +163,20 @@ impl Command {
                 Some(SubCommand::Edit { editor }) => {
                     let selection = finder.single_select(&clips).await?;
                     if let Some((_index, clip)) = selection {
-                        let editor = ExternalEditor::new(editor);
-                        let new_data =
-                            editor.execute(&clip.data).await.context(error::CallEditor)?;
-                        let (ok, new_id) = client.update(clip.id, &new_data).await?;
-                        if ok {
-                            tracing::info!("Editing clip (id: {:016x})", new_id);
+                        if clip.is_utf8_string() {
+                            let editor = ExternalEditor::new(editor);
+                            let new_data = editor
+                                .execute(&clip.as_utf8_string())
+                                .await
+                                .context(error::CallEditor)?;
+                            let (ok, new_id) =
+                                client.update(clip.id, new_data.as_bytes(), clip.mime).await?;
+                            if ok {
+                                tracing::info!("Editing clip (id: {:016x})", new_id);
+                            }
+                            client.mark(new_id, ClipboardMode::Clipboard).await?;
+                        } else {
                         }
-                        client.mark_as_clipboard(new_id).await?;
                     } else {
                         tracing::info!("Nothing is selected");
                         return Ok(());
@@ -191,7 +197,7 @@ async fn insert_clip(
     clips: &[ClipboardData],
     finder: FinderRunner,
     mut client: GrpcClient,
-    clipboard_type: ClipboardType,
+    clipboard_mode: ClipboardMode,
 ) -> Result<(), Error> {
     let selection = finder.single_select(&clips).await?;
     if let Some((index, clip)) = selection {
@@ -201,14 +207,7 @@ async fn insert_clip(
             clip.id,
             clip.printable_data(Some(LINE_LENGTH)),
         );
-        match clipboard_type {
-            ClipboardType::Clipboard => {
-                client.mark_as_clipboard(clip.id).await?;
-            }
-            ClipboardType::Primary => {
-                client.mark_as_primary(clip.id).await?;
-            }
-        }
+        client.mark(clip.id, clipboard_mode).await?;
     } else {
         tracing::info!("Nothing is selected");
     }
