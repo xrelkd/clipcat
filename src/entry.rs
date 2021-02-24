@@ -4,7 +4,7 @@ use std::{
     time::SystemTime,
 };
 
-use crate::{deserialize_mime, serialize_mime, ClipboardEvent, ClipboardMode};
+use crate::{utils, ClipboardEvent, ClipboardMode};
 
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct ClipEntry {
@@ -13,7 +13,10 @@ pub struct ClipEntry {
     pub mode: ClipboardMode,
     pub timestamp: SystemTime,
 
-    #[serde(serialize_with = "serialize_mime", deserialize_with = "deserialize_mime")]
+    #[serde(
+        serialize_with = "utils::serialize_mime",
+        deserialize_with = "utils::deserialize_mime"
+    )]
     pub mime: mime::Mime,
 }
 

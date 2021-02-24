@@ -13,12 +13,15 @@ use crate::history::{HistoryDriver, HistoryError};
 mod v2 {
     use std::time::SystemTime;
 
-    use clipcat::{deserialize_mime, serialize_mime, ClipEntry, ClipboardMode};
+    use clipcat::{utils, ClipEntry, ClipboardMode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct ClipboardValue {
         pub data: Vec<u8>,
-        #[serde(serialize_with = "serialize_mime", deserialize_with = "deserialize_mime")]
+        #[serde(
+            serialize_with = "utils::serialize_mime",
+            deserialize_with = "utils::deserialize_mime"
+        )]
         pub mime: mime::Mime,
         pub timestamp: SystemTime,
     }
