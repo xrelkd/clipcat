@@ -2,15 +2,15 @@ use std::{collections::HashMap, sync::Arc, time::SystemTime};
 
 use caracal::MimeData;
 
-use crate::{driver::ClipboardDriver, ClipboardData, ClipboardError, ClipboardMode};
+use crate::{driver::ClipboardDriver, ClipEntry, ClipboardError, ClipboardMode};
 
 const DEFAULT_CAPACITY: usize = 40;
 
 pub struct ClipboardManager {
     driver: Arc<dyn ClipboardDriver>,
-    clips: HashMap<u64, ClipboardData>,
+    clips: HashMap<u64, ClipEntry>,
     capacity: usize,
-    current_clips: HashMap<ClipboardMode, ClipboardData>,
+    current_clips: HashMap<ClipboardMode, ClipEntry>,
 }
 
 impl ClipboardManager {
@@ -35,10 +35,10 @@ impl ClipboardManager {
     pub fn set_capacity(&mut self, v: usize) { self.capacity = v; }
 
     #[inline]
-    pub fn import(&mut self, clips: &[ClipboardData]) { self.import_iter(clips.iter()); }
+    pub fn import(&mut self, clips: &[ClipEntry]) { self.import_iter(clips.iter()); }
 
     #[inline]
-    pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipboardData>) {
+    pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipEntry>) {
         self.clips = clips_iter.fold(HashMap::new(), |mut clips, clip| {
             clips.insert(clip.id, clip.clone());
             clips
@@ -47,35 +47,35 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn list(&self) -> Vec<ClipboardData> { self.iter().cloned().collect() }
+    pub fn list(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
 
     #[inline]
-    pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> { self.clips.values() }
+    pub fn iter(&self) -> impl Iterator<Item = &ClipEntry> { self.clips.values() }
 
     #[inline]
-    pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
+    pub fn get(&self, id: u64) -> Option<ClipEntry> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
-    pub fn get_current_clip(&self, t: ClipboardMode) -> Option<&ClipboardData> {
+    pub fn get_current_clip(&self, t: ClipboardMode) -> Option<&ClipEntry> {
         self.current_clips.get(&t)
     }
 
     #[inline]
-    pub fn insert(&mut self, data: ClipboardData) -> u64 { self.insert_inner(data) }
+    pub fn insert(&mut self, data: ClipEntry) -> u64 { self.insert_inner(data) }
 
     #[inline]
     pub fn insert_clipboard(&mut self, data: &[u8], mime: mime::Mime) -> u64 {
-        let data = ClipboardData::new(data, mime, ClipboardMode::Clipboard);
+        let data = ClipEntry::new(data, mime, ClipboardMode::Clipboard);
         self.insert_inner(data)
     }
 
     #[inline]
     pub fn insert_primary(&mut self, data: &[u8], mime: mime::Mime) -> u64 {
-        let data = ClipboardData::new(data, mime, ClipboardMode::Selection);
+        let data = ClipEntry::new(data, mime, ClipboardMode::Selection);
         self.insert_inner(data)
     }
 
-    fn insert_inner(&mut self, clipboard_data: ClipboardData) -> u64 {
+    fn insert_inner(&mut self, clipboard_data: ClipEntry) -> u64 {
         let id = clipboard_data.id;
         self.current_clips.insert(clipboard_data.mode, clipboard_data.clone());
         self.clips.insert(clipboard_data.id, clipboard_data);
@@ -129,9 +129,9 @@ impl ClipboardManager {
             None => (ClipboardMode::Selection, SystemTime::now()),
         };
 
-        let new_id = ClipboardData::compute_id(data);
+        let new_id = ClipEntry::compute_id(data);
         let data = data.to_owned();
-        let data = ClipboardData { id: new_id, data, mode, mime, timestamp };
+        let data = ClipEntry { id: new_id, data, mode, mime, timestamp };
 
         self.insert_inner(data);
         (true, new_id)
@@ -158,11 +158,11 @@ mod tests {
 
     use crate::{
         manager::{ClipboardManager, DEFAULT_CAPACITY},
-        ClipboardData, ClipboardMode, MockClipboardDriver,
+        ClipEntry, ClipboardMode, MockClipboardDriver,
     };
 
-    fn create_clips(n: usize) -> Vec<ClipboardData> {
-        (0..n).map(|i| ClipboardData::from_string(&i, ClipboardMode::Selection)).collect()
+    fn create_clips(n: usize) -> Vec<ClipEntry> {
+        (0..n).map(|i| ClipEntry::from_string(&i, ClipboardMode::Selection)).collect()
     }
 
     #[test]
@@ -285,7 +285,7 @@ mod tests {
 
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
-        let clip = ClipboardData::new(data1.as_bytes(), MIME, ClipboardMode::Clipboard);
+        let clip = ClipEntry::new(data1.as_bytes(), MIME, ClipboardMode::Clipboard);
         let driver = Arc::new(MockClipboardDriver::new());
         let mut mgr = ClipboardManager::new(driver);
         let old_id = mgr.insert(clip);
@@ -308,7 +308,7 @@ mod tests {
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.remove(43), false);
 
-        let clip = ClipboardData::from_string("АБВГДЕ", ClipboardMode::Selection);
+        let clip = ClipEntry::from_string("АБВГДЕ", ClipboardMode::Selection);
         let id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
         assert!(mgr.get_current_clip(ClipboardMode::Clipboard).is_none());

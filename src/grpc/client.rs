@@ -11,7 +11,7 @@ use crate::{
         GetMonitorStateRequest, GetRequest, InsertRequest, LengthRequest, ListRequest, MarkRequest,
         RemoveRequest, ToggleMonitorRequest, UpdateRequest,
     },
-    ClipboardData, ClipboardMode, MonitorState,
+    ClipEntry, ClipboardMode, MonitorState,
 };
 
 #[derive(Debug, Snafu)]
@@ -122,7 +122,7 @@ impl GrpcClient {
         self.insert(data, mime, ClipboardMode::Selection).await
     }
 
-    pub async fn get(&mut self, id: u64) -> Result<ClipboardData, GrpcClientError> {
+    pub async fn get(&mut self, id: u64) -> Result<ClipEntry, GrpcClientError> {
         let request = Request::new(GetRequest { id });
         let response = self.manager_client.get(request).await.context(GetData { id })?;
         match response.into_inner().data {
@@ -134,7 +134,7 @@ impl GrpcClient {
     pub async fn get_current_clip(
         &mut self,
         mode: ClipboardMode,
-    ) -> Result<ClipboardData, GrpcClientError> {
+    ) -> Result<ClipEntry, GrpcClientError> {
         let request = Request::new(GetCurrentClipRequest { mode: mode.into() });
         let response =
             self.manager_client.get_current_clip(request).await.context(GetCurrentClip { mode })?;
@@ -188,11 +188,11 @@ impl GrpcClient {
         Ok(response.into_inner().length as usize)
     }
 
-    pub async fn list(&mut self) -> Result<Vec<ClipboardData>, GrpcClientError> {
+    pub async fn list(&mut self) -> Result<Vec<ClipEntry>, GrpcClientError> {
         let request = Request::new(ListRequest {});
         let response = self.manager_client.list(request).await.context(List)?;
         let mut list: Vec<_> =
-            response.into_inner().data.into_iter().map(ClipboardData::from).collect();
+            response.into_inner().data.into_iter().map(ClipEntry::from).collect();
         list.sort();
         Ok(list)
     }

@@ -35,7 +35,7 @@ impl Manager for ManagerService {
         let id = {
             let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            let id = manager.insert(crate::ClipboardData::new(&data, mime, mode.into()));
+            let id = manager.insert(crate::ClipEntry::new(&data, mime, mode.into()));
             let _ = manager.mark(id, mode.into()).await;
             id
         };

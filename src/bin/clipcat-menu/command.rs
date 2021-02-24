@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardData, ClipboardMode};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipEntry, ClipboardMode};
 
 use crate::{
     config::Config,
@@ -197,7 +197,7 @@ impl Command {
 }
 
 async fn insert_clip(
-    clips: &[ClipboardData],
+    clips: &[ClipEntry],
     finder: FinderRunner,
     mut client: GrpcClient,
     clipboard_mode: ClipboardMode,

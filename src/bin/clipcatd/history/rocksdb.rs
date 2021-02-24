@@ -6,14 +6,14 @@ use std::{
 
 use rocksdb::{IteratorMode, Options as RocksDBOptions, WriteBatch, DB as RocksDB};
 
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 use crate::history::{HistoryDriver, HistoryError};
 
 mod v2 {
     use std::time::SystemTime;
 
-    use clipcat::{deserialize_mime, serialize_mime, ClipboardData, ClipboardMode};
+    use clipcat::{deserialize_mime, serialize_mime, ClipEntry, ClipboardMode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct ClipboardValue {
@@ -24,8 +24,8 @@ mod v2 {
     }
 
     impl ClipboardValue {
-        pub fn into_data(self, id: u64) -> ClipboardData {
-            ClipboardData {
+        pub fn into_data(self, id: u64) -> ClipEntry {
+            ClipEntry {
                 id,
                 data: self.data,
                 mime: self.mime,
@@ -35,9 +35,9 @@ mod v2 {
         }
     }
 
-    impl From<ClipboardData> for ClipboardValue {
-        fn from(data: ClipboardData) -> ClipboardValue {
-            let ClipboardData { data, mime, timestamp, .. } = data;
+    impl From<ClipEntry> for ClipboardValue {
+        fn from(data: ClipEntry) -> ClipboardValue {
+            let ClipEntry { data, mime, timestamp, .. } = data;
             ClipboardValue { data, mime, timestamp }
         }
     }
@@ -46,7 +46,7 @@ mod v2 {
 mod v1 {
     use std::time::SystemTime;
 
-    use clipcat::{ClipboardData, ClipboardMode};
+    use clipcat::{ClipEntry, ClipboardMode};
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct ClipboardValue {
@@ -55,8 +55,8 @@ mod v1 {
     }
 
     impl ClipboardValue {
-        pub fn into_data(self, id: u64) -> ClipboardData {
-            ClipboardData {
+        pub fn into_data(self, id: u64) -> ClipEntry {
+            ClipEntry {
                 id,
                 data: Vec::from(self.data.as_bytes()),
                 mime: mime::TEXT_PLAIN_UTF_8,
@@ -90,7 +90,7 @@ impl RocksDBDriver {
         bincode::deserialize(&id).expect("u64 is deserializable")
     }
 
-    fn deserialize_data(id: u64, raw_data: &[u8]) -> Option<ClipboardData> {
+    fn deserialize_data(id: u64, raw_data: &[u8]) -> Option<ClipEntry> {
         if let Ok(data) =
             bincode::deserialize::<v2::ClipboardValue>(&raw_data).map(|value| value.into_data(id))
         {
@@ -106,23 +106,23 @@ impl RocksDBDriver {
             .ok()
     }
 
-    fn serialize_data(data: &ClipboardData) -> Vec<u8> {
+    fn serialize_data(data: &ClipEntry) -> Vec<u8> {
         let value = v2::ClipboardValue::from(data.clone());
         bincode::serialize(&value).expect("ClipboardData is serializable")
     }
 
-    fn serialize_entry(id: u64, data: &ClipboardData) -> (Vec<u8>, Vec<u8>) {
+    fn serialize_entry(id: u64, data: &ClipEntry) -> (Vec<u8>, Vec<u8>) {
         (Self::serialize_id(id), Self::serialize_data(data))
     }
 
-    fn deserialize_entry(id: &[u8], data: &[u8]) -> Option<ClipboardData> {
+    fn deserialize_entry(id: &[u8], data: &[u8]) -> Option<ClipEntry> {
         let id = Self::deserialize_id(id);
         Self::deserialize_data(id, data)
     }
 }
 
 impl HistoryDriver for RocksDBDriver {
-    fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> {
+    fn load(&self) -> Result<Vec<ClipEntry>, HistoryError> {
         let db = self.db.as_ref().expect("RocksDB must be some");
         let iter = db.iterator(IteratorMode::Start);
         let clips = iter
@@ -131,7 +131,7 @@ impl HistoryDriver for RocksDBDriver {
         Ok(clips)
     }
 
-    fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
+    fn save(&mut self, data: &[ClipEntry]) -> Result<(), HistoryError> {
         let db = self.db.as_mut().expect("RocksDB must be some");
 
         let iter = db.iterator(IteratorMode::Start);
@@ -202,13 +202,13 @@ impl HistoryDriver for RocksDBDriver {
         Ok(())
     }
 
-    fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
+    fn put(&mut self, data: &ClipEntry) -> Result<(), HistoryError> {
         let db = self.db.as_mut().expect("RocksDB must be some");
         db.put(Self::serialize_id(data.id), Self::serialize_data(&data))?;
         Ok(())
     }
 
-    fn get(&self, id: u64) -> Result<Option<ClipboardData>, HistoryError> {
+    fn get(&self, id: u64) -> Result<Option<ClipEntry>, HistoryError> {
         let db = self.db.as_ref().expect("RocksDB must be some");
         let serialized_id = Self::serialize_id(id);
         match db.get(&serialized_id)? {

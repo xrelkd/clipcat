@@ -3,7 +3,7 @@ use std::io::Cursor;
 use skim::prelude::*;
 use snafu::ResultExt;
 
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 use crate::finder::{
     error, finder_stream::ENTRY_SEPARATOR, FinderError, FinderStream, SelectionMode,
@@ -16,7 +16,7 @@ impl BuiltinFinder {
 
     pub async fn select(
         &self,
-        clips: &[ClipboardData],
+        clips: &[ClipEntry],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         let input = self.generate_input(clips);

@@ -3,7 +3,7 @@ use std::str::FromStr;
 use snafu::{OptionExt, ResultExt};
 use tokio::io::AsyncWriteExt;
 
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 use crate::{config::Config, error::Error};
 
@@ -118,8 +118,8 @@ impl FinderRunner {
 
     pub async fn single_select(
         self,
-        clips: &[ClipboardData],
-    ) -> Result<Option<(usize, ClipboardData)>, FinderError> {
+        clips: &[ClipEntry],
+    ) -> Result<Option<(usize, ClipEntry)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Single).await?;
         if selected_indices.is_empty() {
             return Ok(None);
@@ -133,8 +133,8 @@ impl FinderRunner {
 
     pub async fn multiple_select(
         self,
-        clips: &[ClipboardData],
-    ) -> Result<Vec<(usize, ClipboardData)>, FinderError> {
+        clips: &[ClipEntry],
+    ) -> Result<Vec<(usize, ClipEntry)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Multiple).await?;
         if selected_indices.is_empty() {
             return Ok(vec![]);
@@ -147,7 +147,7 @@ impl FinderRunner {
 
     pub async fn select(
         self,
-        clips: &[ClipboardData],
+        clips: &[ClipEntry],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         if self.external.is_some() {
@@ -160,7 +160,7 @@ impl FinderRunner {
 
     async fn select_externally(
         self,
-        clips: &[ClipboardData],
+        clips: &[ClipEntry],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         if let Some(external) = self.external {

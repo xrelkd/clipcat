@@ -5,7 +5,7 @@ use std::{
 
 use caracal::MimeData;
 
-use crate::{ClipboardData, ClipboardMode};
+use crate::{ClipEntry, ClipboardMode};
 
 #[derive(Debug, Clone, Eq)]
 pub struct ClipboardEvent {
@@ -22,9 +22,9 @@ impl ClipboardEvent {
     }
 }
 
-impl From<ClipboardData> for ClipboardEvent {
-    fn from(data: ClipboardData) -> ClipboardEvent {
-        let ClipboardData { data, mime, mode, .. } = data;
+impl From<ClipEntry> for ClipboardEvent {
+    fn from(data: ClipEntry) -> ClipboardEvent {
+        let ClipEntry { data, mime, mode, .. } = data;
         ClipboardEvent { data, mime, mode }
     }
 }

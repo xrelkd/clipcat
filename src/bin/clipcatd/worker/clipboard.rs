@@ -6,7 +6,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-use clipcat::{ClipboardData, ClipboardEvent, ClipboardManager, ClipboardMode, ClipboardMonitor};
+use clipcat::{ClipEntry, ClipboardEvent, ClipboardManager, ClipboardMode, ClipboardMonitor};
 
 use crate::{
     error::Error,
@@ -76,7 +76,7 @@ impl ClipboardWorker {
             }
             Err(broadcast::error::RecvError::Lagged(_)) => {}
             Ok(event) => {
-                let data = ClipboardData::from(event);
+                let data = ClipEntry::from(event);
                 match data.mode {
                     ClipboardMode::Clipboard => {
                         tracing::info!(

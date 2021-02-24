@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 mod error;
 mod rocksdb;
@@ -8,21 +8,21 @@ mod rocksdb;
 pub use self::{error::HistoryError, rocksdb::RocksDBDriver};
 
 pub trait HistoryDriver: Send + Sync {
-    fn load(&self) -> Result<Vec<ClipboardData>, HistoryError>;
+    fn load(&self) -> Result<Vec<ClipEntry>, HistoryError>;
 
-    fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError>;
+    fn save(&mut self, data: &[ClipEntry]) -> Result<(), HistoryError>;
 
     fn clear(&mut self) -> Result<(), HistoryError>;
 
-    fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError>;
+    fn put(&mut self, data: &ClipEntry) -> Result<(), HistoryError>;
 
-    fn get(&self, id: u64) -> Result<Option<ClipboardData>, HistoryError>;
+    fn get(&self, id: u64) -> Result<Option<ClipEntry>, HistoryError>;
 
     fn shrink_to(&mut self, min_capacity: usize) -> Result<(), HistoryError>;
 
     fn save_and_shrink_to(
         &mut self,
-        data: &[ClipboardData],
+        data: &[ClipEntry],
         min_capacity: usize,
     ) -> Result<(), HistoryError> {
         self.save(data)?;
@@ -47,19 +47,17 @@ impl HistoryManager {
     pub fn path(&self) -> &Path { &self.file_path }
 
     #[inline]
-    pub fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
-        self.driver.put(data)
-    }
+    pub fn put(&mut self, data: &ClipEntry) -> Result<(), HistoryError> { self.driver.put(data) }
 
     #[inline]
     #[allow(dead_code)]
     pub fn clear(&mut self) -> Result<(), HistoryError> { self.driver.clear() }
 
     #[inline]
-    pub fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> { self.driver.load() }
+    pub fn load(&self) -> Result<Vec<ClipEntry>, HistoryError> { self.driver.load() }
 
     #[inline]
-    pub fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
+    pub fn save(&mut self, data: &[ClipEntry]) -> Result<(), HistoryError> {
         self.driver.save(data)
     }
 
@@ -71,7 +69,7 @@ impl HistoryManager {
     #[inline]
     pub fn save_and_shrink_to(
         &mut self,
-        data: &[ClipboardData],
+        data: &[ClipEntry],
         min_capacity: usize,
     ) -> Result<(), HistoryError> {
         self.save(data)?;

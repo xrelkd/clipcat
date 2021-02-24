@@ -1,10 +1,10 @@
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 pub const ENTRY_SEPARATOR: &str = "\n";
 pub const INDEX_SEPARATOR: char = ':';
 
 pub trait FinderStream: Send + Sync {
-    fn generate_input(&self, clips: &[ClipboardData]) -> String {
+    fn generate_input(&self, clips: &[ClipEntry]) -> String {
         clips
             .iter()
             .enumerate()
@@ -40,7 +40,7 @@ pub trait FinderStream: Send + Sync {
 
 #[cfg(test)]
 mod tests {
-    use clipcat::{ClipboardData, ClipboardMode};
+    use clipcat::{ClipEntry, ClipboardMode};
 
     use crate::finder::FinderStream;
 
@@ -55,14 +55,14 @@ mod tests {
         let v = d.generate_input(&clips);
         assert_eq!(v, "");
 
-        let clips = vec![ClipboardData::from_string("abcde", MODE)];
+        let clips = vec![ClipEntry::from_string("abcde", MODE)];
         let v = d.generate_input(&clips);
         assert_eq!(v, "0: abcde");
 
         let clips = vec![
-            ClipboardData::from_string("abcde", MODE),
-            ClipboardData::from_string("АбВГД", MODE),
-            ClipboardData::from_string("あいうえお", MODE),
+            ClipEntry::from_string("abcde", MODE),
+            ClipEntry::from_string("АбВГД", MODE),
+            ClipEntry::from_string("あいうえお", MODE),
         ];
 
         let v = d.generate_input(&clips);

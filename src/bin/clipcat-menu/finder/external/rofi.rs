@@ -1,4 +1,4 @@
-use clipcat::ClipboardData;
+use clipcat::ClipEntry;
 
 use crate::{
     config,
@@ -50,7 +50,7 @@ impl ExternalProgram for Rofi {
 }
 
 impl FinderStream for Rofi {
-    fn generate_input(&self, clips: &[ClipboardData]) -> String {
+    fn generate_input(&self, clips: &[ClipEntry]) -> String {
         clips
             .iter()
             .map(|data| data.printable_data(self.line_length()))
