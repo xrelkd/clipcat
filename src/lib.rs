@@ -33,7 +33,7 @@ pub use self::driver::{ClipboardDriver, MockClipboardDriver, Subscriber, X11Clip
 #[cfg(feature = "monitor")]
 pub use self::manager::ClipboardManager;
 #[cfg(feature = "monitor")]
-pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
+pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions, ClipboardWatcherState};
 
 pub const PROJECT_NAME: &str = "clipcat";
 
@@ -107,21 +107,6 @@ impl From<i32> for ClipboardMode {
             0 => ClipboardMode::Clipboard,
             1 => ClipboardMode::Selection,
             _ => ClipboardMode::Selection,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Hash)]
-pub enum MonitorState {
-    Enabled = 0,
-    Disabled = 1,
-}
-
-impl From<i32> for crate::MonitorState {
-    fn from(state: i32) -> crate::MonitorState {
-        match state {
-            0 => crate::MonitorState::Enabled,
-            _ => crate::MonitorState::Disabled,
         }
     }
 }

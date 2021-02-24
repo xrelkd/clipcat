@@ -11,7 +11,7 @@ use crate::{
         GetMonitorStateRequest, GetRequest, InsertRequest, LengthRequest, ListRequest, MarkRequest,
         RemoveRequest, ToggleMonitorRequest, UpdateRequest,
     },
-    ClipEntry, ClipboardMode, MonitorState,
+    ClipEntry, ClipboardMode, ClipboardWatcherState,
 };
 
 #[derive(Debug, Snafu)]
@@ -197,26 +197,26 @@ impl GrpcClient {
         Ok(list)
     }
 
-    pub async fn enable_monitor(&mut self) -> Result<MonitorState, GrpcClientError> {
+    pub async fn enable_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
         let request = Request::new(EnableMonitorRequest {});
         let response = self.monitor_client.enable_monitor(request).await.context(EnableMonitor)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn disable_monitor(&mut self) -> Result<MonitorState, GrpcClientError> {
+    pub async fn disable_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
         let request = Request::new(DisableMonitorRequest {});
         let response =
             self.monitor_client.disable_monitor(request).await.context(DisableMonitor)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn toggle_monitor(&mut self) -> Result<MonitorState, GrpcClientError> {
+    pub async fn toggle_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
         let request = Request::new(ToggleMonitorRequest {});
         let response = self.monitor_client.toggle_monitor(request).await.context(ToggleMonitor)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn get_monitor_state(&mut self) -> Result<MonitorState, GrpcClientError> {
+    pub async fn get_monitor_state(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
         let request = Request::new(GetMonitorStateRequest {});
         let response =
             self.monitor_client.get_monitor_state(request).await.context(GetMonitorState)?;

@@ -57,24 +57,24 @@ impl From<ClipboardData> for crate::ClipEntry {
     }
 }
 
-impl From<MonitorState> for crate::MonitorState {
-    fn from(state: MonitorState) -> crate::MonitorState {
+impl From<MonitorState> for crate::ClipboardWatcherState {
+    fn from(state: MonitorState) -> crate::ClipboardWatcherState {
         match state {
-            MonitorState::Enabled => crate::MonitorState::Enabled,
-            MonitorState::Disabled => crate::MonitorState::Disabled,
+            MonitorState::Enabled => crate::ClipboardWatcherState::Enabled,
+            MonitorState::Disabled => crate::ClipboardWatcherState::Disabled,
         }
     }
 }
 
-impl Into<MonitorState> for crate::MonitorState {
+impl Into<MonitorState> for crate::ClipboardWatcherState {
     fn into(self) -> MonitorState {
         match self {
-            crate::MonitorState::Enabled => MonitorState::Enabled,
-            crate::MonitorState::Disabled => MonitorState::Disabled,
+            crate::ClipboardWatcherState::Enabled => MonitorState::Enabled,
+            crate::ClipboardWatcherState::Disabled => MonitorState::Disabled,
         }
     }
 }
 
-impl From<crate::MonitorState> for i32 {
-    fn from(state: crate::MonitorState) -> i32 { state as i32 }
+impl From<crate::ClipboardWatcherState> for i32 {
+    fn from(state: crate::ClipboardWatcherState) -> i32 { state as i32 }
 }

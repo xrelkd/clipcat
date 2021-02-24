@@ -4,7 +4,7 @@ use snafu::ResultExt;
 use structopt::StructOpt;
 use tokio::runtime::Runtime;
 
-use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardMode, MonitorState};
+use clipcat::{editor::ExternalEditor, grpc::GrpcClient, ClipboardMode, ClipboardWatcherState};
 
 use crate::{
     config::Config,
@@ -182,10 +182,10 @@ impl Command {
     }
 
     pub fn run(self) -> Result<i32, Error> {
-        fn print_monitor_state(state: MonitorState) {
+        fn print_monitor_state(state: ClipboardWatcherState) {
             let msg = match state {
-                MonitorState::Enabled => "Clipcat monitor is running",
-                MonitorState::Disabled => "Clipcat monitor is not running",
+                ClipboardWatcherState::Enabled => "Clipcat monitor is running",
+                ClipboardWatcherState::Disabled => "Clipcat monitor is not running",
             };
             println!("{}", msg);
         }

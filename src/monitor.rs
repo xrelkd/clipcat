@@ -10,7 +10,22 @@ use caracal::MimeData;
 use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
-use crate::{error, ClipboardDriver, ClipboardError, ClipboardEvent, ClipboardMode, MonitorState};
+use crate::{error, ClipboardDriver, ClipboardError, ClipboardEvent, ClipboardMode};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ClipboardWatcherState {
+    Enabled = 0,
+    Disabled = 1,
+}
+
+impl From<i32> for ClipboardWatcherState {
+    fn from(state: i32) -> ClipboardWatcherState {
+        match state {
+            0 => ClipboardWatcherState::Enabled,
+            _ => ClipboardWatcherState::Disabled,
+        }
+    }
+}
 
 pub struct ClipboardMonitor {
     is_monitoring: Arc<AtomicBool>,
@@ -152,11 +167,11 @@ impl ClipboardMonitor {
     pub fn is_monitoring(&self) -> bool { self.is_monitoring.load(Ordering::Acquire) }
 
     #[inline]
-    pub fn state(&self) -> MonitorState {
+    pub fn state(&self) -> ClipboardWatcherState {
         if self.is_monitoring() {
-            MonitorState::Enabled
+            ClipboardWatcherState::Enabled
         } else {
-            MonitorState::Disabled
+            ClipboardWatcherState::Disabled
         }
     }
 }
