@@ -5,14 +5,14 @@ use tonic::{Request, Response, Status};
 
 use crate::{
     grpc::protobuf::{
-        manager_server::Manager, monitor_server::Monitor, BatchRemoveRequest, BatchRemoveResponse,
-        ClearRequest, ClearResponse, DisableMonitorRequest, EnableMonitorRequest,
-        GetCurrentClipRequest, GetCurrentClipResponse, GetMonitorStateRequest, GetRequest,
-        GetResponse, InsertRequest, InsertResponse, LengthRequest, LengthResponse, ListRequest,
-        ListResponse, MarkRequest, MarkResponse, MonitorStateReply, RemoveRequest, RemoveResponse,
-        ToggleMonitorRequest, UpdateRequest, UpdateResponse,
+        manager_server::Manager, watcher_server::Watcher, BatchRemoveRequest, BatchRemoveResponse,
+        ClearRequest, ClearResponse, DisableWatcherRequest, EnableWatcherRequest,
+        GetCurrentClipRequest, GetCurrentClipResponse, GetRequest, GetResponse,
+        GetWatcherStateRequest, InsertRequest, InsertResponse, LengthRequest, LengthResponse,
+        ListRequest, ListResponse, MarkRequest, MarkResponse, RemoveRequest, RemoveResponse,
+        ToggleWatcherRequest, UpdateRequest, UpdateResponse, WatcherStateReply,
     },
-    ClipboardManager, ClipboardMonitor,
+    ClipboardManager, ClipboardWatcher,
 };
 
 pub struct ManagerService {
@@ -140,65 +140,65 @@ impl Manager for ManagerService {
     }
 }
 
-pub struct MonitorService {
-    monitor: Arc<Mutex<ClipboardMonitor>>,
+pub struct WatcherService {
+    watcher: Arc<Mutex<ClipboardWatcher>>,
 }
 
-impl MonitorService {
+impl WatcherService {
     #[inline]
-    pub fn new(monitor: Arc<Mutex<ClipboardMonitor>>) -> MonitorService {
-        MonitorService { monitor }
+    pub fn new(watcher: Arc<Mutex<ClipboardWatcher>>) -> WatcherService {
+        WatcherService { watcher }
     }
 }
 
 #[tonic::async_trait]
-impl Monitor for MonitorService {
-    async fn enable_monitor(
+impl Watcher for WatcherService {
+    async fn enable_watcher(
         &self,
-        _request: Request<EnableMonitorRequest>,
-    ) -> Result<Response<MonitorStateReply>, Status> {
+        _request: Request<EnableWatcherRequest>,
+    ) -> Result<Response<WatcherStateReply>, Status> {
         let state = {
-            let mut monitor = self.monitor.lock().await;
-            monitor.enable();
-            MonitorStateReply { state: monitor.state().into() }
+            let mut watcher = self.watcher.lock().await;
+            watcher.enable();
+            WatcherStateReply { state: watcher.state().into() }
         };
 
         Ok(Response::new(state))
     }
 
-    async fn disable_monitor(
+    async fn disable_watcher(
         &self,
-        _request: Request<DisableMonitorRequest>,
-    ) -> Result<Response<MonitorStateReply>, Status> {
+        _request: Request<DisableWatcherRequest>,
+    ) -> Result<Response<WatcherStateReply>, Status> {
         let state = {
-            let mut monitor = self.monitor.lock().await;
-            monitor.disable();
-            MonitorStateReply { state: monitor.state().into() }
+            let mut watcher = self.watcher.lock().await;
+            watcher.disable();
+            WatcherStateReply { state: watcher.state().into() }
         };
 
         Ok(Response::new(state))
     }
 
-    async fn toggle_monitor(
+    async fn toggle_watcher(
         &self,
-        _request: Request<ToggleMonitorRequest>,
-    ) -> Result<Response<MonitorStateReply>, Status> {
+        _request: Request<ToggleWatcherRequest>,
+    ) -> Result<Response<WatcherStateReply>, Status> {
         let state = {
-            let mut monitor = self.monitor.lock().await;
-            monitor.toggle();
-            MonitorStateReply { state: monitor.state().into() }
+            let mut watcher = self.watcher.lock().await;
+            watcher.toggle();
+            WatcherStateReply { state: watcher.state().into() }
         };
 
         Ok(Response::new(state))
     }
 
-    async fn get_monitor_state(
+    async fn get_watcher_state(
         &self,
-        _request: Request<GetMonitorStateRequest>,
-    ) -> Result<Response<MonitorStateReply>, Status> {
+        _request: Request<GetWatcherStateRequest>,
+    ) -> Result<Response<WatcherStateReply>, Status> {
         let state = {
-            let monitor = self.monitor.lock().await;
-            MonitorStateReply { state: monitor.state().into() }
+            let watcher = self.watcher.lock().await;
+            WatcherStateReply { state: watcher.state().into() }
         };
 
         Ok(Response::new(state))

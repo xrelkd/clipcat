@@ -6,7 +6,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-use clipcat::{ClipEntry, ClipboardEvent, ClipboardManager, ClipboardMode, ClipboardMonitor};
+use clipcat::{ClipEntry, ClipboardEvent, ClipboardManager, ClipboardMode, ClipboardWatcher};
 
 use crate::{
     error::Error,
@@ -24,7 +24,7 @@ pub type MessageReceiver = mpsc::UnboundedReceiver<Message>;
 pub struct ClipboardWorker {
     ctl_tx: CtlMessageSender,
     msg_rx: MessageReceiver,
-    clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
+    clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     history_manager: Arc<Mutex<HistoryManager>>,
 }
@@ -33,8 +33,8 @@ impl ClipboardWorker {
     async fn run(mut self) -> Result<(), Error> {
         let mut quit = false;
         let mut event_recv = {
-            let monitor = self.clipboard_monitor.lock().await;
-            monitor.subscribe()
+            let watcher = self.clipboard_watcher.lock().await;
+            watcher.subscribe()
         };
 
         while !quit {
@@ -67,7 +67,7 @@ impl ClipboardWorker {
     ) -> bool {
         match event {
             Err(broadcast::error::RecvError::Closed) => {
-                tracing::info!("ClipboardMonitor is closing, no further values will be received");
+                tracing::info!("ClipboardWatcher is closing, no further event will be received");
 
                 tracing::info!("Internal shutdown signal is sent");
                 let _ = self.ctl_tx.send(CtlMessage::Shutdown);
@@ -115,12 +115,12 @@ impl ClipboardWorker {
 
 pub fn start(
     ctl_tx: CtlMessageSender,
-    clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
+    clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     history_manager: Arc<Mutex<HistoryManager>>,
 ) -> (MessageSender, JoinHandle<Result<(), Error>>) {
     let (tx, msg_rx) = mpsc::unbounded_channel::<Message>();
     let worker =
-        ClipboardWorker { ctl_tx, msg_rx, clipboard_monitor, clipboard_manager, history_manager };
+        ClipboardWorker { ctl_tx, msg_rx, clipboard_watcher, clipboard_manager, history_manager };
     (tx, tokio::spawn(worker.run()))
 }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use snafu::ResultExt;
 use tokio::sync::{mpsc, Mutex};
 
-use clipcat::{driver, ClipboardManager, ClipboardMonitor};
+use clipcat::{driver, ClipboardManager, ClipboardWatcher};
 
 use crate::{
     config::Config,
@@ -55,20 +55,20 @@ pub async fn start(config: Config) -> Result<(), Error> {
 
     let _signal_join = signal::start(ctl_tx.clone());
 
-    let monitor_opts = config.monitor.into();
-    let clipboard_monitor = {
-        let monitor = ClipboardMonitor::new(clipboard_driver.clone(), monitor_opts)
-            .context(error::CreateClipboardMonitor)?;
-        Arc::new(Mutex::new(monitor))
+    let watcher_opts = config.watcher.into();
+    let clipboard_watcher = {
+        let watcher = ClipboardWatcher::new(clipboard_driver.clone(), watcher_opts)
+            .context(error::CreateClipboardWatcher)?;
+        Arc::new(Mutex::new(watcher))
     };
 
     let (clip_tx, clipboard_join) = clipboard::start(
         ctl_tx.clone(),
-        clipboard_monitor.clone(),
+        clipboard_watcher.clone(),
         clipboard_manager.clone(),
         history_manager,
     );
-    let (grpc_tx, grpc_join) = grpc::start(grpc_addr, clipboard_monitor, clipboard_manager);
+    let (grpc_tx, grpc_join) = grpc::start(grpc_addr, clipboard_watcher, clipboard_manager);
 
     while let Some(msg) = ctl_rx.recv().await {
         match msg {

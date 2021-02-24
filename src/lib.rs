@@ -17,23 +17,23 @@ mod entry;
 mod error;
 mod event;
 
-#[cfg(feature = "monitor")]
+#[cfg(feature = "watcher")]
 pub mod driver;
-#[cfg(feature = "monitor")]
+#[cfg(feature = "watcher")]
 mod manager;
-#[cfg(feature = "monitor")]
-mod monitor;
+#[cfg(feature = "watcher")]
+mod watcher;
 
 pub mod editor;
 
 pub use self::{entry::ClipEntry, error::ClipboardError, event::ClipboardEvent};
 
-#[cfg(feature = "monitor")]
+#[cfg(feature = "watcher")]
 pub use self::driver::{ClipboardDriver, MockClipboardDriver, Subscriber, X11ClipboardDriver};
-#[cfg(feature = "monitor")]
+#[cfg(feature = "watcher")]
 pub use self::manager::ClipboardManager;
-#[cfg(feature = "monitor")]
-pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions, ClipboardWatcherState};
+#[cfg(feature = "watcher")]
+pub use self::watcher::{ClipboardWatcher, ClipboardWatcherOptions, ClipboardWatcherState};
 
 pub const PROJECT_NAME: &str = "clipcat";
 

@@ -27,29 +27,29 @@ impl From<i32> for ClipboardWatcherState {
     }
 }
 
-pub struct ClipboardMonitor {
-    is_monitoring: Arc<AtomicBool>,
+pub struct ClipboardWatcher {
+    is_watching: Arc<AtomicBool>,
     event_sender: broadcast::Sender<ClipboardEvent>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct ClipboardMonitorOptions {
+pub struct ClipboardWatcherOptions {
     pub load_current: bool,
     pub enable_clipboard: bool,
     pub enable_primary: bool,
 }
 
-impl Default for ClipboardMonitorOptions {
+impl Default for ClipboardWatcherOptions {
     fn default() -> Self {
-        ClipboardMonitorOptions { load_current: true, enable_clipboard: true, enable_primary: true }
+        ClipboardWatcherOptions { load_current: true, enable_clipboard: true, enable_primary: true }
     }
 }
 
-impl ClipboardMonitor {
+impl ClipboardWatcher {
     pub fn new(
         driver: Arc<dyn ClipboardDriver>,
-        opts: ClipboardMonitorOptions,
-    ) -> Result<ClipboardMonitor, ClipboardError> {
+        opts: ClipboardWatcherOptions,
+    ) -> Result<ClipboardWatcher, ClipboardError> {
         let enabled_modes = {
             let mut modes = Vec::new();
 
@@ -62,18 +62,18 @@ impl ClipboardMonitor {
             }
 
             if modes.is_empty() {
-                tracing::warn!("Both clipboard and selection are not monitored");
+                tracing::warn!("Both clipboard and selection are not watched");
             }
 
             modes
         };
 
         let (event_sender, _event_receiver) = broadcast::channel(16);
-        let is_monitoring = Arc::new(AtomicBool::new(true));
+        let is_watching = Arc::new(AtomicBool::new(true));
 
         let _: task::JoinHandle<Result<(), ClipboardError>> = task::spawn({
             let event_sender = event_sender.clone();
-            let is_monitoring = is_monitoring.clone();
+            let is_watching = is_watching.clone();
 
             let mut subscriber = driver.subscribe()?;
             async move {
@@ -101,7 +101,7 @@ impl ClipboardMonitor {
                 loop {
                     let mode = subscriber.next().await.context(error::SubscriberClosed)?;
 
-                    if is_monitoring.load(Ordering::Relaxed) && enabled_modes.contains(&mode) {
+                    if is_watching.load(Ordering::Relaxed) && enabled_modes.contains(&mode) {
                         let new_data = match driver.load_mime_data(mode).await {
                             Ok(new_data) => match current_data.get(&mode) {
                                 Some(current_data) if new_data != *current_data => new_data,
@@ -113,10 +113,9 @@ impl ClipboardMonitor {
                             Err(ClipboardError::UnknownContentType) => continue,
                             Err(err) => {
                                 tracing::error!(
-                                    "Failed to load clipboard, error: {}, ClipboardMonitor({:?}) \
-                                     is closing",
+                                    "Failed to load clipboard, ClipboardWatcher is closing, \
+                                     error: {}",
                                     err,
-                                    mode
                                 );
                                 return Err(err);
                             }
@@ -136,7 +135,7 @@ impl ClipboardMonitor {
             }
         });
 
-        Ok(ClipboardMonitor { is_monitoring, event_sender })
+        Ok(ClipboardWatcher { is_watching, event_sender })
     }
 
     #[inline]
@@ -144,19 +143,19 @@ impl ClipboardMonitor {
 
     #[inline]
     pub fn enable(&mut self) {
-        self.is_monitoring.store(true, Ordering::Release);
-        tracing::info!("ClipboardWorker is monitoring for clipboard");
+        self.is_watching.store(true, Ordering::Release);
+        tracing::info!("ClipboardWatcher is watching for clipboard event");
     }
 
     #[inline]
     pub fn disable(&mut self) {
-        self.is_monitoring.store(false, Ordering::Release);
-        tracing::info!("ClipboardWorker is not monitoring for clipboard");
+        self.is_watching.store(false, Ordering::Release);
+        tracing::info!("ClipboardWatcher is not watching for clipboard event");
     }
 
     #[inline]
     pub fn toggle(&mut self) {
-        if self.is_monitoring() {
+        if self.is_watching() {
             self.disable();
         } else {
             self.enable();
@@ -164,11 +163,11 @@ impl ClipboardMonitor {
     }
 
     #[inline]
-    pub fn is_monitoring(&self) -> bool { self.is_monitoring.load(Ordering::Acquire) }
+    pub fn is_watching(&self) -> bool { self.is_watching.load(Ordering::Acquire) }
 
     #[inline]
     pub fn state(&self) -> ClipboardWatcherState {
-        if self.is_monitoring() {
+        if self.is_watching() {
             ClipboardWatcherState::Enabled
         } else {
             ClipboardWatcherState::Disabled

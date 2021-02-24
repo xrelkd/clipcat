@@ -23,14 +23,14 @@ pub struct Config {
     #[serde(default = "Config::default_log_level", with = "serde_with::rust::display_fromstr")]
     pub log_level: tracing::Level,
 
-    #[serde(default)]
-    pub monitor: Monitor,
+    #[serde(default, alias = "monitor")]
+    pub watcher: Watcher,
 
     pub grpc: Grpc,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub struct Monitor {
+pub struct Watcher {
     pub load_current: bool,
     pub enable_clipboard: bool,
     pub enable_primary: bool,
@@ -50,22 +50,22 @@ impl Default for Config {
             max_history: Config::default_max_history(),
             history_file_path: Config::default_history_file_path(),
             log_level: Config::default_log_level(),
-            monitor: Default::default(),
+            watcher: Default::default(),
             grpc: Default::default(),
         }
     }
 }
 
-impl Default for Monitor {
-    fn default() -> Monitor {
-        Monitor { load_current: true, enable_clipboard: true, enable_primary: true }
+impl Default for Watcher {
+    fn default() -> Watcher {
+        Watcher { load_current: true, enable_clipboard: true, enable_primary: true }
     }
 }
 
-impl Into<clipcat::ClipboardMonitorOptions> for Monitor {
-    fn into(self) -> clipcat::ClipboardMonitorOptions {
-        let Monitor { load_current, enable_clipboard, enable_primary } = self;
-        clipcat::ClipboardMonitorOptions { load_current, enable_clipboard, enable_primary }
+impl Into<clipcat::ClipboardWatcherOptions> for Watcher {
+    fn into(self) -> clipcat::ClipboardWatcherOptions {
+        let Watcher { load_current, enable_clipboard, enable_primary } = self;
+        clipcat::ClipboardWatcherOptions { load_current, enable_clipboard, enable_primary }
     }
 }
 

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package watcher;
+
+service Watcher {
+  rpc EnableWatcher(EnableWatcherRequest) returns (WatcherStateReply);
+  rpc DisableWatcher(DisableWatcherRequest) returns (WatcherStateReply);
+  rpc ToggleWatcher(ToggleWatcherRequest) returns (WatcherStateReply);
+  rpc GetWatcherState(GetWatcherStateRequest) returns (WatcherStateReply);
+}
+
+enum WatcherState {
+  Enabled = 0;
+  Disabled = 1;
+}
+
+message WatcherStateReply { WatcherState state = 1; }
+
+message EnableWatcherRequest {}
+message DisableWatcherRequest {}
+message ToggleWatcherRequest {}
+message GetWatcherStateRequest {}

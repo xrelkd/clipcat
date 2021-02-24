@@ -100,7 +100,7 @@ daemonize = true          # run as a traditional UNIX daemon
 max_history = 50          # max clip history limit
 log_level = 'INFO'        # log level
 
-[monitor]
+[watcher]
 load_current = true       # load current clipboard content at startup
 enable_clipboard = true   # watch X11 clipboard
 enable_primary = true     # watch X11 primary clipboard

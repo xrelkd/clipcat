@@ -19,27 +19,27 @@ pub enum ClipboardError {
     #[snafu(display("Unknown Content type"))]
     UnknownContentType,
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Could not initialize X11 clipboard, error: {}", source))]
     InitializeX11Clipboard { source: caracal::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Could not clear X11 clipboard, error: {}", source))]
     ClearX11Clipboard { source: caracal::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Could not store data to X11 clipboard, error: {}", source))]
     StoreDataToX11Clipboard { source: caracal::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Could not load data from X11 clipboard, error: {}", source))]
     LoadDataFromX11Clipboard { source: caracal::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Could not subscribe X11 clipboard, error: {}", source))]
     SubscribeX11Clipboard { source: caracal::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "watcher")]
     #[snafu(display("Subscriber is closed"))]
     SubscriberClosed,
 }

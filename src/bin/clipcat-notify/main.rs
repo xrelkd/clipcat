@@ -25,10 +25,10 @@ struct Command {
     #[structopt(subcommand)]
     subcommand: Option<SubCommand>,
 
-    #[structopt(long = "no-clipboard", help = "Does not monitor clipboard")]
+    #[structopt(long = "no-clipboard", help = "Does not watch clipboard")]
     no_clipboard: bool,
 
-    #[structopt(long = "no-primary", help = "Does not monitor primary")]
+    #[structopt(long = "no-primary", help = "Does not watch primary")]
     no_primary: bool,
 }
 

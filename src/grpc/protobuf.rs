@@ -1,5 +1,5 @@
 tonic::include_proto!("manager");
-tonic::include_proto!("monitor");
+tonic::include_proto!("watcher");
 
 use std::str::FromStr;
 
@@ -57,20 +57,20 @@ impl From<ClipboardData> for crate::ClipEntry {
     }
 }
 
-impl From<MonitorState> for crate::ClipboardWatcherState {
-    fn from(state: MonitorState) -> crate::ClipboardWatcherState {
+impl From<WatcherState> for crate::ClipboardWatcherState {
+    fn from(state: WatcherState) -> crate::ClipboardWatcherState {
         match state {
-            MonitorState::Enabled => crate::ClipboardWatcherState::Enabled,
-            MonitorState::Disabled => crate::ClipboardWatcherState::Disabled,
+            WatcherState::Enabled => crate::ClipboardWatcherState::Enabled,
+            WatcherState::Disabled => crate::ClipboardWatcherState::Disabled,
         }
     }
 }
 
-impl Into<MonitorState> for crate::ClipboardWatcherState {
-    fn into(self) -> MonitorState {
+impl Into<WatcherState> for crate::ClipboardWatcherState {
+    fn into(self) -> WatcherState {
         match self {
-            crate::ClipboardWatcherState::Enabled => MonitorState::Enabled,
-            crate::ClipboardWatcherState::Disabled => MonitorState::Disabled,
+            crate::ClipboardWatcherState::Enabled => WatcherState::Enabled,
+            crate::ClipboardWatcherState::Disabled => WatcherState::Disabled,
         }
     }
 }

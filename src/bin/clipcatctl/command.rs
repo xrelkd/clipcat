@@ -142,17 +142,17 @@ pub enum SubCommand {
         about = "Prints length of clipboard history")]
     Length,
 
-    #[structopt(aliases = &["enable"], about = "Enable clipboard monitor")]
-    EnableMonitor,
+    #[structopt(aliases = &["enable"], about = "Enable clipboard watcher")]
+    EnableWatcher,
 
-    #[structopt(aliases = &["disable"], about = "Disable clipboard monitor")]
-    DisableMonitor,
+    #[structopt(aliases = &["disable"], about = "Disable clipboard watcher")]
+    DisableWatcher,
 
-    #[structopt(aliases = &["toggle"], about = "Toggle clipboard monitor")]
-    ToggleMonitor,
+    #[structopt(aliases = &["toggle"], about = "Toggle clipboard watcher")]
+    ToggleWatcher,
 
-    #[structopt(aliases = &["monitor-state"], about = "Get clipboard monitor state")]
-    GetMonitorState,
+    #[structopt(aliases = &["watcher-state"], about = "Get clipboard watcher state")]
+    GetWatcherState,
 }
 
 impl Command {
@@ -182,10 +182,10 @@ impl Command {
     }
 
     pub fn run(self) -> Result<i32, Error> {
-        fn print_monitor_state(state: ClipboardWatcherState) {
+        fn print_watcher_state(state: ClipboardWatcherState) {
             let msg = match state {
-                ClipboardWatcherState::Enabled => "Clipcat monitor is running",
-                ClipboardWatcherState::Disabled => "Clipcat monitor is not running",
+                ClipboardWatcherState::Enabled => "Clipboard watcher is running",
+                ClipboardWatcherState::Disabled => "Clipboard watcher is not running",
             };
             println!("{}", msg);
         }
@@ -334,21 +334,21 @@ impl Command {
                         println!("Ok");
                     }
                 }
-                Some(SubCommand::EnableMonitor) => {
-                    let state = client.enable_monitor().await?;
-                    print_monitor_state(state);
+                Some(SubCommand::EnableWatcher) => {
+                    let state = client.enable_watcher().await?;
+                    print_watcher_state(state);
                 }
-                Some(SubCommand::DisableMonitor) => {
-                    let state = client.disable_monitor().await?;
-                    print_monitor_state(state);
+                Some(SubCommand::DisableWatcher) => {
+                    let state = client.disable_watcher().await?;
+                    print_watcher_state(state);
                 }
-                Some(SubCommand::ToggleMonitor) => {
-                    let state = client.toggle_monitor().await?;
-                    print_monitor_state(state);
+                Some(SubCommand::ToggleWatcher) => {
+                    let state = client.toggle_watcher().await?;
+                    print_watcher_state(state);
                 }
-                Some(SubCommand::GetMonitorState) => {
-                    let state = client.get_monitor_state().await?;
-                    print_monitor_state(state);
+                Some(SubCommand::GetWatcherState) => {
+                    let state = client.get_watcher_state().await?;
+                    print_watcher_state(state);
                 }
                 _ => unreachable!(),
             }

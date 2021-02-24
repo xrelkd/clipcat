@@ -6,10 +6,10 @@ use tonic::{
 
 use crate::{
     grpc::protobuf::{
-        manager_client::ManagerClient, monitor_client::MonitorClient, BatchRemoveRequest,
-        ClearRequest, DisableMonitorRequest, EnableMonitorRequest, GetCurrentClipRequest,
-        GetMonitorStateRequest, GetRequest, InsertRequest, LengthRequest, ListRequest, MarkRequest,
-        RemoveRequest, ToggleMonitorRequest, UpdateRequest,
+        manager_client::ManagerClient, watcher_client::WatcherClient, BatchRemoveRequest,
+        ClearRequest, DisableWatcherRequest, EnableWatcherRequest, GetCurrentClipRequest,
+        GetRequest, GetWatcherStateRequest, InsertRequest, LengthRequest, ListRequest, MarkRequest,
+        RemoveRequest, ToggleWatcherRequest, UpdateRequest,
     },
     ClipEntry, ClipboardMode, ClipboardWatcherState,
 };
@@ -57,24 +57,24 @@ pub enum GrpcClientError {
     #[snafu(display("Could not clear clips, error: {}", source))]
     Clear { source: TonicStatus },
 
-    #[snafu(display("Could not enable monitor, error: {}", source))]
-    EnableMonitor { source: TonicStatus },
+    #[snafu(display("Could not enable watcher, error: {}", source))]
+    EnableWatcher { source: TonicStatus },
 
-    #[snafu(display("Could not disable monitor, error: {}", source))]
-    DisableMonitor { source: TonicStatus },
+    #[snafu(display("Could not disable watcher, error: {}", source))]
+    DisableWatcher { source: TonicStatus },
 
-    #[snafu(display("Could not toggle monitor, error: {}", source))]
-    ToggleMonitor { source: TonicStatus },
+    #[snafu(display("Could not toggle watcher, error: {}", source))]
+    ToggleWatcher { source: TonicStatus },
 
-    #[snafu(display("Could not get monitor state, error: {}", source))]
-    GetMonitorState { source: TonicStatus },
+    #[snafu(display("Could not get watcher state, error: {}", source))]
+    GetWatcherState { source: TonicStatus },
 
     #[snafu(display("Empty response"))]
     Empty,
 }
 
 pub struct GrpcClient {
-    monitor_client: MonitorClient<Channel>,
+    watcher_client: WatcherClient<Channel>,
     manager_client: ManagerClient<Channel>,
 }
 
@@ -86,9 +86,9 @@ impl GrpcClient {
             .connect()
             .await
             .context(ConnetRemote { addr })?;
-        let monitor_client = MonitorClient::new(channel.clone());
+        let watcher_client = WatcherClient::new(channel.clone());
         let manager_client = ManagerClient::new(channel);
-        Ok(GrpcClient { monitor_client, manager_client })
+        Ok(GrpcClient { watcher_client, manager_client })
     }
 
     pub async fn insert(
@@ -197,29 +197,29 @@ impl GrpcClient {
         Ok(list)
     }
 
-    pub async fn enable_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
-        let request = Request::new(EnableMonitorRequest {});
-        let response = self.monitor_client.enable_monitor(request).await.context(EnableMonitor)?;
+    pub async fn enable_watcher(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
+        let request = Request::new(EnableWatcherRequest {});
+        let response = self.watcher_client.enable_watcher(request).await.context(EnableWatcher)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn disable_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
-        let request = Request::new(DisableMonitorRequest {});
+    pub async fn disable_watcher(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
+        let request = Request::new(DisableWatcherRequest {});
         let response =
-            self.monitor_client.disable_monitor(request).await.context(DisableMonitor)?;
+            self.watcher_client.disable_watcher(request).await.context(DisableWatcher)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn toggle_monitor(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
-        let request = Request::new(ToggleMonitorRequest {});
-        let response = self.monitor_client.toggle_monitor(request).await.context(ToggleMonitor)?;
+    pub async fn toggle_watcher(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
+        let request = Request::new(ToggleWatcherRequest {});
+        let response = self.watcher_client.toggle_watcher(request).await.context(ToggleWatcher)?;
         Ok(response.into_inner().state.into())
     }
 
-    pub async fn get_monitor_state(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
-        let request = Request::new(GetMonitorStateRequest {});
+    pub async fn get_watcher_state(&mut self) -> Result<ClipboardWatcherState, GrpcClientError> {
+        let request = Request::new(GetWatcherStateRequest {});
         let response =
-            self.monitor_client.get_monitor_state(request).await.context(GetMonitorState)?;
+            self.watcher_client.get_watcher_state(request).await.context(GetWatcherState)?;
         Ok(response.into_inner().state.into())
     }
 }
