@@ -48,10 +48,15 @@ pub enum SubCommand {
     ListFinder,
 
     #[structopt(about = "Insert selected clip into clipboard")]
-    Insert,
-
-    #[structopt(about = "Insert selected clip into primary clipboard")]
-    InsertPrimary,
+    Insert {
+        #[structopt(
+            short = "m",
+            long = "mode",
+            default_value = "clipboard",
+            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+        )]
+        mode: ClipboardMode,
+    },
 
     #[structopt(
         aliases = &["rm", "delete", "del"],
@@ -146,12 +151,10 @@ impl Command {
             let clips = client.list().await?;
 
             match subcommand {
-                Some(SubCommand::Insert) | None => {
-                    insert_clip(&clips, finder, client, ClipboardMode::Clipboard).await?
+                Some(SubCommand::Insert { mode }) => {
+                    insert_clip(&clips, finder, client, mode).await?
                 }
-                Some(SubCommand::InsertPrimary) => {
-                    insert_clip(&clips, finder, client, ClipboardMode::Selection).await?
-                }
+                None => insert_clip(&clips, finder, client, ClipboardMode::Clipboard).await?,
                 Some(SubCommand::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();

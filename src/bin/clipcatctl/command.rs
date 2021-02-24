@@ -41,34 +41,43 @@ pub enum SubCommand {
     #[structopt(about = "Outputs default configuration")]
     DefaultConfig,
 
-    #[structopt(
-        aliases = &["paste"],
-        about = "Inserts new clip into clipboard")]
-    Insert { data: String },
+    #[structopt(aliases = &["paste"], about = "Insert new clip into clipboard")]
+    Insert {
+        #[structopt(
+            short = "m",
+            long = "mode",
+            default_value = "clipboard",
+            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+        )]
+        mode: ClipboardMode,
 
-    #[structopt(about = "Inserts new clip into primary clipboard")]
-    InsertPrimary { data: String },
+        data: String,
+    },
 
     #[structopt(aliases = &["cut"], about = "Loads file into clipboard")]
     Load {
-        #[structopt(long = "file", short = "f")]
-        file_path: Option<PathBuf>,
-    },
+        #[structopt(
+            short = "m",
+            long = "mode",
+            default_value = "clipboard",
+            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+        )]
+        mode: ClipboardMode,
 
-    #[structopt(aliases = &["cut-primary"], about = "Loads file into primary clipboard")]
-    LoadPrimary {
         #[structopt(long = "file", short = "f")]
         file_path: Option<PathBuf>,
     },
 
     #[structopt(aliases = &["paste"], about = "Pastes content of current clipboard into file")]
     Save {
-        #[structopt(long = "file", short = "f")]
-        file_path: Option<PathBuf>,
-    },
+        #[structopt(
+            short = "m",
+            long = "mode",
+            default_value = "clipboard",
+            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+        )]
+        mode: ClipboardMode,
 
-    #[structopt(aliases = &["paste-primary"], about = "Pastes content of current primary clipboard into file")]
-    SavePrimary {
         #[structopt(long = "file", short = "f")]
         file_path: Option<PathBuf>,
     },
@@ -109,16 +118,15 @@ pub enum SubCommand {
     Remove { ids: Vec<String> },
 
     #[structopt(name = "promote", about = "Replaces content of clipboard with clip with <id>")]
-    MarkAsClipboard {
-        #[structopt(parse(try_from_str = parse_hex))]
-        id: u64,
-    },
+    Mark {
+        #[structopt(
+            short = "m",
+            long = "mode",
+            default_value = "clipboard",
+            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+        )]
+        mode: ClipboardMode,
 
-    #[structopt(
-        name = "promote-primary",
-        about = "Replaces content of primary clipboard with clip with <id>"
-    )]
-    MarkAsPrimary {
         #[structopt(parse(try_from_str = parse_hex))]
         id: u64,
     },
@@ -256,38 +264,19 @@ impl Command {
                         println!("{}", data.printable_data(None));
                     }
                 }
-                Some(SubCommand::Insert { data }) => {
-                    client
-                        .insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Clipboard)
-                        .await?;
-                }
-                Some(SubCommand::InsertPrimary { data }) => {
-                    client
-                        .insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Selection)
-                        .await?;
+                Some(SubCommand::Insert { mode, data }) => {
+                    client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, mode).await?;
                 }
                 Some(SubCommand::Length) => {
                     let len = client.length().await?;
                     println!("{}", len);
                 }
-                Some(SubCommand::Load { file_path }) => {
+                Some(SubCommand::Load { file_path, mode }) => {
                     let data = load_file_or_read_stdin(file_path).await?;
-                    client
-                        .insert(&data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Clipboard)
-                        .await?;
+                    client.insert(&data.as_bytes(), mime::TEXT_PLAIN_UTF_8, mode).await?;
                 }
-                Some(SubCommand::LoadPrimary { file_path }) => {
-                    let data = load_file_or_read_stdin(file_path).await?;
-                    client
-                        .insert(&data.as_bytes(), mime::TEXT_PLAIN_UTF_8, ClipboardMode::Selection)
-                        .await?;
-                }
-                Some(SubCommand::Save { file_path }) => {
-                    let data = client.get_current_clip(ClipboardMode::Clipboard).await?;
-                    save_file_or_write_stdout(file_path, data.as_bytes()).await?;
-                }
-                Some(SubCommand::SavePrimary { file_path }) => {
-                    let data = client.get_current_clip(ClipboardMode::Selection).await?;
+                Some(SubCommand::Save { file_path, mode }) => {
+                    let data = client.get_current_clip(mode).await?;
                     save_file_or_write_stdout(file_path, data.as_bytes()).await?;
                 }
                 Some(SubCommand::Remove { ids }) => {
@@ -340,13 +329,8 @@ impl Command {
                         println!("{:016x}", new_id);
                     }
                 }
-                Some(SubCommand::MarkAsClipboard { id }) => {
-                    if client.mark(id, ClipboardMode::Clipboard).await? {
-                        println!("Ok");
-                    }
-                }
-                Some(SubCommand::MarkAsPrimary { id }) => {
-                    if client.mark(id, ClipboardMode::Clipboard).await? {
+                Some(SubCommand::Mark { id, mode }) => {
+                    if client.mark(id, mode).await? {
                         println!("Ok");
                     }
                 }

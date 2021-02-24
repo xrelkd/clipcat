@@ -7,6 +7,9 @@ pub enum ClipboardError {
     #[snafu(display("Could not send clipboard event"))]
     SendClipboardEvent,
 
+    #[snafu(display("Could not parse clipboard mode, value: {}", value))]
+    ParseClipboardMode { value: String },
+
     #[snafu(display("Clipboard is empty"))]
     EmptyClipboard,
 
