@@ -10,16 +10,16 @@ Clipcat uses the Client-Server architecture. There are two role types in this ar
 
 ### Clipcat Server
 
-A `clipcat` server (as known as daemon) is running as the background process that doing the following routines:
+A `clipcat` server (as known as daemon) is running as the background process and does the following routines:
 
-- Watching the change for `X11 clipboard`.
+- Watching the changes of `X11 clipboard`.
 - Caching the content of `X11 clipboard`.
-- Insert content into `X11 clipboard`.
+- Inserting content into `X11 clipboard`.
 - Serving as a `gRPC` server and waiting for remote procedure call from clients.
 
 ### Clipcat Client
 
-A `clipcat` client sends requests to the server for the following manipulations:
+A `clipcat` client sends requests to the server for the following operations:
 
 - List: list the cached clips from server.
 - Insert: replace the current content of `X11 clipboard` with a clip.
@@ -62,13 +62,13 @@ $ clipcatd
 
 2. Copy arbitrary text from other X11 process with your mouse or keyboard.
 
-3. You can do one of the following manipulations with `clipcatctl` or `clipcat-menu`:
+3. You can run following commands with `clipcatctl` or `clipcat-menu`:
 
 | Command                   | Comment                                           |
 | ------------------------- | ------------------------------------------------- |
 | `clipcatctl list`         | List cached clipboard history                     |
 | `clipcatctl promote <id>` | Insert cached clip with `<id>` into X11 clipboard |
-| `clipcatctl remove [ids]` | Remove cahced clips with `[ids]` from server      |
+| `clipcatctl remove [ids]` | Remove cached clips with `[ids]` from server      |
 | `clipcatctl clear`        | Clear cached clipboard history                    |
 
 | Command               | Comment                                 |
