@@ -20,6 +20,7 @@ which already was an explicit dependency.
 
 This also adds configuration value to the [monitor] section of `clipcatd.toml`; `filter_min_size`.
 It filters the copy actions for a minimum size. See the example configuration below for more info.
+If you use Vim and set this to 1, holding `x` no longer ruins the Clipcat history; Vim's 1 byte long copy actions aren't saved.
 
 ## Architecture
 
