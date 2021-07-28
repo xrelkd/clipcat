@@ -114,7 +114,7 @@ fn kill_other(pid: u64) -> Result<(), Error> {
     if ret != 0 {
         match std::io::Error::last_os_error().raw_os_error() {
             Some(3) => tracing::warn!("Previous clipcatd didn't remove it's PID file"),
-                _ => return Err(Error::SendSignalTerminal { pid }),
+            _ => return Err(Error::SendSignalTerminal { pid }),
         }
     }
     Ok(())
