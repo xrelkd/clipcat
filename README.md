@@ -18,6 +18,9 @@ Apparently, it doesn't remove from the actual files when clearing the history.
 So I removed the dependency, and now data is serialized and deserialized using [bincode](https://crates.io/crates/bincode),
 which already was an explicit dependency.
 
+This also adds configuration value to the [monitor] section of `clipcatd.toml`; `filter_min_size`.
+It filters the copy actions for a minimum size. See the example configuration below for more info.
+
 ## Architecture
 
 Clipcat uses the Client-Server architecture. There are two role types in this architecture: `Server` and `Client`.
@@ -118,6 +121,7 @@ log_level = 'INFO'        # log level
 load_current = true       # load current clipboard content at startup
 enable_clipboard = true   # watch X11 clipboard
 enable_primary = true     # watch X11 primary clipboard
+filter_min_size = 0       # ignores copy actions with a size equal to or less this, in bytes
 
 [grpc]
 host = '127.0.0.1'        # host address for gRPC

@@ -34,6 +34,8 @@ pub struct Monitor {
     pub load_current: bool,
     pub enable_clipboard: bool,
     pub enable_primary: bool,
+    #[serde(default)]
+    pub filter_min_size: usize,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -58,14 +60,14 @@ impl Default for Config {
 
 impl Default for Monitor {
     fn default() -> Monitor {
-        Monitor { load_current: true, enable_clipboard: true, enable_primary: true }
+        Monitor { load_current: true, enable_clipboard: true, enable_primary: true, filter_min_size: 0 }
     }
 }
 
 impl Into<clipcat::ClipboardMonitorOptions> for Monitor {
     fn into(self) -> clipcat::ClipboardMonitorOptions {
-        let Monitor { load_current, enable_clipboard, enable_primary } = self;
-        clipcat::ClipboardMonitorOptions { load_current, enable_clipboard, enable_primary }
+        let Monitor { load_current, enable_clipboard, enable_primary, filter_min_size } = self;
+        clipcat::ClipboardMonitorOptions { load_current, enable_clipboard, enable_primary, filter_min_size }
     }
 }
 

@@ -25,11 +25,17 @@ pub struct ClipboardMonitorOptions {
     pub load_current: bool,
     pub enable_clipboard: bool,
     pub enable_primary: bool,
+    pub filter_min_size: usize,
 }
 
 impl Default for ClipboardMonitorOptions {
     fn default() -> Self {
-        ClipboardMonitorOptions { load_current: true, enable_clipboard: true, enable_primary: true }
+        ClipboardMonitorOptions {
+            load_current: true,
+            enable_clipboard: true,
+            enable_primary: true,
+            filter_min_size: 0,
+        }
     }
 }
 
@@ -51,13 +57,19 @@ impl ClipboardMonitor {
                 is_running.clone(),
                 ClipboardType::Clipboard,
                 event_sender.clone(),
+                opts.filter_min_size,
             )?;
             monitor.clipboard_thread = Some(thread);
         }
 
         if opts.enable_primary {
-            let thread =
-                build_thread(opts.load_current, is_running, ClipboardType::Primary, event_sender)?;
+            let thread = build_thread(
+                opts.load_current,
+                is_running,
+                ClipboardType::Primary,
+                event_sender,
+                opts.filter_min_size,
+            )?;
             monitor.primary_thread = Some(thread);
         }
 
@@ -114,6 +126,7 @@ fn build_thread(
     is_running: Arc<AtomicBool>,
     clipboard_type: ClipboardType,
     sender: broadcast::Sender<ClipboardEvent>,
+    filter_min_size: usize,
 ) -> Result<thread::JoinHandle<()>, ClipboardError> {
     let send_event = move |data: &str| {
         let event = match clipboard_type {
@@ -133,7 +146,7 @@ fn build_thread(
             match result {
                 Ok(data) => {
                     let data = String::from_utf8_lossy(&data);
-                    if !data.is_empty() {
+                    if data.len() > filter_min_size {
                         if let Err(SendError(_curr)) = send_event(&data) {
                             tracing::info!("ClipboardEvent receiver is closed.");
                             return;
@@ -151,15 +164,16 @@ fn build_thread(
             let result = clipboard.load_wait();
             match result {
                 Ok(curr) => {
-                    if is_running.load(Ordering::Acquire) {
+                    if is_running.load(Ordering::Acquire)
+                        && curr.len() > filter_min_size
+                        && last.as_bytes() != curr
+                    {
                         let curr = String::from_utf8_lossy(&curr);
-                        if !curr.is_empty() && last != curr {
-                            last = curr.into_owned();
-                            if let Err(SendError(_curr)) = send_event(&last) {
-                                tracing::info!("ClipboardEvent receiver is closed.");
-                                return;
-                            };
-                        }
+                        last = curr.into_owned();
+                        if let Err(SendError(_curr)) = send_event(&last) {
+                            tracing::info!("ClipboardEvent receiver is closed.");
+                            return;
+                        };
                     }
                 }
                 Err(err) => {
