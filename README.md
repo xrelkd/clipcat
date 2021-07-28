@@ -9,6 +9,8 @@
 Some critical issues (mainly [loosing the connection](https://github.com/xrelkd/clipcat/issues/19))
 were found when using it, and [xrelkd](https://github.com/xrelkd) didn't respond, so I fixed them here.
 
+Wayland support is built in, but not tested. If anyone is interested, please report back!
+
 I've also added a [systemd service file](clipcat.service), which you can copy to ~/.config/systemd/user/clipcat.service
 
 Compiling RocksDB took ages, and currently my DB is 34MB. That's a lot for 250 snippets of text.
