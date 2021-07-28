@@ -3,9 +3,10 @@ use std::path::{Path, PathBuf};
 use clipcat::ClipboardData;
 
 mod error;
-mod rocksdb;
 
-pub use self::{error::HistoryError, rocksdb::RocksDBDriver};
+mod fs;
+
+pub use self::error::HistoryError;
 
 pub trait HistoryDriver: Send + Sync {
     fn load(&self) -> Result<Vec<ClipboardData>, HistoryError>;
@@ -15,8 +16,6 @@ pub trait HistoryDriver: Send + Sync {
     fn clear(&mut self) -> Result<(), HistoryError>;
 
     fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError>;
-
-    fn get(&self, id: u64) -> Result<Option<ClipboardData>, HistoryError>;
 
     fn shrink_to(&mut self, min_capacity: usize) -> Result<(), HistoryError>;
 
@@ -38,43 +37,43 @@ pub struct HistoryManager {
 impl HistoryManager {
     #[inline]
     pub fn new<P: AsRef<Path>>(file_path: P) -> Result<HistoryManager, HistoryError> {
-        let driver = Box::new(RocksDBDriver::open(&file_path)?);
-        let file_path = file_path.as_ref().to_owned();
-        Ok(HistoryManager { driver, file_path })
+        let mut path = file_path.as_ref().to_path_buf();
+        if path.is_dir() {
+            path.set_file_name("history.cdb")
+        }
+        let driver = Box::new(fs::SimpleDBDriver::new(&path));
+        Ok(HistoryManager { driver, file_path: path })
     }
 
     #[inline]
-    pub fn path(&self) -> &Path { &self.file_path }
-
+    pub fn path(&self) -> &Path {
+        &self.file_path
+    }
+}
+impl HistoryDriver for HistoryManager {
     #[inline]
-    pub fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
+    fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
         self.driver.put(data)
     }
 
     #[inline]
     #[allow(dead_code)]
-    pub fn clear(&mut self) -> Result<(), HistoryError> { self.driver.clear() }
+    fn clear(&mut self) -> Result<(), HistoryError> {
+        self.driver.clear()
+    }
 
     #[inline]
-    pub fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> { self.driver.load() }
+    fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> {
+        self.driver.load()
+    }
 
     #[inline]
-    pub fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
+    fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
         self.driver.save(data)
     }
 
     #[inline]
-    pub fn shrink_to(&mut self, min_capacity: usize) -> Result<(), HistoryError> {
+    fn shrink_to(&mut self, min_capacity: usize) -> Result<(), HistoryError> {
         self.driver.shrink_to(min_capacity)
-    }
-
-    #[inline]
-    pub fn save_and_shrink_to(
-        &mut self,
-        data: &[ClipboardData],
-        min_capacity: usize,
-    ) -> Result<(), HistoryError> {
-        self.save(data)?;
-        self.shrink_to(min_capacity)
     }
 }

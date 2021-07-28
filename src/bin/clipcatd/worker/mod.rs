@@ -8,7 +8,7 @@ use clipcat::{ClipboardManager, ClipboardMonitor};
 use crate::{
     config::Config,
     error::{self, Error},
-    history::HistoryManager,
+    history::{HistoryDriver, HistoryManager},
 };
 
 mod clipboard;

@@ -10,7 +10,7 @@ use clipcat::{ClipboardData, ClipboardEvent, ClipboardManager, ClipboardMonitor,
 
 use crate::{
     error::Error,
-    history::HistoryManager,
+    history::{HistoryDriver, HistoryManager},
     worker::{CtlMessage, CtlMessageSender},
 };
 
