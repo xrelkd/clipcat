@@ -112,7 +112,10 @@ impl Command {
 fn kill_other(pid: u64) -> Result<(), Error> {
     let ret = unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM) };
     if ret != 0 {
-        return Err(Error::SendSignalTerminal { pid });
+        match std::io::Error::last_os_error().raw_os_error() {
+            Some(3) => tracing::warn!("Previous clipcatd didn't remove it's PID file"),
+                _ => return Err(Error::SendSignalTerminal { pid }),
+        }
     }
     Ok(())
 }
@@ -120,19 +123,22 @@ fn kill_other(pid: u64) -> Result<(), Error> {
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     let daemonize = config.daemonize;
     let pid_file = PidFile::from(config.pid_file.clone());
+
+    if pid_file.exists() && replace {
+        let pid = pid_file.try_load()?;
+        kill_other(pid)?;
+
+        // sleep for a while
+        std::thread::sleep(Duration::from_millis(200));
+    }
+
     if daemonize {
-        if pid_file.exists() && replace {
-            let pid = pid_file.try_load()?;
-            kill_other(pid)?;
-
-            // sleep for a while
-            std::thread::sleep(Duration::from_millis(200));
-        }
-
         let daemonize = daemonize::Daemonize::new().pid_file(pid_file.clone_path());
         if let Err(err) = daemonize.start() {
             return Err(Error::Daemonize { source: err });
         }
+    } else {
+        pid_file.set()?;
     }
 
     {
@@ -189,6 +195,11 @@ impl PidFile {
         tracing::info!("Remove PID file: {:?}", self.path);
         std::fs::remove_file(&self.path).context(error::RemovePidFile { pid_file: self.path })?;
         Ok(())
+    }
+    fn set(&self) -> Result<(), Error> {
+        tracing::info!("Setting PID file: {:?}", self.path);
+        std::fs::write(&self.path(), std::process::id().to_string().as_bytes())
+            .context(error::SetPidFile { pid_file: self.clone_path() })
     }
 }
 

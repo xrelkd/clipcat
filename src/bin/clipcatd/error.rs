@@ -37,6 +37,9 @@ pub enum Error {
     #[snafu(display("Could not remove PID file, filename: {}, error: {}", pid_file.display(), source))]
     RemovePidFile { pid_file: PathBuf, source: std::io::Error },
 
+    #[snafu(display("Could not set PID file, filename: {}, error: {}", pid_file.display(), source))]
+    SetPidFile { pid_file: PathBuf, source: std::io::Error },
+
     #[snafu(display("Parse process id, value: {}, error: {}", value, source))]
     ParseProcessId { value: String, source: std::num::ParseIntError },
 
