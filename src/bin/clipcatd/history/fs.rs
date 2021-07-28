@@ -1,7 +1,7 @@
 use clipcat::ClipboardData;
 use serde::Serialize;
 use snafu::ResultExt;
-use std::io::{self, Seek};
+use std::io;
 use std::path::{Path, PathBuf};
 
 use crate::history::{error, HistoryDriver, HistoryError};
@@ -22,8 +22,6 @@ impl SimpleDBDriver {
             .open(&self.path)
             .context(error::Io)?;
         file.set_len(0).context(error::Io)?;
-        // file.seek(io::SeekFrom::Start(0));
-        // println!("Writing {:#?}", data);
         bincode::serialize_into(&mut file, &FileContents { data }).context(error::Serde)?;
         Ok(())
     }
@@ -36,7 +34,6 @@ struct FileContents {
 
 impl HistoryDriver for SimpleDBDriver {
     fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> {
-        println!("CAlled load");
         let data = match std::fs::File::open(&self.path) {
             Ok(mut file) => bincode::deserialize_from(&mut file).context(error::Serde)?,
             Err(err) => match err.kind() {
@@ -55,21 +52,17 @@ impl HistoryDriver for SimpleDBDriver {
         self.write(saved)
     }
     fn clear(&mut self) -> Result<(), HistoryError> {
-        println!("Called clear");
         self.write(Vec::new())
     }
     fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
-        println!("Called put {:#?}", data);
         let mut saved = self.load()?;
         saved.push(data.clone());
         self.write(saved)
     }
     fn shrink_to(&mut self, min_capacity: usize) -> Result<(), HistoryError> {
-        println!("Called shrink to {}", min_capacity);
         let mut saved = self.load()?;
 
         let to_shrink = saved.len().saturating_sub(min_capacity);
-        println!("Shrinking with {}", to_shrink);
         for _ in 0..to_shrink {
             saved.remove(0);
         }

@@ -78,9 +78,7 @@ impl Manager for ManagerService {
         _request: Request<ClearRequest>,
     ) -> Result<Response<ClearResponse>, Status> {
         {
-            println!("Received clear");
             let mut manager = self.manager.lock().await;
-            println!("Sending clear");
             manager.clear();
         }
         Ok(Response::new(ClearResponse {}))
