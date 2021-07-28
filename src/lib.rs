@@ -39,7 +39,7 @@ pub const APP_INFO: AppInfo = AppInfo { name: PROJECT_NAME, author: PROJECT_NAME
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";
-pub const DAEMON_HISTORY_FILE_NAME: &str = "clipcatd/db";
+pub const DAEMON_HISTORY_FILE_NAME: &str = "clipcatd/history.cch";
 
 pub const CTL_PROGRAM_NAME: &str = "clipcatctl";
 pub const CTL_CONFIG_NAME: &str = "clipcatctl.toml";
