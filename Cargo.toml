@@ -19,6 +19,8 @@ daemon = [
 external_editor = ["tokio/process"]
 builtin_finder = ["skim"]
 
+wayland = ["wl-clipboard-rs"]
+
 clipcatd = ["app", "monitor", "daemon"]
 clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
 clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
@@ -72,6 +74,7 @@ serde_with = "1"
 serde_json = { version = "1", optional = true }
 
 x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
+wl-clipboard-rs = { version = "^0.4", optional = true }
 
 rocksdb = { version = "0.15", optional = true }
 bincode = { version = "1", optional = true }
