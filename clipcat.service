@@ -1,0 +1,10 @@
+[Unit]
+Description=Clipboard manager
+
+[Service]
+Type=simple
+ExecStart=clipcatd --no-daemon
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
