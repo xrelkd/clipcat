@@ -22,6 +22,15 @@ This also adds configuration value to the [monitor] section of `clipcatd.toml`; 
 It filters the copy actions for a minimum size. See the example configuration below for more info.
 If you use Vim and set this to 1, holding `x` no longer ruins the Clipcat history; Vim's 1 byte long copy actions aren't saved.
 
+You can install all the binaries with
+```shell
+$ cargo install --path . --features clipcatd,clipcat-menu,clipcatctl,clipcat-notify
+```
+or with wayland support:
+```shell
+$ cargo install --path . --features all
+```
+
 ## Architecture
 
 Clipcat uses the Client-Server architecture. There are two role types in this architecture: `Server` and `Client`.
