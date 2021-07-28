@@ -1,9 +1,9 @@
 [Unit]
-Description=Clipboard manager
+Description=Starts the clipboard daemon
 
 [Service]
 Type=simple
-ExecStart=clipcatd --no-daemon
+ExecStart=sh -c "PATH=~/.cargo/bin:$PATH clipcatd --no-daemon"
 Restart=on-failure
 
 [Install]
