@@ -44,12 +44,7 @@ impl HistoryDriver for SimpleDBDriver {
         Ok(data)
     }
     fn save(&mut self, data: &[ClipboardData]) -> Result<(), HistoryError> {
-        println!("CAlled save {}", data.len());
-        let mut saved = self.load()?;
-        for data in data {
-            saved.push(data.clone());
-        }
-        self.write(saved)
+        self.write(data.to_vec())
     }
     fn clear(&mut self) -> Result<(), HistoryError> {
         self.write(Vec::new())
