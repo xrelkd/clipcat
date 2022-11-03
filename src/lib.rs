@@ -142,7 +142,7 @@ impl ClipboardData {
             }
         };
 
-        data.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+        data.replace('\n', "\\n").replace('\r', "\\r").replace('\t', "\\t")
     }
 
     #[inline]

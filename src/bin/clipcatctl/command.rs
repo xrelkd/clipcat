@@ -202,7 +202,7 @@ impl Command {
                 let config_text =
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable");
                 std::io::stdout()
-                    .write_all(&config_text.as_bytes())
+                    .write_all(config_text.as_bytes())
                     .expect("Failed to write to stdout");
                 return Ok(0);
             }

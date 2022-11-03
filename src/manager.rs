@@ -70,13 +70,13 @@ impl ClipboardManager {
 
     #[inline]
     pub fn insert_clipboard(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_clipboard(&data);
+        let data = ClipboardData::new_clipboard(data);
         self.insert_inner(data)
     }
 
     #[inline]
     pub fn insert_primary(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_primary(&data);
+        let data = ClipboardData::new_primary(data);
         self.insert_inner(data)
     }
 

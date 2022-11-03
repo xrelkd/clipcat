@@ -177,7 +177,7 @@ impl FinderRunner {
                 return Ok(vec![]);
             }
 
-            let selected_indices = external.parse_output(&output.stdout.as_slice());
+            let selected_indices = external.parse_output(output.stdout.as_slice());
             Ok(selected_indices)
         } else {
             Ok(vec![])
