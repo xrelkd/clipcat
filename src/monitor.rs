@@ -164,16 +164,15 @@ fn build_thread(
             let result = clipboard.load_wait();
             match result {
                 Ok(curr) => {
-                    if is_running.load(Ordering::Acquire)
-                        && curr.len() > filter_min_size
-                        && last.as_bytes() != curr
-                    {
+                    if is_running.load(Ordering::Acquire) && last.as_bytes() != curr {
                         let curr = String::from_utf8_lossy(&curr);
                         last = curr.into_owned();
-                        if let Err(SendError(_curr)) = send_event(&last) {
-                            tracing::info!("ClipboardEvent receiver is closed.");
-                            return;
-                        };
+                        if curr.len() > filter_min_size {
+                            if let Err(SendError(_curr)) = send_event(&last) {
+                                tracing::info!("ClipboardEvent receiver is closed.");
+                                return;
+                            };
+                        }
                     }
                 }
                 Err(err) => {
@@ -241,13 +240,12 @@ struct ClipboardWaitProvider {
 #[cfg(feature = "wayland")]
 impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
+        tracing::info!("Creating new wayland clipboard watcher");
         let mut s = Self {
             clipboard_type,
             last: None,
         };
-        if let Ok(last) = s.load() {
-            s.last = Some(last);
-        }
+        s.last = s.load().ok();
         Ok(s)
     }
 
@@ -273,6 +271,7 @@ impl ClipboardWaitProvider {
 
             Err(Error::NoSeats) | Err(Error::ClipboardEmpty) | Err(Error::NoMimeType) => {
                 // The clipboard is empty, nothing to worry about.
+                thread::sleep(std::time::Duration::from_millis(250));
                 Ok(vec![])
             }
 
@@ -282,13 +281,14 @@ impl ClipboardWaitProvider {
 
     pub(crate) fn load_wait(&mut self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
         loop {
+            tracing::info!("Try load");
             let response = self.load()?;
             match &response {
                 contents
                     if !contents.is_empty()
                         && Some(contents.as_slice()) != self.last.as_deref() =>
                 {
-                    self.last = Some(contents.clone());
+                    self.last = Some(response.clone());
                     return Ok(response);
                 }
                 _ => {
