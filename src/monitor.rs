@@ -166,8 +166,9 @@ fn build_thread(
                 Ok(curr) => {
                     if is_running.load(Ordering::Acquire) && last.as_bytes() != curr {
                         let curr = String::from_utf8_lossy(&curr);
+                        let len = curr.len();
                         last = curr.into_owned();
-                        if curr.len() > filter_min_size {
+                        if len > filter_min_size {
                             if let Err(SendError(_curr)) = send_event(&last) {
                                 tracing::info!("ClipboardEvent receiver is closed.");
                                 return;
