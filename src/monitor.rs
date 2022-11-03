@@ -181,6 +181,7 @@ fn build_thread(
                         "Failed to load clipboard, error: {}. Restarting clipboard provider.",
                         err,
                     );
+                    thread::sleep(std::time::Duration::from_secs(5));
                     clipboard = match ClipboardWaitProvider::new(clipboard_type) {
                         Ok(c) => c,
                         Err(err) => {
@@ -282,7 +283,6 @@ impl ClipboardWaitProvider {
 
     pub(crate) fn load_wait(&mut self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
         loop {
-            tracing::info!("Try load");
             let response = self.load()?;
             match &response {
                 contents
@@ -293,7 +293,7 @@ impl ClipboardWaitProvider {
                     return Ok(response);
                 }
                 _ => {
-                    thread::sleep(std::time::Duration::from_millis(250));
+                    thread::sleep(std::time::Duration::from_millis(500));
                 }
             }
         }
