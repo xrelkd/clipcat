@@ -6,7 +6,10 @@ use clipcat::{editor::EditorError, grpc::GrpcClientError};
 #[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Could not read file {}, error: {}", filename.display(), source))]
-    ReadFile { filename: PathBuf, source: std::io::Error },
+    ReadFile {
+        filename: PathBuf,
+        source: std::io::Error,
+    },
 
     #[snafu(display("Could not read from stdin, error: {}", source))]
     ReadStdin { source: std::io::Error },
@@ -25,5 +28,7 @@ pub enum Error {
 }
 
 impl From<GrpcClientError> for Error {
-    fn from(err: GrpcClientError) -> Error { Error::CallGrpcClient { source: err } }
+    fn from(err: GrpcClientError) -> Error {
+        Error::CallGrpcClient { source: err }
+    }
 }

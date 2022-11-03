@@ -34,7 +34,10 @@ impl Manager for ManagerService {
         &self,
         request: Request<InsertRequest>,
     ) -> Result<Response<InsertResponse>, Status> {
-        let InsertRequest { data, clipboard_type } = request.into_inner();
+        let InsertRequest {
+            data,
+            clipboard_type,
+        } = request.into_inner();
         let clipboard_type = clipboard_type.into();
         let id = {
             let mut manager = self.manager.lock().await;
@@ -99,7 +102,9 @@ impl Manager for ManagerService {
     ) -> Result<Response<GetCurrentClipboardResponse>, Status> {
         let data = {
             let manager = self.manager.lock().await;
-            manager.get_current_clipboard().map(|clip| clip.clone().into())
+            manager
+                .get_current_clipboard()
+                .map(|clip| clip.clone().into())
         };
         Ok(Response::new(GetCurrentClipboardResponse { data }))
     }
@@ -110,7 +115,9 @@ impl Manager for ManagerService {
     ) -> Result<Response<GetCurrentPrimaryResponse>, Status> {
         let data = {
             let manager = self.manager.lock().await;
-            manager.get_current_primary().map(|clip| clip.clone().into())
+            manager
+                .get_current_primary()
+                .map(|clip| clip.clone().into())
         };
         Ok(Response::new(GetCurrentPrimaryResponse { data }))
     }
@@ -191,7 +198,9 @@ impl Monitor for MonitorService {
         let state = {
             let mut monitor = self.monitor.lock().await;
             monitor.enable();
-            MonitorStateReply { state: monitor.state().into() }
+            MonitorStateReply {
+                state: monitor.state().into(),
+            }
         };
         dbg!(&state);
 
@@ -205,7 +214,9 @@ impl Monitor for MonitorService {
         let state = {
             let mut monitor = self.monitor.lock().await;
             monitor.disable();
-            MonitorStateReply { state: monitor.state().into() }
+            MonitorStateReply {
+                state: monitor.state().into(),
+            }
         };
 
         Ok(Response::new(state))
@@ -218,7 +229,9 @@ impl Monitor for MonitorService {
         let state = {
             let mut monitor = self.monitor.lock().await;
             monitor.toggle();
-            MonitorStateReply { state: monitor.state().into() }
+            MonitorStateReply {
+                state: monitor.state().into(),
+            }
         };
 
         Ok(Response::new(state))
@@ -230,7 +243,9 @@ impl Monitor for MonitorService {
     ) -> Result<Response<MonitorStateReply>, Status> {
         let state = {
             let monitor = self.monitor.lock().await;
-            MonitorStateReply { state: monitor.state().into() }
+            MonitorStateReply {
+                state: monitor.state().into(),
+            }
         };
 
         Ok(Response::new(state))

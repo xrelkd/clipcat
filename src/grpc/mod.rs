@@ -9,6 +9,6 @@ pub use self::{
     protobuf::{manager_server::ManagerServer, monitor_server::MonitorServer},
 };
 
-#[cfg(feature = "monitor")]
 pub use self::service::ManagerService;
+#[cfg(feature = "monitor")]
 pub use self::service::MonitorService;

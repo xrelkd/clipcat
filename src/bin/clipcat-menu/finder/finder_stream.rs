@@ -9,7 +9,12 @@ pub trait FinderStream: Send + Sync {
             .iter()
             .enumerate()
             .map(|(i, data)| {
-                format!("{}{} {}", i, INDEX_SEPARATOR, data.printable_data(self.line_length()))
+                format!(
+                    "{}{} {}",
+                    i,
+                    INDEX_SEPARATOR,
+                    data.printable_data(self.line_length())
+                )
             })
             .collect::<Vec<_>>()
             .join(ENTRY_SEPARATOR)
@@ -33,9 +38,13 @@ pub trait FinderStream: Send + Sync {
 
     fn set_menu_length(&mut self, _menu_length: usize) {}
 
-    fn menu_length(&self) -> Option<usize> { None }
+    fn menu_length(&self) -> Option<usize> {
+        None
+    }
 
-    fn line_length(&self) -> Option<usize> { None }
+    fn line_length(&self) -> Option<usize> {
+        None
+    }
 }
 
 #[cfg(test)]

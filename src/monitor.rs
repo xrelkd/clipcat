@@ -205,8 +205,12 @@ struct ClipboardWaitProvider {
 impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
-        Ok(Self { clipboard, clipboard_type })
+        Ok(Self {
+            clipboard,
+            clipboard_type,
+        })
     }
+
     fn atoms(&self) -> (u32, u32, u32) {
         let atom_clipboard = match self.clipboard_type {
             ClipboardType::Clipboard => self.clipboard.getter.atoms.clipboard,
@@ -216,11 +220,13 @@ impl ClipboardWaitProvider {
         let atom_property = self.clipboard.getter.atoms.property;
         (atom_clipboard, atom_utf8string, atom_property)
     }
+
     pub(crate) fn load(&self) -> Result<Vec<u8>, x11_clipboard::error::Error> {
         let (c, utf8, prop) = self.atoms();
 
         self.clipboard.load(c, utf8, prop, None)
     }
+
     pub(crate) fn load_wait(&self) -> Result<Vec<u8>, x11_clipboard::error::Error> {
         let (c, utf8, prop) = self.atoms();
 
@@ -235,18 +241,23 @@ struct ClipboardWaitProvider {
 #[cfg(feature = "wayland")]
 impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
-        let mut s = Self { clipboard_type, last: None };
+        let mut s = Self {
+            clipboard_type,
+            last: None,
+        };
         if let Ok(last) = s.load() {
             s.last = Some(last);
         }
         Ok(s)
     }
+
     fn wl_type(&self) -> wl_clipboard_rs::paste::ClipboardType {
         match self.clipboard_type {
             ClipboardType::Primary => wl_clipboard_rs::paste::ClipboardType::Primary,
             ClipboardType::Clipboard => wl_clipboard_rs::paste::ClipboardType::Regular,
         }
     }
+
     pub(crate) fn load(&self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
         use std::io::Read;
         use wl_clipboard_rs::paste::{get_contents, Error, MimeType, Seat};
@@ -255,7 +266,8 @@ impl ClipboardWaitProvider {
         match result {
             Ok((mut pipe, _mime_type)) => {
                 let mut contents = vec![];
-                pipe.read_to_end(&mut contents).map_err(Error::PipeCreation)?;
+                pipe.read_to_end(&mut contents)
+                    .map_err(Error::PipeCreation)?;
                 Ok(contents)
             }
 
@@ -267,11 +279,15 @@ impl ClipboardWaitProvider {
             Err(err) => Err(err)?,
         }
     }
+
     pub(crate) fn load_wait(&mut self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
         loop {
             let response = self.load()?;
             match &response {
-                contents if !contents.is_empty() && Some(contents.as_slice()) != self.last.as_deref() => {
+                contents
+                    if !contents.is_empty()
+                        && Some(contents.as_slice()) != self.last.as_deref() =>
+                {
                     self.last = Some(contents.clone());
                     return Ok(response);
                 }

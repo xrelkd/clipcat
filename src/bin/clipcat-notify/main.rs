@@ -68,8 +68,11 @@ impl Command {
             return Err(Error::MonitorNothing);
         }
 
-        let monitor_opts =
-            ClipboardMonitorOptions { load_current: false, enable_clipboard, enable_primary };
+        let monitor_opts = ClipboardMonitorOptions {
+            load_current: false,
+            enable_clipboard,
+            enable_primary,
+        };
         let monitor = ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
         let runtime = Runtime::new().context(InitializeTokioRuntime)?;
         runtime.block_on(async {

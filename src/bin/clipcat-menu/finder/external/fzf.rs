@@ -5,11 +5,15 @@ pub struct Fzf;
 
 impl Fzf {
     #[inline]
-    pub fn new() -> Fzf { Fzf }
+    pub fn new() -> Fzf {
+        Fzf
+    }
 }
 
 impl ExternalProgram for Fzf {
-    fn program(&self) -> String { "fzf".to_string() }
+    fn program(&self) -> String {
+        "fzf".to_string()
+    }
 
     fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
         match selection_mode {

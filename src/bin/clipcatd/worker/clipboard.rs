@@ -110,7 +110,12 @@ pub fn start(
     history_manager: Arc<Mutex<HistoryManager>>,
 ) -> (MessageSender, JoinHandle<Result<(), Error>>) {
     let (tx, msg_rx) = mpsc::unbounded_channel::<Message>();
-    let worker =
-        ClipboardWorker { ctl_tx, msg_rx, clipboard_monitor, clipboard_manager, history_manager };
+    let worker = ClipboardWorker {
+        ctl_tx,
+        msg_rx,
+        clipboard_monitor,
+        clipboard_manager,
+        history_manager,
+    };
     (tx, tokio::spawn(worker.run()))
 }

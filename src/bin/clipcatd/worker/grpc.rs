@@ -22,7 +22,10 @@ pub fn start(
     grpc_addr: std::net::SocketAddr,
     clipboard_monitor: Arc<Mutex<ClipboardMonitor>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
-) -> (mpsc::UnboundedSender<Message>, JoinHandle<Result<(), Error>>) {
+) -> (
+    mpsc::UnboundedSender<Message>,
+    JoinHandle<Result<(), Error>>,
+) {
     let server = {
         let monitor_service = MonitorService::new(clipboard_monitor);
         let manager_service = ManagerService::new(clipboard_manager);

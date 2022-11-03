@@ -1,8 +1,6 @@
 use std::{collections::HashMap, time::SystemTime};
 
-use snafu::ResultExt;
-
-use crate::{error, ClipboardData, ClipboardError, ClipboardType};
+use crate::{ClipboardData, ClipboardError, ClipboardType};
 
 const DEFAULT_CAPACITY: usize = 40;
 
@@ -14,7 +12,9 @@ pub struct ClipboardManager {
 }
 
 impl Default for ClipboardManager {
-    fn default() -> ClipboardManager { Self::with_capacity(DEFAULT_CAPACITY) }
+    fn default() -> ClipboardManager {
+        Self::with_capacity(DEFAULT_CAPACITY)
+    }
 }
 
 impl ClipboardManager {
@@ -28,16 +28,24 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn new() -> ClipboardManager { Self::default() }
+    pub fn new() -> ClipboardManager {
+        Self::default()
+    }
 
     #[inline]
-    pub fn capacity(&self) -> usize { self.capacity }
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
 
     #[inline]
-    pub fn set_capacity(&mut self, v: usize) { self.capacity = v; }
+    pub fn set_capacity(&mut self, v: usize) {
+        self.capacity = v;
+    }
 
     #[inline]
-    pub fn import(&mut self, clips: &[ClipboardData]) { self.import_iter(clips.iter()); }
+    pub fn import(&mut self, clips: &[ClipboardData]) {
+        self.import_iter(clips.iter());
+    }
 
     #[inline]
     pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipboardData>) {
@@ -49,13 +57,19 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn list(&self) -> Vec<ClipboardData> { self.iter().cloned().collect() }
+    pub fn list(&self) -> Vec<ClipboardData> {
+        self.iter().cloned().collect()
+    }
 
     #[inline]
-    pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> { self.clips.values() }
+    pub fn iter(&self) -> impl Iterator<Item = &ClipboardData> {
+        self.clips.values()
+    }
 
     #[inline]
-    pub fn get(&self, id: u64) -> Option<ClipboardData> { self.clips.get(&id).map(Clone::clone) }
+    pub fn get(&self, id: u64) -> Option<ClipboardData> {
+        self.clips.get(&id).map(Clone::clone)
+    }
 
     #[inline]
     pub fn get_current_clipboard(&self) -> Option<&ClipboardData> {
@@ -63,10 +77,14 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn get_current_primary(&self) -> Option<&ClipboardData> { self.current_primary.as_ref() }
+    pub fn get_current_primary(&self) -> Option<&ClipboardData> {
+        self.current_primary.as_ref()
+    }
 
     #[inline]
-    pub fn insert(&mut self, data: ClipboardData) -> u64 { self.insert_inner(data) }
+    pub fn insert(&mut self, data: ClipboardData) -> u64 {
+        self.insert_inner(data)
+    }
 
     #[inline]
     pub fn insert_clipboard(&mut self, data: &str) -> u64 {
@@ -96,21 +114,27 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn len(&self) -> usize { self.clips.len() }
+    pub fn len(&self) -> usize {
+        self.clips.len()
+    }
 
     #[inline]
-    pub fn is_empty(&self) -> bool { self.clips.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.clips.is_empty()
+    }
 
     fn remove_oldest(&mut self) {
         while self.clips.len() > self.capacity {
             let (_, oldest_id) =
-                self.clips.iter().fold((SystemTime::now(), 0), |oldest, (id, clip)| {
-                    if clip.timestamp < oldest.0 {
-                        (clip.timestamp, *id)
-                    } else {
-                        oldest
-                    }
-                });
+                self.clips
+                    .iter()
+                    .fold((SystemTime::now(), 0), |oldest, (id, clip)| {
+                        if clip.timestamp < oldest.0 {
+                            (clip.timestamp, *id)
+                        } else {
+                            oldest
+                        }
+                    });
 
             self.remove(oldest_id);
         }
@@ -148,7 +172,12 @@ impl ClipboardManager {
 
         let new_id = ClipboardData::compute_id(data);
         let data = data.to_owned();
-        let data = ClipboardData { id: new_id, data, timestamp, clipboard_type };
+        let data = ClipboardData {
+            id: new_id,
+            data,
+            timestamp,
+            clipboard_type,
+        };
 
         self.insert_inner(data);
         (true, new_id)
@@ -172,12 +201,34 @@ impl ClipboardManager {
         Ok(())
     }
 
+    #[cfg(feature = "wayland")]
     async fn update_sys_clipboard(
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {
+        let cb = match clipboard_type {
+            ClipboardType::Clipboard => wl_clipboard_rs::copy::ClipboardType::Regular,
+            ClipboardType::Primary => wl_clipboard_rs::copy::ClipboardType::Primary,
+        };
+        wl_clipboard_rs::copy::Options::new()
+            .clipboard(cb)
+            .clone()
+            .copy(
+                wl_clipboard_rs::copy::Source::Bytes(data.as_bytes().to_vec().into_boxed_slice()),
+                wl_clipboard_rs::copy::MimeType::Text,
+            )
+            .ok()
+            .ok_or(ClipboardError::WaylandWrite)?;
+        Ok(())
+    }
+    #[cfg(not(feature = "wayland"))]
+    async fn update_sys_clipboard(
+        data: &str,
+        clipboard_type: ClipboardType,
+    ) -> Result<(), ClipboardError> {
+        use snafu::ResultExt;
         use x11_clipboard::Clipboard;
-        let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
+        let clipboard = Clipboard::new().context(crate::error::InitializeX11Clipboard)?;
 
         let atom_clipboard = match clipboard_type {
             ClipboardType::Clipboard => clipboard.setter.atoms.clipboard,
@@ -189,11 +240,11 @@ impl ClipboardManager {
         tokio::task::spawn_blocking(move || -> Result<(), ClipboardError> {
             clipboard
                 .store(atom_clipboard, atom_utf8string, data.as_bytes())
-                .context(error::PasteToX11Clipboard)?;
+                .context(crate::error::PasteToX11Clipboard)?;
             Ok(())
         })
         .await
-        .context(error::SpawnBlockingTask)??;
+        .context(crate::error::SpawnBlockingTask)??;
         Ok(())
     }
 }
@@ -208,7 +259,9 @@ mod tests {
     };
 
     fn create_clips(n: usize) -> Vec<ClipboardData> {
-        (0..n).map(|i| ClipboardData::new_primary(&i.to_string())).collect()
+        (0..n)
+            .map(|i| ClipboardData::new_primary(&i.to_string()))
+            .collect()
     }
 
     #[test]

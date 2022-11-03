@@ -42,7 +42,10 @@ impl HistoryManager {
             path.set_file_name("history.cdb")
         }
         let driver = Box::new(fs::SimpleDBDriver::new(&path));
-        Ok(HistoryManager { driver, file_path: path })
+        Ok(HistoryManager {
+            driver,
+            file_path: path,
+        })
     }
 
     #[inline]

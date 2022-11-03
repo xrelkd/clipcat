@@ -38,7 +38,9 @@ pub struct CustomFinder {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            server_host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
+            server_host: clipcat::DEFAULT_GRPC_HOST
+                .parse()
+                .expect("Parse default gRPC host"),
             server_port: clipcat::DEFAULT_GRPC_PORT,
             finder: FinderType::Rofi,
             rofi: Some(Rofi::default()),
@@ -49,15 +51,30 @@ impl Default for Config {
 }
 
 impl Default for Rofi {
-    fn default() -> Rofi { Rofi { line_length: 100, menu_length: 30 } }
+    fn default() -> Rofi {
+        Rofi {
+            line_length: 100,
+            menu_length: 30,
+        }
+    }
 }
 
 impl Default for Dmenu {
-    fn default() -> Dmenu { Dmenu { line_length: 100, menu_length: 30 } }
+    fn default() -> Dmenu {
+        Dmenu {
+            line_length: 100,
+            menu_length: 30,
+        }
+    }
 }
 
 impl Default for CustomFinder {
-    fn default() -> CustomFinder { CustomFinder { program: "fzf".to_string(), args: vec![] } }
+    fn default() -> CustomFinder {
+        CustomFinder {
+            program: "fzf".to_string(),
+            args: vec![],
+        }
+    }
 }
 
 impl Config {

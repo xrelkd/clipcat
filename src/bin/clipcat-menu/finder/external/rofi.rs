@@ -15,14 +15,22 @@ pub struct Rofi {
 
 impl Rofi {
     pub fn from_config(config: &config::Rofi) -> Rofi {
-        let config::Rofi { menu_length, line_length } = *config;
+        let config::Rofi {
+            menu_length,
+            line_length,
+        } = *config;
 
-        Rofi { menu_length, line_length }
+        Rofi {
+            menu_length,
+            line_length,
+        }
     }
 }
 
 impl ExternalProgram for Rofi {
-    fn program(&self) -> String { "rofi".to_string() }
+    fn program(&self) -> String {
+        "rofi".to_string()
+    }
 
     fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
         match selection_mode {
@@ -66,13 +74,21 @@ impl FinderStream for Rofi {
             .collect()
     }
 
-    fn line_length(&self) -> Option<usize> { Some(self.line_length) }
+    fn line_length(&self) -> Option<usize> {
+        Some(self.line_length)
+    }
 
-    fn menu_length(&self) -> Option<usize> { Some(self.menu_length) }
+    fn menu_length(&self) -> Option<usize> {
+        Some(self.menu_length)
+    }
 
-    fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length }
+    fn set_line_length(&mut self, line_length: usize) {
+        self.line_length = line_length
+    }
 
-    fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }
+    fn set_menu_length(&mut self, menu_length: usize) {
+        self.menu_length = menu_length;
+    }
 }
 
 #[cfg(test)]
@@ -84,7 +100,10 @@ mod tests {
 
     #[test]
     fn test_args() {
-        let rofi = Rofi::from_config(&config::Rofi { menu_length: 30, line_length: 40 });
+        let rofi = Rofi::from_config(&config::Rofi {
+            menu_length: 30,
+            line_length: 40,
+        });
         assert_eq!(
             rofi.args(SelectionMode::Single),
             vec![

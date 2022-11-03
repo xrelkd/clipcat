@@ -12,7 +12,9 @@ use crate::finder::{
 pub struct BuiltinFinder;
 
 impl BuiltinFinder {
-    pub fn new() -> BuiltinFinder { BuiltinFinder }
+    pub fn new() -> BuiltinFinder {
+        BuiltinFinder
+    }
 
     pub async fn select(
         &self,
@@ -26,8 +28,11 @@ impl BuiltinFinder {
                 SelectionMode::Single => false,
                 SelectionMode::Multiple => true,
             };
-            let options =
-                SkimOptionsBuilder::default().height(Some("100%")).multi(multi).build().unwrap();
+            let options = SkimOptionsBuilder::default()
+                .height(Some("100%"))
+                .multi(multi)
+                .build()
+                .unwrap();
 
             let item_reader = SkimItemReader::default();
             let items = item_reader.of_bufread(Cursor::new(input));
@@ -37,7 +42,11 @@ impl BuiltinFinder {
                 .map(|out| out.selected_items)
                 .unwrap_or_else(Vec::new);
 
-            selected_items.iter().map(|item| item.text()).collect::<Vec<_>>().join(ENTRY_SEPARATOR)
+            selected_items
+                .iter()
+                .map(|item| item.text())
+                .collect::<Vec<_>>()
+                .join(ENTRY_SEPARATOR)
         })
         .await
         .context(error::JoinTask)?;

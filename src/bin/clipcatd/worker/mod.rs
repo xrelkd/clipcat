@@ -39,13 +39,19 @@ pub async fn start(config: Config) -> Result<(), Error> {
         let clip_count = history_clips.len();
         tracing::info!("{} clip(s) loaded", clip_count);
 
-        tracing::info!("Initialize ClipboardManager with capacity {}", config.max_history);
+        tracing::info!(
+            "Initialize ClipboardManager with capacity {}",
+            config.max_history
+        );
         let mut clipboard_manager = ClipboardManager::with_capacity(config.max_history);
 
         tracing::info!("Import {} clip(s) into ClipboardManager", clip_count);
         clipboard_manager.import(&history_clips);
 
-        (Arc::new(Mutex::new(clipboard_manager)), Arc::new(Mutex::new(history_manager)))
+        (
+            Arc::new(Mutex::new(clipboard_manager)),
+            Arc::new(Mutex::new(history_manager)),
+        )
     };
 
     let (ctl_tx, mut ctl_rx) = mpsc::unbounded_channel::<CtlMessage>();

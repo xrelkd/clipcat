@@ -11,12 +11,16 @@ pub struct ExternalEditor {
 
 impl ExternalEditor {
     pub fn new<S: ToString>(editor: S) -> ExternalEditor {
-        ExternalEditor { editor: editor.to_string() }
+        ExternalEditor {
+            editor: editor.to_string(),
+        }
     }
 
     pub fn new_or_from_env<S: ToString>(editor: Option<S>) -> Result<ExternalEditor, EditorError> {
         if let Some(editor) = editor {
-            return Ok(ExternalEditor { editor: editor.to_string() });
+            return Ok(ExternalEditor {
+                editor: editor.to_string(),
+            });
         }
 
         Self::from_env()
@@ -29,8 +33,9 @@ impl ExternalEditor {
 
     pub async fn execute(&self, data: &str) -> Result<String, EditorError> {
         let tmp_file = {
-            let timestamp =
-                SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("system time");
+            let timestamp = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .expect("system time");
             let filename = format!(".{}-{:?}", crate::PROJECT_NAME, timestamp);
             let mut path = std::env::temp_dir();
             path.push(filename);
@@ -39,22 +44,33 @@ impl ExternalEditor {
 
         tokio::fs::write(&tmp_file, data)
             .await
-            .context(error::CreateTemporaryFile { filename: tmp_file.to_owned() })?;
+            .context(error::CreateTemporaryFile {
+                filename: tmp_file.to_owned(),
+            })?;
 
         Command::new(&self.editor)
             .arg(&tmp_file)
             .spawn()
-            .context(error::CallExternalTextEditor { program: self.editor.to_owned() })?
+            .context(error::CallExternalTextEditor {
+                program: self.editor.to_owned(),
+            })?
             .wait()
             .await
-            .context(error::ExecuteExternalTextEditor { program: self.editor.to_owned() })?;
+            .context(error::ExecuteExternalTextEditor {
+                program: self.editor.to_owned(),
+            })?;
 
-        let data = tokio::fs::read_to_string(&tmp_file)
-            .await
-            .context(error::ReadTemporaryFile { filename: tmp_file.to_owned() })?;
+        let data =
+            tokio::fs::read_to_string(&tmp_file)
+                .await
+                .context(error::ReadTemporaryFile {
+                    filename: tmp_file.to_owned(),
+                })?;
         tokio::fs::remove_file(&tmp_file.to_owned())
             .await
-            .context(error::RemoveTemporaryFile { filename: tmp_file.to_owned() })?;
+            .context(error::RemoveTemporaryFile {
+                filename: tmp_file.to_owned(),
+            })?;
 
         Ok(data)
     }

@@ -108,7 +108,10 @@ pub enum SubCommand {
         about = "Removes clips with [ids]")]
     Remove { ids: Vec<String> },
 
-    #[structopt(name = "promote", about = "Replaces content of clipboard with clip with <id>")]
+    #[structopt(
+        name = "promote",
+        about = "Replaces content of clipboard with clip with <id>"
+    )]
     MarkAsClipboard {
         #[structopt(parse(try_from_str = parse_hex))]
         id: u64,
@@ -148,11 +151,17 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command { StructOpt::from_args() }
+    pub fn new() -> Command {
+        StructOpt::from_args()
+    }
 
     fn load_config(&self) -> Config {
-        let mut config =
-            Config::load_or_default(&self.config_file.clone().unwrap_or_else(Config::default_path));
+        let mut config = Config::load_or_default(
+            &self
+                .config_file
+                .clone()
+                .unwrap_or_else(Config::default_path),
+        );
         if let Some(host) = self.server_host {
             config.server_host = host;
         }
@@ -219,7 +228,9 @@ impl Command {
                 let level_filter =
                     tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
 
-                let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+                let registry = tracing_subscriber::registry()
+                    .with(level_filter)
+                    .with(fmt_layer);
                 match tracing_journald::layer() {
                     Ok(layer) => registry.with(layer).init(),
                     Err(_err) => {
@@ -228,9 +239,11 @@ impl Command {
                 }
             }
 
-            let mut client =
-                GrpcClient::new(format!("http://{}:{}", config.server_host, config.server_port))
-                    .await?;
+            let mut client = GrpcClient::new(format!(
+                "http://{}:{}",
+                config.server_host, config.server_port
+            ))
+            .await?;
 
             match self.subcommand {
                 None => {
@@ -355,7 +368,9 @@ impl Command {
 }
 
 #[inline]
-fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
+fn parse_hex(src: &str) -> Result<u64, ParseIntError> {
+    u64::from_str_radix(src, 16)
+}
 
 async fn print_list(client: &mut GrpcClient, no_id: bool) -> Result<(), Error> {
     const LINE_LENGTH: Option<usize> = Some(100);
@@ -376,10 +391,15 @@ async fn load_file_or_read_stdin(file_path: Option<PathBuf>) -> Result<String, E
     match file_path {
         Some(file_path) => tokio::fs::read_to_string(&file_path)
             .await
-            .context(error::ReadFile { filename: file_path.to_owned() }),
+            .context(error::ReadFile {
+                filename: file_path.to_owned(),
+            }),
         None => {
             let mut data = String::new();
-            tokio::io::stdin().read_to_string(&mut data).await.context(error::ReadStdin)?;
+            tokio::io::stdin()
+                .read_to_string(&mut data)
+                .await
+                .context(error::ReadStdin)?;
             Ok(data)
         }
     }
@@ -393,7 +413,12 @@ async fn save_file_or_write_stdout<C: AsRef<[u8]> + Unpin>(
     match file_path {
         Some(file_path) => tokio::fs::write(&file_path, data)
             .await
-            .context(error::ReadFile { filename: file_path.to_owned() }),
-        None => tokio::io::stdout().write_all(data.as_ref()).await.context(error::WriteStdout),
+            .context(error::ReadFile {
+                filename: file_path.to_owned(),
+            }),
+        None => tokio::io::stdout()
+            .write_all(data.as_ref())
+            .await
+            .context(error::WriteStdout),
     }
 }

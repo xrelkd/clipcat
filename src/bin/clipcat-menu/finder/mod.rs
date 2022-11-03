@@ -60,7 +60,9 @@ impl FinderType {
 }
 
 impl Default for FinderType {
-    fn default() -> FinderType { FinderType::Builtin }
+    fn default() -> FinderType {
+        FinderType::Builtin
+    }
 }
 
 impl FromStr for FinderType {
@@ -74,7 +76,9 @@ impl FromStr for FinderType {
             "skim" => Ok(FinderType::Skim),
             "fzf" => Ok(FinderType::Fzf),
             "custom" => Ok(FinderType::Custom),
-            _ => Err(FinderError::InvalidFinder { finder: finder.to_owned() }),
+            _ => Err(FinderError::InvalidFinder {
+                finder: finder.to_owned(),
+            }),
         }
     }
 }
@@ -102,12 +106,12 @@ impl FinderRunner {
             FinderType::Builtin => None,
             FinderType::Skim => Some(Box::new(Skim::new())),
             FinderType::Fzf => Some(Box::new(Fzf::new())),
-            FinderType::Rofi => {
-                Some(Box::new(Rofi::from_config(&config.rofi.clone().unwrap_or_default())))
-            }
-            FinderType::Dmenu => {
-                Some(Box::new(Dmenu::from_config(&config.dmenu.clone().unwrap_or_default())))
-            }
+            FinderType::Rofi => Some(Box::new(Rofi::from_config(
+                &config.rofi.clone().unwrap_or_default(),
+            ))),
+            FinderType::Dmenu => Some(Box::new(Dmenu::from_config(
+                &config.dmenu.clone().unwrap_or_default(),
+            ))),
             FinderType::Custom => Some(Box::new(Custom::from_config(
                 &config.custom_finder.clone().unwrap_or_default(),
             ))),
@@ -125,7 +129,9 @@ impl FinderRunner {
             return Ok(None);
         }
 
-        let selected_index = *selected_indices.first().expect("selected_indices is not empty");
+        let selected_index = *selected_indices
+            .first()
+            .expect("selected_indices is not empty");
         let selected_data = &clips[selected_index as usize];
 
         Ok(Some((selected_index, selected_data.clone())))
@@ -140,8 +146,10 @@ impl FinderRunner {
             return Ok(vec![]);
         }
 
-        let clips =
-            selected_indices.into_iter().map(|index| (index, clips[index].clone())).collect();
+        let clips = selected_indices
+            .into_iter()
+            .map(|index| (index, clips[index].clone()))
+            .collect();
         Ok(clips)
     }
 
@@ -165,11 +173,15 @@ impl FinderRunner {
     ) -> Result<Vec<usize>, FinderError> {
         if let Some(external) = self.external {
             let input_data = external.generate_input(clips);
-            let mut child =
-                external.spawn_child(selection_mode).context(error::SpawnExternalProcess)?;
+            let mut child = external
+                .spawn_child(selection_mode)
+                .context(error::SpawnExternalProcess)?;
             {
                 let stdin = child.stdin.as_mut().context(error::OpenStdin)?;
-                stdin.write_all(input_data.as_bytes()).await.context(error::WriteStdin)?;
+                stdin
+                    .write_all(input_data.as_bytes())
+                    .await
+                    .context(error::WriteStdin)?;
             }
 
             let output = child.wait_with_output().await.context(error::ReadStdout)?;

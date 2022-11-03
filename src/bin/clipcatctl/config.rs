@@ -11,14 +11,19 @@ pub struct Config {
 
     pub server_port: u16,
 
-    #[serde(default = "Config::default_log_level", with = "serde_with::rust::display_fromstr")]
+    #[serde(
+        default = "Config::default_log_level",
+        with = "serde_with::rust::display_fromstr"
+    )]
     pub log_level: tracing::Level,
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
-            server_host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
+            server_host: clipcat::DEFAULT_GRPC_HOST
+                .parse()
+                .expect("Parse default gRPC host"),
             server_port: clipcat::DEFAULT_GRPC_PORT,
             log_level: Self::default_log_level(),
         }
@@ -28,8 +33,12 @@ impl Default for Config {
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        app_dirs::get_app_dir(AppDataType::UserConfig, &clipcat::APP_INFO, clipcat::CTL_CONFIG_NAME)
-            .expect("app_dirs")
+        app_dirs::get_app_dir(
+            AppDataType::UserConfig,
+            &clipcat::APP_INFO,
+            clipcat::CTL_CONFIG_NAME,
+        )
+        .expect("app_dirs")
     }
 
     #[inline]
@@ -45,5 +54,7 @@ impl Config {
     }
 
     #[inline]
-    pub fn default_log_level() -> tracing::Level { tracing::Level::INFO }
+    pub fn default_log_level() -> tracing::Level {
+        tracing::Level::INFO
+    }
 }

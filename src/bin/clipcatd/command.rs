@@ -23,7 +23,11 @@ pub struct Command {
     #[structopt(long = "no-daemon", help = "Does not run as daemon")]
     no_daemon: bool,
 
-    #[structopt(long = "replace", short = "r", help = "Tries to replace existing daemon")]
+    #[structopt(
+        long = "replace",
+        short = "r",
+        help = "Tries to replace existing daemon"
+    )]
     replace: bool,
 
     #[structopt(long = "config", short = "c", help = "Specifies a configuration file")]
@@ -52,10 +56,15 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command { StructOpt::from_args() }
+    pub fn new() -> Command {
+        StructOpt::from_args()
+    }
 
     fn load_config(&self) -> Result<Config, ConfigError> {
-        let config_file = &self.config_file.clone().unwrap_or_else(Config::default_path);
+        let config_file = &self
+            .config_file
+            .clone()
+            .unwrap_or_else(Config::default_path);
         let mut config = Config::load(&config_file)?;
 
         config.daemonize = !self.no_daemon;
@@ -147,7 +156,9 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
         let level_filter = tracing_subscriber::filter::LevelFilter::from_level(config.log_level);
 
-        let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+        let registry = tracing_subscriber::registry()
+            .with(level_filter)
+            .with(fmt_layer);
         match tracing_journald::layer() {
             Ok(layer) => registry.with(layer).init(),
             Err(_err) => {
@@ -156,7 +167,11 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         }
     }
 
-    tracing::info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
+    tracing::info!(
+        "{} is initializing, pid: {}",
+        clipcat::DAEMON_PROGRAM_NAME,
+        std::process::id()
+    );
 
     let runtime = Runtime::new().context(error::InitializeTokioRuntime)?;
     runtime.block_on(worker::start(config))?;
@@ -175,38 +190,58 @@ struct PidFile {
 
 impl PidFile {
     #[inline]
-    fn exists(&self) -> bool { self.path.exists() }
+    fn exists(&self) -> bool {
+        self.path.exists()
+    }
 
     #[inline]
-    fn clone_path(&self) -> PathBuf { self.path().to_path_buf() }
+    fn clone_path(&self) -> PathBuf {
+        self.path().to_path_buf()
+    }
 
     #[inline]
-    fn path(&self) -> &Path { &self.path }
+    fn path(&self) -> &Path {
+        &self.path
+    }
 
     fn try_load(&self) -> Result<u64, Error> {
-        let pid_data = std::fs::read_to_string(&self)
-            .context(error::ReadPidFile { filename: self.clone_path() })?;
-        let pid = pid_data.trim().parse().context(error::ParseProcessId { value: pid_data })?;
+        let pid_data = std::fs::read_to_string(&self).context(error::ReadPidFile {
+            filename: self.clone_path(),
+        })?;
+        let pid = pid_data
+            .trim()
+            .parse()
+            .context(error::ParseProcessId { value: pid_data })?;
         Ok(pid)
     }
 
     #[inline]
     fn remove(self) -> Result<(), Error> {
         tracing::info!("Remove PID file: {:?}", self.path);
-        std::fs::remove_file(&self.path).context(error::RemovePidFile { pid_file: self.path })?;
+        std::fs::remove_file(&self.path).context(error::RemovePidFile {
+            pid_file: self.path,
+        })?;
         Ok(())
     }
+
     fn set(&self) -> Result<(), Error> {
         tracing::info!("Setting PID file: {:?}", self.path);
-        std::fs::write(&self.path(), std::process::id().to_string().as_bytes())
-            .context(error::SetPidFile { pid_file: self.clone_path() })
+        std::fs::write(&self.path(), std::process::id().to_string().as_bytes()).context(
+            error::SetPidFile {
+                pid_file: self.clone_path(),
+            },
+        )
     }
 }
 
 impl From<PathBuf> for PidFile {
-    fn from(path: PathBuf) -> PidFile { PidFile { path } }
+    fn from(path: PathBuf) -> PidFile {
+        PidFile { path }
+    }
 }
 
 impl AsRef<Path> for PidFile {
-    fn as_ref(&self) -> &Path { &self.path }
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
 }

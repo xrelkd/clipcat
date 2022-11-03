@@ -20,7 +20,9 @@ impl From<crate::ClipboardType> for ClipboardType {
 }
 
 impl From<crate::ClipboardType> for i32 {
-    fn from(t: crate::ClipboardType) -> i32 { t as i32 }
+    fn from(t: crate::ClipboardType) -> i32 {
+        t as i32
+    }
 }
 
 impl From<crate::ClipboardData> for ClipboardData {
@@ -57,5 +59,7 @@ impl Into<MonitorState> for crate::MonitorState {
 }
 
 impl From<crate::MonitorState> for i32 {
-    fn from(state: crate::MonitorState) -> i32 { state as i32 }
+    fn from(state: crate::MonitorState) -> i32 {
+        state as i32
+    }
 }

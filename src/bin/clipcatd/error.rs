@@ -32,16 +32,28 @@ pub enum Error {
     Daemonize { source: daemonize::DaemonizeError },
 
     #[snafu(display("Could not read PID file, filename: {}, error: {}", filename.display(), source))]
-    ReadPidFile { filename: PathBuf, source: std::io::Error },
+    ReadPidFile {
+        filename: PathBuf,
+        source: std::io::Error,
+    },
 
     #[snafu(display("Could not remove PID file, filename: {}, error: {}", pid_file.display(), source))]
-    RemovePidFile { pid_file: PathBuf, source: std::io::Error },
+    RemovePidFile {
+        pid_file: PathBuf,
+        source: std::io::Error,
+    },
 
     #[snafu(display("Could not set PID file, filename: {}, error: {}", pid_file.display(), source))]
-    SetPidFile { pid_file: PathBuf, source: std::io::Error },
+    SetPidFile {
+        pid_file: PathBuf,
+        source: std::io::Error,
+    },
 
     #[snafu(display("Parse process id, value: {}, error: {}", value, source))]
-    ParseProcessId { value: String, source: std::num::ParseIntError },
+    ParseProcessId {
+        value: String,
+        source: std::num::ParseIntError,
+    },
 
     #[snafu(display("Failed to send SIGTERM to PID {}", pid))]
     SendSignalTerminal { pid: u64 },

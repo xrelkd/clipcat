@@ -29,7 +29,11 @@ pub struct Command {
     #[structopt(long, short = "m", help = "Specifies the menu length of finder")]
     menu_length: Option<usize>,
 
-    #[structopt(long, short = "l", help = "Specifies the length of a line showing on finder")]
+    #[structopt(
+        long,
+        short = "l",
+        help = "Specifies the length of a line showing on finder"
+    )]
     line_length: Option<usize>,
 }
 
@@ -71,7 +75,9 @@ pub enum SubCommand {
 }
 
 impl Command {
-    pub fn new() -> Command { Command::from_args() }
+    pub fn new() -> Command {
+        Command::from_args()
+    }
 
     pub fn run(self) -> Result<(), Error> {
         match self.subcommand {
@@ -111,7 +117,9 @@ impl Command {
             let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
             let level_filter = tracing_subscriber::filter::LevelFilter::INFO;
 
-            let registry = tracing_subscriber::registry().with(level_filter).with(fmt_layer);
+            let registry = tracing_subscriber::registry()
+                .with(level_filter)
+                .with(fmt_layer);
             match tracing_journald::layer() {
                 Ok(layer) => registry.with(layer).init(),
                 Err(_err) => {
@@ -164,8 +172,10 @@ impl Command {
                     let selection = finder.single_select(&clips).await?;
                     if let Some((_index, clip)) = selection {
                         let editor = ExternalEditor::new(editor);
-                        let new_data =
-                            editor.execute(&clip.data).await.context(error::CallEditor)?;
+                        let new_data = editor
+                            .execute(&clip.data)
+                            .await
+                            .context(error::CallEditor)?;
                         let (ok, new_id) = client.update(clip.id, &new_data).await?;
                         if ok {
                             tracing::info!("Editing clip (id: {:016x})", new_id);

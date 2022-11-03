@@ -35,7 +35,10 @@ pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
 pub const PROJECT_NAME: &str = "clipcat";
 
 #[cfg(feature = "app")]
-pub const APP_INFO: AppInfo = AppInfo { name: PROJECT_NAME, author: PROJECT_NAME };
+pub const APP_INFO: AppInfo = AppInfo {
+    name: PROJECT_NAME,
+    author: PROJECT_NAME,
+};
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";
@@ -142,7 +145,9 @@ impl ClipboardData {
             }
         };
 
-        data.replace('\n', "\\n").replace('\r', "\\r").replace('\t', "\\t")
+        data.replace('\n', "\\n")
+            .replace('\r', "\\r")
+            .replace('\t', "\\t")
     }
 
     #[inline]
@@ -160,10 +165,18 @@ impl ClipboardData {
 
 impl From<ClipboardEvent> for ClipboardData {
     fn from(event: ClipboardEvent) -> ClipboardData {
-        let ClipboardEvent { data, clipboard_type } = event;
+        let ClipboardEvent {
+            data,
+            clipboard_type,
+        } = event;
         let id = Self::compute_id(&data);
         let timestamp = SystemTime::now();
-        ClipboardData { id, data, clipboard_type, timestamp }
+        ClipboardData {
+            id,
+            data,
+            clipboard_type,
+            timestamp,
+        }
     }
 }
 
@@ -179,11 +192,15 @@ impl Default for ClipboardData {
 }
 
 impl PartialEq for ClipboardData {
-    fn eq(&self, other: &Self) -> bool { self.data == other.data }
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
 }
 
 impl PartialOrd for ClipboardData {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for ClipboardData {
@@ -196,7 +213,9 @@ impl Ord for ClipboardData {
 }
 
 impl Hash for ClipboardData {
-    fn hash<H: Hasher>(&self, state: &mut H) { self.data.hash(state); }
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.data.hash(state);
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy, Hash)]

@@ -20,7 +20,10 @@ pub struct Config {
     #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
-    #[serde(default = "Config::default_log_level", with = "serde_with::rust::display_fromstr")]
+    #[serde(
+        default = "Config::default_log_level",
+        with = "serde_with::rust::display_fromstr"
+    )]
     pub log_level: tracing::Level,
 
     #[serde(default)]
@@ -60,21 +63,38 @@ impl Default for Config {
 
 impl Default for Monitor {
     fn default() -> Monitor {
-        Monitor { load_current: true, enable_clipboard: true, enable_primary: true, filter_min_size: 0 }
+        Monitor {
+            load_current: true,
+            enable_clipboard: true,
+            enable_primary: true,
+            filter_min_size: 0,
+        }
     }
 }
 
 impl Into<clipcat::ClipboardMonitorOptions> for Monitor {
     fn into(self) -> clipcat::ClipboardMonitorOptions {
-        let Monitor { load_current, enable_clipboard, enable_primary, filter_min_size } = self;
-        clipcat::ClipboardMonitorOptions { load_current, enable_clipboard, enable_primary, filter_min_size }
+        let Monitor {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            filter_min_size,
+        } = self;
+        clipcat::ClipboardMonitorOptions {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            filter_min_size,
+        }
     }
 }
 
 impl Default for Grpc {
     fn default() -> Grpc {
         Grpc {
-            host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
+            host: clipcat::DEFAULT_GRPC_HOST
+                .parse()
+                .expect("Parse default gRPC host"),
             port: clipcat::DEFAULT_GRPC_PORT,
         }
     }
@@ -92,7 +112,9 @@ impl Config {
     }
 
     #[inline]
-    fn default_log_level() -> tracing::Level { tracing::Level::INFO }
+    fn default_log_level() -> tracing::Level {
+        tracing::Level::INFO
+    }
 
     #[inline]
     pub fn default_history_file_path() -> PathBuf {
@@ -105,7 +127,9 @@ impl Config {
     }
 
     #[inline]
-    pub fn default_max_history() -> usize { 50 }
+    pub fn default_max_history() -> usize {
+        50
+    }
 
     #[inline]
     pub fn default_pid_file_path() -> PathBuf {
@@ -118,10 +142,12 @@ impl Config {
 
     #[inline]
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Config, ConfigError> {
-        let data =
-            std::fs::read(&path).context(OpenConfig { filename: path.as_ref().to_path_buf() })?;
-        let mut config = toml::from_slice::<Config>(&data)
-            .context(ParseConfig { filename: path.as_ref().to_path_buf() })?;
+        let data = std::fs::read(&path).context(OpenConfig {
+            filename: path.as_ref().to_path_buf(),
+        })?;
+        let mut config = toml::from_slice::<Config>(&data).context(ParseConfig {
+            filename: path.as_ref().to_path_buf(),
+        })?;
 
         if config.max_history == 0 {
             config.max_history = Self::default_max_history();
@@ -134,8 +160,14 @@ impl Config {
 #[derive(Debug, Snafu)]
 pub enum ConfigError {
     #[snafu(display("Could not open config from {}: {}", filename.display(), source))]
-    OpenConfig { filename: PathBuf, source: std::io::Error },
+    OpenConfig {
+        filename: PathBuf,
+        source: std::io::Error,
+    },
 
     #[snafu(display("Count not parse config from {}: {}", filename.display(), source))]
-    ParseConfig { filename: PathBuf, source: toml::de::Error },
+    ParseConfig {
+        filename: PathBuf,
+        source: toml::de::Error,
+    },
 }
