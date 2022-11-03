@@ -267,13 +267,13 @@ impl ClipboardWaitProvider {
             Err(err) => Err(err)?,
         }
     }
-    pub(crate) fn load_wait(&self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
+    pub(crate) fn load_wait(&mut self) -> Result<Vec<u8>, wl_clipboard_rs::paste::Error> {
         loop {
             let response = self.load()?;
-            match response {
-                contents if !contents.is_empty() && Some(response) != self.last => {
+            match &response {
+                contents if !contents.is_empty() && Some(contents.as_slice()) != self.last.as_deref() => {
                     self.last = Some(contents.clone());
-                    return Ok(contents);
+                    return Ok(response);
                 }
                 _ => {
                     thread::sleep(std::time::Duration::from_millis(250));
