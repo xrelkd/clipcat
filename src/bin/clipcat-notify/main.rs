@@ -72,6 +72,7 @@ impl Command {
             load_current: false,
             enable_clipboard,
             enable_primary,
+            filter_min_size: 1,
         };
         let monitor = ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
         let runtime = Runtime::new().context(InitializeTokioRuntime)?;

@@ -8,21 +8,7 @@ env:
 
 jobs:
   all:
-    name: All
-
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-
-    runs-on: ${{matrix.os}}
-
-    env:
-      RUSTFLAGS: "-D warnings"
-
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -38,23 +24,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install Main Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{matrix.target}}
-          override: true
+        run: rustup install nightly
+        run: rustup default nightly
 
       - name: Format
-        run: cargo fmt --all --check
+        run: cargo fmt --all --all-features --check
 
       - name: Clippy
-        run: cargo clippy --all
+        run: cargo clippy --all --all-features --all-targets
 
       - name: Test
-        run: cargo test --all
+        run: cargo test --all --all-features
 
       - name: Release
-        run: cargo build --features=all --release
+        run: cargo build --all-features --release
 
       - name: Upload
         uses: actions/upload-artifact@v3
