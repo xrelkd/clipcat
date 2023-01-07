@@ -25,7 +25,7 @@ jobs:
 
       - name: Install Main Toolchain
         run: rustup install nightly
-        run: rustup default nightly
+      - run: rustup default nightly
 
       - name: Format
         run: cargo fmt --all --all-features --check
