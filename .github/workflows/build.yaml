@@ -2,16 +2,7 @@ name: Build
 
 on:
   push:
-    branches:
-      - main
-      - develop
-    tags:
-      - "*"
-
   pull_request:
-    branches:
-      - main
-      - develop
 
 env:
   CARGO_TERM_COLOR: always
@@ -45,99 +36,41 @@ jobs:
             libxcb-render0-dev \
             libxcb-shape0-dev
 
-      - name: Cache cargo registry
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/registry
-          key: ${{runner.os}}-cargo-registry-${{hashFiles('**/Cargo.lock')}}
-
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{runner.os}}-cargo-index-${{hashFiles('**/Cargo.lock')}}
-
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{runner.os}}-cargo-build-target-${{hashFiles('**/Cargo.lock')}}
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install Main Toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: ${{matrix.target}}
-          profile: minimal
-          components: clippy, rustfmt
           override: true
 
-      - name: Version
-        run: |
-          rustup --version
-          cargo --version
-
-      - name: Install Rustfmt Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          target: ${{matrix.target}}
-          profile: minimal
-          components: rustfmt
-
       - name: Format
-        run: cargo +nightly fmt --all -- --check
+        run: cargo fmt --all --check
 
       - name: Clippy
-        run: |
-          cargo clippy --all
-          cargo clippy --version
-
-      - name: Build
-        run: cargo build --all --verbose
+        run: cargo clippy --all
 
       - name: Test
-        run: cargo test --all --verbose
+        run: cargo test --all
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          target=${{matrix.target}}
+        run: cargo build --features=all --release
 
-          cargo build --features=all --release --verbose --target $target
-
-      - name: Package
-        id: package
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          src=`pwd`
-          dist=$src/dist
-
-          github_ref=${{github.ref}}
-          version=${github_ref#"refs/tags/"}
-          target=${{matrix.target}}
-          archive="clipcat-$version-$target.tar.gz"
-
-          mkdir $dist
-          cp \
-            README.md \
-            LICENSE \
-            target/$target/release/clipcatd \
-            target/$target/release/clipcatctl \
-            target/$target/release/clipcat-menu \
-            target/$target/release/clipcat-notify \
-            $dist
-
-          cd $dist
-          tar cvf ../$archive *
-          echo "::set-output name=archive::$archive"
-
-      - name: Publish
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload
+        uses: actions/upload-artifact@v3
         with:
-          draft: false
-          files: ${{ steps.package.outputs.archive }}
-          prerelease: ${{ ! startsWith(github.ref, 'refs/tags/v') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: clipcatd
+          path: target/release/clipcatd
+      - uses: actions/upload-artifact@v3
+        with:
+          name: clipcatctl
+          path: target/release/clipcatctl
+      - uses: actions/upload-artifact@v3
+        with:
+          name: clipcat-menu
+          path: target/release/clipcat-menu
+      - uses: actions/upload-artifact@v3
+        with:
+          name: clipcat-notify
+          path: target/release/clipcat-notify
