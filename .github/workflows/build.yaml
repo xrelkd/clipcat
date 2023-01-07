@@ -24,7 +24,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install Main Toolchain
-        run: rustup install nightly
+        run: rustup install nightly --profile default
       - run: rustup default nightly
 
       - name: Format
