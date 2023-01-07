@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update && \
           sudo apt-get install -y \
@@ -23,7 +23,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Install Main Toolchain
+      - name: Install toolchain
         run: rustup install nightly --profile default
       - run: rustup default nightly
 
@@ -36,7 +36,7 @@ jobs:
       - name: Test
         run: cargo test --all --all-features
 
-      - name: Release
+      - name: Build
         run: cargo build --all-features --release
 
       - name: Upload

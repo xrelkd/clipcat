@@ -228,13 +228,13 @@ impl ClipboardWaitProvider {
 
         let result = self.clipboard.load(c, utf8, prop, None);
 
-        match result {
-            Ok(ok) => { Ok(ok) }
-            Err(x11_clipboard::error::Error::UnexpectedType(_target)) => {
+        result.map_err(|err| {
+            if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
                 self.clipboard.load(c, string, prop, None)
+            } else {
+                err
             }
-            Err(err) => Err(err),
-        }
+        })
     }
 
     pub(crate) fn load_wait(&self) -> Result<Vec<u8>, x11_clipboard::error::Error> {
@@ -242,13 +242,13 @@ impl ClipboardWaitProvider {
 
         let result = self.clipboard.load_wait(c, utf8, prop);
 
-        match result {
-            Ok(ok) => { Ok(ok) }
-            Err(x11_clipboard::error::Error::UnexpectedType(_target)) => {
-                self.clipboard.load_wait(c, string, prop)
+        result.map_err(|err| {
+            if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
+                self.clipboard.load_wait(c, string, prop, None)
+            } else {
+                err
             }
-            Err(err) => Err(err),
-        }
+        })
     }
 }
 #[cfg(feature = "wayland")]
