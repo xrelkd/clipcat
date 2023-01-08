@@ -9,7 +9,7 @@ dependencies = ["format"]
 
 [tasks.build-all-x11]
 command = "cargo"
-args = ["build", "--features=all-bins"]
+args = ["build", "--features=all-bins,x11"]
 dependencies = ["format"]
 
 [tasks.build-all-wayland]
@@ -19,7 +19,7 @@ dependencies = ["format"]
 
 [tasks.build-release-x11]
 command = "cargo"
-args = ["build", "--release", "--features=all-bins"]
+args = ["build", "--release", "--features=all-bins,x11"]
 dependencies = ["format"]
 
 [tasks.build-release-wayland]

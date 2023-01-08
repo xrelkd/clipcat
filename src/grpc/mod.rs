@@ -1,7 +1,6 @@
 mod client;
 mod protobuf;
 
-#[cfg(feature = "monitor")]
 mod service;
 
 pub use self::{
@@ -10,5 +9,4 @@ pub use self::{
 };
 
 pub use self::service::ManagerService;
-#[cfg(feature = "monitor")]
 pub use self::service::MonitorService;

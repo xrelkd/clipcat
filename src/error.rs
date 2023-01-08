@@ -29,11 +29,11 @@ pub enum ClipboardError {
     #[snafu(display("Could not write to Wayland clipboard"))]
     WaylandWrite,
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "x11")]
     #[snafu(display("Could not initialize X11 clipboard, error: {}", source))]
     InitializeX11Clipboard { source: x11_clipboard::error::Error },
 
-    #[cfg(feature = "monitor")]
+    #[cfg(feature = "x11")]
     #[snafu(display("Could not paste to X11 clipboard, error: {}", source))]
     PasteToX11Clipboard { source: x11_clipboard::error::Error },
 }

@@ -1,9 +1,10 @@
-#![allow(clippy::derive_partial_eq_without_eq)]
 #[macro_use]
 extern crate serde;
-
 #[macro_use]
 extern crate snafu;
+
+#[cfg(not(any(feature = "wayland", feature = "x11")))]
+compile_error!("You have to enable either the `wayland` or `x11` feature.");
 
 use std::{
     cmp::Ordering,
@@ -16,18 +17,14 @@ pub mod grpc;
 mod error;
 mod event;
 
-#[cfg(feature = "monitor")]
 mod manager;
-#[cfg(feature = "monitor")]
 mod monitor;
 
 pub mod editor;
 
 pub use self::{error::display_from_str, error::ClipboardError, event::ClipboardEvent};
 
-#[cfg(feature = "monitor")]
 pub use self::manager::ClipboardManager;
-#[cfg(feature = "monitor")]
 pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
 
 pub const PROJECT_NAME: &str = "clipcat";

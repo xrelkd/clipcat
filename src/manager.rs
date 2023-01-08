@@ -221,7 +221,7 @@ impl ClipboardManager {
             .ok_or(ClipboardError::WaylandWrite)?;
         Ok(())
     }
-    #[cfg(not(feature = "wayland"))]
+    #[cfg(all(feature = "x11", not(feature = "wayland")))]
     async fn update_sys_clipboard(
         data: &str,
         clipboard_type: ClipboardType,

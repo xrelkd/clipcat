@@ -19,7 +19,7 @@ WORKDIR /build
 
 ADD . /build
 
-RUN cargo build --release --features=all-bins
+RUN cargo build --release --features=all-bins,x11
 
 FROM debian:stable-slim
 

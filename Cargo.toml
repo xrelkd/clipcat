@@ -1,7 +1,7 @@
 [package]
 name = "clipcat"
-version = "0.5.0"
-authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
+version = "0.6.0"
+authors = ["Icelk <main@icelk.dev>", "xrelkd 46590321+xrelkd@users.noreply.github.com"]
 edition = "2018"
 
 [lib]
@@ -65,7 +65,6 @@ all-bins = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
 default = ["clipcatd", "clipcatctl", "clipcat-menu"]
 
 app = ["directories", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
-monitor = ["x11-clipboard"]
 daemon = [
   "daemonize", "libc",
   "tracing-subscriber", "tracing-journald",
@@ -75,12 +74,13 @@ daemon = [
 external_editor = ["tokio/process"]
 builtin_finder = ["skim"]
 
+x11 = ["x11-clipboard"]
 wayland = ["wl-clipboard-rs"]
 
-clipcatd = ["app", "monitor", "daemon"]
+clipcatd = ["app", "daemon"]
 clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
 clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
-clipcat-notify = ["structopt", "monitor"]
+clipcat-notify = ["structopt"]
 
 [build-dependencies]
 tonic-build = { version = "0.8", features = ["prost"] }

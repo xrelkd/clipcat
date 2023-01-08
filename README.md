@@ -23,12 +23,15 @@ It filters the copy actions for a minimum size. See the example configuration be
 If you use Vim and set this to 1, holding `x` no longer ruins the Clipcat history; Vim's 1 byte long copy actions aren't saved.
 
 You can install all the binaries with
+
 ```shell
-$ cargo install --path . --features clipcatd,clipcat-menu,clipcatctl,clipcat-notify
+$ cargo install --path . -F all-bins,x11
 ```
+
 or with wayland support:
+
 ```shell
-$ cargo install --path . --features all-bins
+$ cargo install --path . -F all-bins,wayland
 ```
 
 ## Architecture
@@ -39,18 +42,18 @@ Clipcat uses the Client-Server architecture. There are two role types in this ar
 
 A `clipcat` server (as known as daemon) is running as the background process and does the following routines:
 
-- Watching the changes of `X11 clipboard`.
-- Caching the content of `X11 clipboard`.
-- Inserting content into `X11 clipboard`.
-- Serving as a `gRPC` server and waiting for remote procedure call from clients.
+-   Watching the changes of `X11 clipboard`.
+-   Caching the content of `X11 clipboard`.
+-   Inserting content into `X11 clipboard`.
+-   Serving as a `gRPC` server and waiting for remote procedure call from clients.
 
 ### Clipcat Client
 
 A `clipcat` client sends requests to the server for the following operations:
 
-- List: list the cached clips from server.
-- Insert: replace the current content of `X11 clipboard` with a clip.
-- Remove: remove the cached clips from server.
+-   List: list the cached clips from server.
+-   Insert: replace the current content of `X11 clipboard` with a clip.
+-   Remove: remove the cached clips from server.
 
 ### List of Implementations
 
@@ -64,11 +67,11 @@ A `clipcat` client sends requests to the server for the following operations:
 
 ### Installation
 
-| Linux Distribution                  | Package Manager                     | Package                                                                                             | Command                       |
-| ----------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                              | `yay -S clipcat`              |
+| Linux Distribution                  | Package Manager                             | Package                                                                                             | Command                       |
+| ----------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Various                             | [Nix](https://github.com/NixOS/nix)         | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix)         | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org) | [Paru](https://github.com/Morganamilo/paru) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                              | `paru -S clipcat`             |
 
 ### Usage
 
@@ -106,11 +109,11 @@ $ clipcatd
 
 **Note**: Supported finders for `clipcat-menu`:
 
-- built-in finder (integrate with crate [skim](https://github.com/lotabout/skim))
-- [skim](https://github.com/lotabout/skim)
-- [fzf](https://github.com/junegunn/fzf)
-- [rofi](https://github.com/davatorium/rofi)
-- [dmenu](https://tools.suckless.org/dmenu/)
+-   built-in finder (integrate with crate [skim](https://github.com/lotabout/skim))
+-   [skim](https://github.com/lotabout/skim)
+-   [fzf](https://github.com/junegunn/fzf)
+-   [rofi](https://github.com/davatorium/rofi)
+-   [dmenu](https://tools.suckless.org/dmenu/)
 
 ### Configuration
 
@@ -206,14 +209,14 @@ bindsym $mod+o exec $launcher-clipboard-remove
 
 `clipcat` requires the following tools and packages to build:
 
-- `git`
-- `rustc`
-- `cargo`
-- `pkgconfig`
-- `protobuf`
-- `clang`
-- `libclang`
-- `libxcb`
+-   `git`
+-   `rustc`
+-   `cargo`
+-   `pkgconfig`
+-   `protobuf`
+-   `clang`
+-   `libclang`
+-   `libxcb`
 
 With the above tools and packages already installed, you can simply run:
 

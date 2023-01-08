@@ -32,25 +32,30 @@ jobs:
               run: cargo fmt --all --check
 
             - name: Clippy X11
-              run: cargo clippy --all --all-targets --features all-bins
+              run: cargo clippy --all --all-targets --features all-bins,x11
 
             - name: Clippy wayland
               run: cargo clippy --all --all-targets --features all-bins,wayland
 
             - name: Test X11
-              run: cargo test --all --features all-bins
+              run: cargo test --all --features all-bins,x11
 
             - name: Test wayland
               run: cargo test --all --features all-bins,wayland
 
             - name: Build X11
-              run: cargo build --features all-bins --release
+              run: cargo build --features all-bins,x11 --release
 
             - name: Upload X11 daemon
               uses: actions/upload-artifact@v3
               with:
                   name: clipcatd-x11
                   path: target/release/clipcatd
+            - name: Upload X11 clipcat-notify
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcat-notify-x11
+                  path: target/release/clipcat-notify
 
             - name: Build wayland
               run: cargo build --features all-bins,wayland --release
@@ -68,7 +73,8 @@ jobs:
               with:
                   name: clipcat-menu
                   path: target/release/clipcat-menu
-            - uses: actions/upload-artifact@v3
+            - name: Upload wayland clipcat-notify
+              uses: actions/upload-artifact@v3
               with:
-                  name: clipcat-notify
+                  name: clipcat-notify-wayland
                   path: target/release/clipcat-notify

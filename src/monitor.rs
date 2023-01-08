@@ -9,6 +9,7 @@ use std::{
 
 use snafu::ResultExt;
 use tokio::sync::broadcast::{self, error::SendError};
+#[cfg(feature = "x11")]
 use x11_clipboard::Clipboard;
 
 use crate::{error, ClipboardError, ClipboardEvent, ClipboardType, MonitorState};
@@ -197,12 +198,12 @@ fn build_thread(
     Ok(join_handle)
 }
 
-#[cfg(not(feature = "wayland"))]
+#[cfg(all(feature = "x11", not(feature = "wayland")))]
 struct ClipboardWaitProvider {
     clipboard_type: ClipboardType,
     clipboard: Clipboard,
 }
-#[cfg(not(feature = "wayland"))]
+#[cfg(all(feature = "x11", not(feature = "wayland")))]
 impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         let clipboard = Clipboard::new().context(error::InitializeX11ClipboardSnafu)?;
