@@ -2322,8 +2322,7 @@ dependencies = [
 [[package]]
 name = "x11-clipboard"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0827f86aa910c4e73329a4f619deabe88ebb4b042370bf023c2d5d8b4eb54695"
+source = "git+https://github.com/wrvsrx/x11-clipboard?rev=357e7c7fbb2fc9fd6a8b46ed6ce191f8182a594d#357e7c7fbb2fc9fd6a8b46ed6ce191f8182a594d"
 dependencies = [
  "x11rb",
 ]
