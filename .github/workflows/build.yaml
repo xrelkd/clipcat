@@ -22,11 +22,11 @@ jobs:
                     libxcb-shape0-dev \
                     protobuf-compiler
 
-            - uses: Swatinem/rust-cache@v2
-
             - name: Install toolchain
               run: rustup install nightly --profile default
             - run: rustup default nightly
+
+            - uses: Swatinem/rust-cache@v2
 
             - name: Format
               run: cargo fmt --all --check
