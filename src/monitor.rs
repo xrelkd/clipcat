@@ -228,11 +228,11 @@ impl ClipboardWaitProvider {
 
         let result = self.clipboard.load(c, utf8, prop, None);
 
-        result.map_err(|err| {
+        result.or_else(|err| {
             if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
                 self.clipboard.load(c, string, prop, None)
             } else {
-                err
+                Err(err)
             }
         })
     }
@@ -242,11 +242,11 @@ impl ClipboardWaitProvider {
 
         let result = self.clipboard.load_wait(c, utf8, prop);
 
-        result.map_err(|err| {
+        result.or_else(|err| {
             if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
-                self.clipboard.load_wait(c, string, prop, None)
+                self.clipboard.load_wait(c, string, prop)
             } else {
-                err
+                Err(err)
             }
         })
     }
