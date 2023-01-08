@@ -1,26 +1,9 @@
-{ pkgs ? import ./nix { } }:
+{ mkShell, clipcat }:
 
-pkgs.mkShell {
-  nativeBuildInputs = with pkgs; [
-    git
-    rustup
-    cargo-make
-
-    clang
-    llvmPackages.libclang
-
-    pkgconfig
-
-    protobuf
-    python3
-  ];
-
-  buildInputs = with pkgs; [ xorg.libxcb ];
-
-  RUST_BACKTRACE = 1;
-
-  LIBCLANG_PATH = "${pkgs.llvmPackages.libclang}/lib";
-
-  PROTOC = "${pkgs.protobuf}/bin/protoc";
-  PROTOC_INCLUDE = "${pkgs.protobuf}/include";
+mkShell {
+  inputsFrom = [ clipcat ];
+  # needed for internal protobuf c wrapper library
+  inherit (clipcat)
+    PROTOC
+    PROTOC_INCLUDE;
 }

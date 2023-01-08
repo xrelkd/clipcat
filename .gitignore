@@ -17,3 +17,6 @@
 
 # git stuff
 .git
+
+# nix build result
+result
