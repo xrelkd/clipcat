@@ -1,5 +1,8 @@
-{ mkShell, clipcat, clippy }:
-
+{ pkgs ? (import <nixpkgs> {}) }:
+let
+  inherit (pkgs) callPackage mkShell clippy cargo;
+  clipcat = callPackage ./default.nix { };
+in
 mkShell {
   inputsFrom = [ clipcat ];
   buildInputs = [

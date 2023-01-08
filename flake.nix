@@ -12,13 +12,13 @@
         pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         inherit (pkgs) callPackage;
       in
-      rec {
+      {
         packages = rec {
           clipcat = callPackage ./default.nix { };
           default = clipcat;
         };
         devShells = rec {
-          clipcat = callPackage ./shell.nix { inherit (packages) clipcat; };
+          clipcat = callPackage ./shell.nix { };
           default = clipcat;
         };
         formatter = pkgs.nixpkgs-fmt;
