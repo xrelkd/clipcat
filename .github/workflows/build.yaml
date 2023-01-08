@@ -3,70 +3,72 @@ name: Build
 on: [push, pull_request]
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
+    RUSTFLAGS: "-D warnings"
 
 jobs:
-  all:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+    all:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install -y \
-            libx11-xcb-dev \
-            libxcb-xfixes0-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev
+            - name: Install dependencies
+              run: |
+                  sudo apt-get update && \
+                  sudo apt-get install -y \
+                    libx11-xcb-dev \
+                    libxcb-xfixes0-dev \
+                    libxcb-render0-dev \
+                    libxcb-shape0-dev \
+                    protobuf-compiler
 
-      - uses: Swatinem/rust-cache@v2
+            - uses: Swatinem/rust-cache@v2
 
-      - name: Install toolchain
-        run: rustup install nightly --profile default
-      - run: rustup default nightly
+            - name: Install toolchain
+              run: rustup install nightly --profile default
+            - run: rustup default nightly
 
-      - name: Format
-        run: cargo fmt --all --check
+            - name: Format
+              run: cargo fmt --all --check
 
-      - name: Clippy X11
-        run: cargo clippy --all --all-targets --features all-bins
+            - name: Clippy X11
+              run: cargo clippy --all --all-targets --features all-bins
 
-      - name: Clippy wayland
-        run: cargo clippy --all --all-targets --features all-bins,wayland
+            - name: Clippy wayland
+              run: cargo clippy --all --all-targets --features all-bins,wayland
 
-      - name: Test X11
-        run: cargo test --all --features all-bins
+            - name: Test X11
+              run: cargo test --all --features all-bins
 
-      - name: Test wayland
-        run: cargo test --all --features all-bins,wayland
+            - name: Test wayland
+              run: cargo test --all --features all-bins,wayland
 
-      - name: Build X11
-        run: cargo build --features all-bins --release
+            - name: Build X11
+              run: cargo build --features all-bins --release
 
-      - name: Upload X11 daemon
-        uses: actions/upload-artifact@v3
-        with:
-          name: clipcatd-x11
-          path: target/release/clipcatd
+            - name: Upload X11 daemon
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcatd-x11
+                  path: target/release/clipcatd
 
-      - name: Build wayland
-        run: cargo build --features all-bins,wayland --release
+            - name: Build wayland
+              run: cargo build --features all-bins,wayland --release
 
-      - name: Upload wayland daemon
-        uses: actions/upload-artifact@v3
-        with:
-          name: clipcatd-wayland
-          path: target/release/clipcatd
-      - uses: actions/upload-artifact@v3
-        with:
-          name: clipcatctl
-          path: target/release/clipcatctl
-      - uses: actions/upload-artifact@v3
-        with:
-          name: clipcat-menu
-          path: target/release/clipcat-menu
-      - uses: actions/upload-artifact@v3
-        with:
-          name: clipcat-notify
-          path: target/release/clipcat-notify
+            - name: Upload wayland daemon
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcatd-wayland
+                  path: target/release/clipcatd
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: clipcatctl
+                  path: target/release/clipcatctl
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: clipcat-menu
+                  path: target/release/clipcat-menu
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: clipcat-notify
+                  path: target/release/clipcat-notify
