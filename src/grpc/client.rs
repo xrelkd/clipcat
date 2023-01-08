@@ -15,12 +15,14 @@ use crate::{
     ClipboardData, ClipboardType, MonitorState,
 };
 
+// pub use GrpcClientError::*;
+
 #[derive(Debug, Snafu)]
 pub enum GrpcClientError {
     #[snafu(display("Failed to connect gRPC service: {}, error: {}", addr, source))]
     ParseEndpoint {
         addr: String,
-        source: http::uri::InvalidUri,
+        source: tonic::transport::Error,
     },
 
     #[snafu(display("Failed to connect gRPC service: {}, error: {}", addr, source))]
@@ -98,10 +100,10 @@ impl GrpcClient {
     pub async fn new(addr: String) -> Result<GrpcClient, GrpcClientError> {
         use tonic::transport::Endpoint;
         let channel = Endpoint::from_shared(addr.clone())
-            .context(ParseEndpoint { addr: addr.clone() })?
+            .context(ParseEndpointSnafu { addr: addr.clone() })?
             .connect()
             .await
-            .context(ConnetRemote { addr })?;
+            .context(ConnetRemoteSnafu { addr })?;
         let monitor_client = MonitorClient::new(channel.clone());
         let manager_client = ManagerClient::new(channel);
         Ok(GrpcClient {
@@ -123,7 +125,7 @@ impl GrpcClient {
             .manager_client
             .insert(request)
             .await
-            .context(InsertData)?;
+            .context(InsertDataSnafu)?;
         Ok(response.into_inner().id)
     }
 
@@ -141,7 +143,7 @@ impl GrpcClient {
             .manager_client
             .get(request)
             .await
-            .context(GetData { id })?;
+            .context(GetDataSnafu { id })?;
         match response.into_inner().data {
             Some(data) => Ok(data.data),
             None => Err(GrpcClientError::Empty),
@@ -154,7 +156,7 @@ impl GrpcClient {
             .manager_client
             .get_current_clipboard(request)
             .await
-            .context(GetCurrentClipboard)?;
+            .context(GetCurrentClipboardSnafu)?;
         match response.into_inner().data {
             Some(data) => Ok(data.data),
             None => Err(GrpcClientError::Empty),
@@ -167,7 +169,7 @@ impl GrpcClient {
             .manager_client
             .get_current_primary(request)
             .await
-            .context(GetCurrentPrimary)?;
+            .context(GetCurrentPrimarySnafu)?;
         match response.into_inner().data {
             Some(data) => Ok(data.data),
             None => Err(GrpcClientError::Empty),
@@ -181,7 +183,7 @@ impl GrpcClient {
             .manager_client
             .update(request)
             .await
-            .context(UpdateData)?;
+            .context(UpdateDataSnafu)?;
         let response = response.into_inner();
         Ok((response.ok, response.new_id))
     }
@@ -192,7 +194,7 @@ impl GrpcClient {
             .manager_client
             .mark_as_clipboard(request)
             .await
-            .context(MarkAsClipboard { id })?;
+            .context(MarkAsClipboardSnafu { id })?;
         Ok(response.into_inner().ok)
     }
 
@@ -202,7 +204,7 @@ impl GrpcClient {
             .manager_client
             .mark_as_primary(request)
             .await
-            .context(MarkAsPrimary { id })?;
+            .context(MarkAsPrimarySnafu { id })?;
         Ok(response.into_inner().ok)
     }
 
@@ -212,7 +214,7 @@ impl GrpcClient {
             .manager_client
             .remove(request)
             .await
-            .context(RemoveData)?;
+            .context(RemoveDataSnafu)?;
         Ok(response.into_inner().ok)
     }
 
@@ -223,13 +225,17 @@ impl GrpcClient {
             .manager_client
             .batch_remove(request)
             .await
-            .context(BatchRemoveData)?;
+            .context(BatchRemoveDataSnafu)?;
         Ok(response.into_inner().ids)
     }
 
     pub async fn clear(&mut self) -> Result<(), GrpcClientError> {
         let request = Request::new(ClearRequest {});
-        let _response = self.manager_client.clear(request).await.context(Clear)?;
+        let _response = self
+            .manager_client
+            .clear(request)
+            .await
+            .context(ClearSnafu)?;
         Ok(())
     }
 
@@ -239,13 +245,13 @@ impl GrpcClient {
             .manager_client
             .length(request)
             .await
-            .context(GetLength)?;
+            .context(GetLengthSnafu)?;
         Ok(response.into_inner().length as usize)
     }
 
     pub async fn list(&mut self) -> Result<Vec<ClipboardData>, GrpcClientError> {
         let request = Request::new(ListRequest {});
-        let response = self.manager_client.list(request).await.context(List)?;
+        let response = self.manager_client.list(request).await.context(ListSnafu)?;
         let mut list: Vec<_> = response
             .into_inner()
             .data
@@ -272,7 +278,7 @@ impl GrpcClient {
             .monitor_client
             .enable_monitor(request)
             .await
-            .context(EnableMonitor)?;
+            .context(EnableMonitorSnafu)?;
         Ok(response.into_inner().state.into())
     }
 
@@ -282,7 +288,7 @@ impl GrpcClient {
             .monitor_client
             .disable_monitor(request)
             .await
-            .context(DisableMonitor)?;
+            .context(DisableMonitorSnafu)?;
         Ok(response.into_inner().state.into())
     }
 
@@ -292,7 +298,7 @@ impl GrpcClient {
             .monitor_client
             .toggle_monitor(request)
             .await
-            .context(ToggleMonitor)?;
+            .context(ToggleMonitorSnafu)?;
         Ok(response.into_inner().state.into())
     }
 
@@ -302,7 +308,7 @@ impl GrpcClient {
             .monitor_client
             .get_monitor_state(request)
             .await
-            .context(GetMonitorState)?;
+            .context(GetMonitorStateSnafu)?;
         Ok(response.into_inner().state.into())
     }
 }

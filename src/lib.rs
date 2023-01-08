@@ -11,9 +11,6 @@ use std::{
     time::SystemTime,
 };
 
-#[cfg(feature = "app")]
-use app_dirs::AppInfo;
-
 pub mod grpc;
 
 mod error;
@@ -26,7 +23,7 @@ mod monitor;
 
 pub mod editor;
 
-pub use self::{error::ClipboardError, event::ClipboardEvent};
+pub use self::{error::display_from_str, error::ClipboardError, event::ClipboardEvent};
 
 #[cfg(feature = "monitor")]
 pub use self::manager::ClipboardManager;
@@ -34,12 +31,6 @@ pub use self::manager::ClipboardManager;
 pub use self::monitor::{ClipboardMonitor, ClipboardMonitorOptions};
 
 pub const PROJECT_NAME: &str = "clipcat";
-
-#[cfg(feature = "app")]
-pub const APP_INFO: AppInfo = AppInfo {
-    name: PROJECT_NAME,
-    author: PROJECT_NAME,
-};
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";

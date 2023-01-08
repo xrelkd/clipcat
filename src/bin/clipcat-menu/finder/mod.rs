@@ -132,7 +132,7 @@ impl FinderRunner {
         let selected_index = *selected_indices
             .first()
             .expect("selected_indices is not empty");
-        let selected_data = &clips[selected_index as usize];
+        let selected_data = &clips[selected_index];
 
         Ok(Some((selected_index, selected_data.clone())))
     }
@@ -175,16 +175,19 @@ impl FinderRunner {
             let input_data = external.generate_input(clips);
             let mut child = external
                 .spawn_child(selection_mode)
-                .context(error::SpawnExternalProcess)?;
+                .context(error::SpawnExternalProcessSnafu)?;
             {
-                let stdin = child.stdin.as_mut().context(error::OpenStdin)?;
+                let stdin = child.stdin.as_mut().context(error::OpenStdinSnafu)?;
                 stdin
                     .write_all(input_data.as_bytes())
                     .await
-                    .context(error::WriteStdin)?;
+                    .context(error::WriteStdinSnafu)?;
             }
 
-            let output = child.wait_with_output().await.context(error::ReadStdout)?;
+            let output = child
+                .wait_with_output()
+                .await
+                .context(error::ReadStdoutSnafu)?;
             if output.stdout.is_empty() {
                 return Ok(vec![]);
             }

@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use app_dirs::AppDataType;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
 
@@ -22,7 +21,7 @@ pub struct Config {
 
     #[serde(
         default = "Config::default_log_level",
-        with = "serde_with::rust::display_fromstr"
+        with = "clipcat::display_from_str"
     )]
     pub log_level: tracing::Level,
 
@@ -72,14 +71,14 @@ impl Default for Monitor {
     }
 }
 
-impl Into<clipcat::ClipboardMonitorOptions> for Monitor {
-    fn into(self) -> clipcat::ClipboardMonitorOptions {
+impl From<Monitor> for clipcat::ClipboardMonitorOptions {
+    fn from(val: Monitor) -> Self {
         let Monitor {
             load_current,
             enable_clipboard,
             enable_primary,
             filter_min_size,
-        } = self;
+        } = val;
         clipcat::ClipboardMonitorOptions {
             load_current,
             enable_clipboard,
@@ -103,12 +102,11 @@ impl Default for Grpc {
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        app_dirs::get_app_dir(
-            AppDataType::UserConfig,
-            &clipcat::APP_INFO,
-            clipcat::DAEMON_CONFIG_NAME,
-        )
-        .expect("app_dirs")
+        directories::BaseDirs::new()
+            .expect("app_dirs")
+            .config_dir()
+            .join(clipcat::PROJECT_NAME)
+            .join(clipcat::DAEMON_CONFIG_NAME)
     }
 
     #[inline]
@@ -118,12 +116,11 @@ impl Config {
 
     #[inline]
     pub fn default_history_file_path() -> PathBuf {
-        app_dirs::get_app_dir(
-            AppDataType::UserCache,
-            &clipcat::APP_INFO,
-            clipcat::DAEMON_HISTORY_FILE_NAME,
-        )
-        .expect("app_dirs")
+        directories::BaseDirs::new()
+            .expect("app_dirs")
+            .cache_dir()
+            .join(clipcat::PROJECT_NAME)
+            .join(clipcat::DAEMON_HISTORY_FILE_NAME)
     }
 
     #[inline]
@@ -142,10 +139,10 @@ impl Config {
 
     #[inline]
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Config, ConfigError> {
-        let data = std::fs::read(&path).context(OpenConfig {
+        let data = std::fs::read(&path).context(OpenConfigSnafu {
             filename: path.as_ref().to_path_buf(),
         })?;
-        let mut config = toml::from_slice::<Config>(&data).context(ParseConfig {
+        let mut config = toml::from_slice::<Config>(&data).context(ParseConfigSnafu {
             filename: path.as_ref().to_path_buf(),
         })?;
 

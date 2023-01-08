@@ -65,7 +65,7 @@ impl Command {
             .config_file
             .clone()
             .unwrap_or_else(Config::default_path);
-        let mut config = Config::load(&config_file)?;
+        let mut config = Config::load(config_file)?;
 
         config.daemonize = !self.no_daemon;
 
@@ -112,7 +112,7 @@ impl Command {
             None => {}
         }
 
-        let config = self.load_config().context(error::LoadConfig)?;
+        let config = self.load_config().context(error::LoadConfigSnafu)?;
         run_clipcatd(config, self.replace)
     }
 }
@@ -173,7 +173,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         std::process::id()
     );
 
-    let runtime = Runtime::new().context(error::InitializeTokioRuntime)?;
+    let runtime = Runtime::new().context(error::InitializeTokioRuntimeSnafu)?;
     runtime.block_on(worker::start(config))?;
 
     if daemonize {
@@ -205,20 +205,20 @@ impl PidFile {
     }
 
     fn try_load(&self) -> Result<u64, Error> {
-        let pid_data = std::fs::read_to_string(&self).context(error::ReadPidFile {
+        let pid_data = std::fs::read_to_string(self).context(error::ReadPidFileSnafu {
             filename: self.clone_path(),
         })?;
         let pid = pid_data
             .trim()
             .parse()
-            .context(error::ParseProcessId { value: pid_data })?;
+            .context(error::ParseProcessIdSnafu { value: pid_data })?;
         Ok(pid)
     }
 
     #[inline]
     fn remove(self) -> Result<(), Error> {
         tracing::info!("Remove PID file: {:?}", self.path);
-        std::fs::remove_file(&self.path).context(error::RemovePidFile {
+        std::fs::remove_file(&self.path).context(error::RemovePidFileSnafu {
             pid_file: self.path,
         })?;
         Ok(())
@@ -226,8 +226,8 @@ impl PidFile {
 
     fn set(&self) -> Result<(), Error> {
         tracing::info!("Setting PID file: {:?}", self.path);
-        std::fs::write(&self.path(), std::process::id().to_string().as_bytes()).context(
-            error::SetPidFile {
+        std::fs::write(self.path(), std::process::id().to_string().as_bytes()).context(
+            error::SetPidFileSnafu {
                 pid_file: self.clone_path(),
             },
         )

@@ -157,8 +157,7 @@ impl Command {
 
     fn load_config(&self) -> Config {
         let mut config = Config::load_or_default(
-            &self
-                .config_file
+            self.config_file
                 .clone()
                 .unwrap_or_else(Config::default_path),
         );
@@ -318,7 +317,10 @@ impl Command {
                 Some(SubCommand::Edit { id, editor }) => {
                     let data = client.get(id).await?;
                     let editor = ExternalEditor::new(editor);
-                    let data = editor.execute(&data).await.context(error::CallEditor)?;
+                    let data = editor
+                        .execute(&data)
+                        .await
+                        .context(error::CallEditorSnafu)?;
                     let (ok, new_id) = client.update(id, &data).await?;
                     if ok {
                         println!("{:016x}", new_id);
@@ -362,7 +364,7 @@ impl Command {
             Ok(0)
         };
 
-        let runtime = Runtime::new().context(error::CreateTokioRuntime)?;
+        let runtime = Runtime::new().context(error::CreateTokioRuntimeSnafu)?;
         runtime.block_on(fut)
     }
 }
@@ -389,17 +391,19 @@ async fn print_list(client: &mut GrpcClient, no_id: bool) -> Result<(), Error> {
 async fn load_file_or_read_stdin(file_path: Option<PathBuf>) -> Result<String, Error> {
     use tokio::io::AsyncReadExt;
     match file_path {
-        Some(file_path) => tokio::fs::read_to_string(&file_path)
-            .await
-            .context(error::ReadFile {
-                filename: file_path.to_owned(),
-            }),
+        Some(file_path) => {
+            tokio::fs::read_to_string(&file_path)
+                .await
+                .context(error::ReadFileSnafu {
+                    filename: file_path.to_owned(),
+                })
+        }
         None => {
             let mut data = String::new();
             tokio::io::stdin()
                 .read_to_string(&mut data)
                 .await
-                .context(error::ReadStdin)?;
+                .context(error::ReadStdinSnafu)?;
             Ok(data)
         }
     }
@@ -413,12 +417,12 @@ async fn save_file_or_write_stdout<C: AsRef<[u8]> + Unpin>(
     match file_path {
         Some(file_path) => tokio::fs::write(&file_path, data)
             .await
-            .context(error::ReadFile {
+            .context(error::ReadFileSnafu {
                 filename: file_path.to_owned(),
             }),
         None => tokio::io::stdout()
             .write_all(data.as_ref())
             .await
-            .context(error::WriteStdout),
+            .context(error::WriteStdoutSnafu),
     }
 }

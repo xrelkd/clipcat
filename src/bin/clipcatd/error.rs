@@ -5,7 +5,7 @@ use snafu::Snafu;
 use crate::{config::ConfigError, history::HistoryError};
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("Could not initialize tokio runtime, error: {}", source))]
     InitializeTokioRuntime { source: std::io::Error },

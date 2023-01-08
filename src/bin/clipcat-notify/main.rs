@@ -74,8 +74,9 @@ impl Command {
             enable_primary,
             filter_min_size: 1,
         };
-        let monitor = ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitor)?;
-        let runtime = Runtime::new().context(InitializeTokioRuntime)?;
+        let monitor =
+            ClipboardMonitor::new(monitor_opts).context(InitializeClipboardMonitorSnafu)?;
+        let runtime = Runtime::new().context(InitializeTokioRuntimeSnafu)?;
         runtime.block_on(async {
             let mut event_recv = monitor.subscribe();
             while let Ok(event) = event_recv.recv().await {

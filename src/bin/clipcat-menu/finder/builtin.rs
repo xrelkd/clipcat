@@ -49,7 +49,7 @@ impl BuiltinFinder {
                 .join(ENTRY_SEPARATOR)
         })
         .await
-        .context(error::JoinTask)?;
+        .context(error::JoinTaskSnafu)?;
 
         Ok(self.parse_output(output.as_bytes()))
     }

@@ -228,7 +228,7 @@ impl ClipboardManager {
     ) -> Result<(), ClipboardError> {
         use snafu::ResultExt;
         use x11_clipboard::Clipboard;
-        let clipboard = Clipboard::new().context(crate::error::InitializeX11Clipboard)?;
+        let clipboard = Clipboard::new().context(crate::error::InitializeX11ClipboardSnafu)?;
 
         let atom_clipboard = match clipboard_type {
             ClipboardType::Clipboard => clipboard.setter.atoms.clipboard,
@@ -240,11 +240,11 @@ impl ClipboardManager {
         tokio::task::spawn_blocking(move || -> Result<(), ClipboardError> {
             clipboard
                 .store(atom_clipboard, atom_utf8string, data.as_bytes())
-                .context(crate::error::PasteToX11Clipboard)?;
+                .context(crate::error::PasteToX11ClipboardSnafu)?;
             Ok(())
         })
         .await
-        .context(crate::error::SpawnBlockingTask)??;
+        .context(crate::error::SpawnBlockingTaskSnafu)??;
         Ok(())
     }
 }
@@ -395,7 +395,7 @@ mod tests {
     fn test_remove() {
         let mut mgr = ClipboardManager::new();
         assert_eq!(mgr.len(), 0);
-        assert_eq!(mgr.remove(43), false);
+        assert!(!mgr.remove(43));
 
         let clip = ClipboardData::new_primary("АБВГДЕ");
         let id = mgr.insert(clip);

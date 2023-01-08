@@ -1,9 +1,3 @@
-#[cfg(feature = "app")]
-extern crate app_dirs;
-
-#[cfg(feature = "app")]
-extern crate structopt;
-
 #[macro_use]
 extern crate serde;
 

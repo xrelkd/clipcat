@@ -25,17 +25,19 @@ pub type CtlMessageSender = mpsc::UnboundedSender<CtlMessage>;
 pub async fn start(config: Config) -> Result<(), Error> {
     let grpc_addr = format!("{}:{}", config.grpc.host, config.grpc.port)
         .parse()
-        .context(error::ParseSockAddr)?;
+        .context(error::ParseSockAddrSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         let file_path = config.history_file_path;
 
         tracing::info!("History file path: {:?}", file_path);
         let history_manager =
-            HistoryManager::new(&file_path).context(error::CreateHistoryManager)?;
+            HistoryManager::new(&file_path).context(error::CreateHistoryManagerSnafu)?;
 
         tracing::info!("Load history from {:?}", history_manager.path());
-        let history_clips = history_manager.load().context(error::LoadHistoryManager)?;
+        let history_clips = history_manager
+            .load()
+            .context(error::LoadHistoryManagerSnafu)?;
         let clip_count = history_clips.len();
         tracing::info!("{} clip(s) loaded", clip_count);
 
@@ -60,7 +62,8 @@ pub async fn start(config: Config) -> Result<(), Error> {
 
     let monitor_opts = config.monitor.into();
     let clipboard_monitor = {
-        let monitor = ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitor)?;
+        let monitor =
+            ClipboardMonitor::new(monitor_opts).context(error::CreateClipboardMonitorSnafu)?;
         Arc::new(Mutex::new(monitor))
     };
 

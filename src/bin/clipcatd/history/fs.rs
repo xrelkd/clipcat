@@ -24,9 +24,9 @@ impl SimpleDBDriver {
             .write(true)
             .append(false)
             .open(&self.path)
-            .context(error::Io)?;
-        file.set_len(0).context(error::Io)?;
-        bincode::serialize_into(&mut file, &FileContents { data }).context(error::Serde)?;
+            .context(error::IoSnafu)?;
+        file.set_len(0).context(error::IoSnafu)?;
+        bincode::serialize_into(&mut file, &FileContents { data }).context(error::SerdeSnafu)?;
         Ok(())
     }
 }
@@ -39,10 +39,10 @@ struct FileContents {
 impl HistoryDriver for SimpleDBDriver {
     fn load(&self) -> Result<Vec<ClipboardData>, HistoryError> {
         let data = match std::fs::File::open(&self.path) {
-            Ok(mut file) => bincode::deserialize_from(&mut file).context(error::Serde)?,
+            Ok(mut file) => bincode::deserialize_from(&mut file).context(error::SerdeSnafu)?,
             Err(err) => match err.kind() {
                 io::ErrorKind::NotFound => Vec::new(),
-                _ => return Err(err).context(error::Io),
+                _ => return Err(err).context(error::IoSnafu),
             },
         };
         Ok(data)

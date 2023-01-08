@@ -27,7 +27,7 @@ impl ExternalEditor {
     }
 
     pub fn from_env() -> Result<ExternalEditor, EditorError> {
-        let editor = std::env::var("EDITOR").context(error::GetEnvEditor)?;
+        let editor = std::env::var("EDITOR").context(error::GetEnvEditorSnafu)?;
         Ok(ExternalEditor { editor })
     }
 
@@ -44,33 +44,33 @@ impl ExternalEditor {
 
         tokio::fs::write(&tmp_file, data)
             .await
-            .context(error::CreateTemporaryFile {
+            .context(error::CreateTemporaryFileSnafu {
                 filename: tmp_file.to_owned(),
             })?;
 
         Command::new(&self.editor)
             .arg(&tmp_file)
             .spawn()
-            .context(error::CallExternalTextEditor {
+            .context(error::CallExternalTextEditorSnafu {
                 program: self.editor.to_owned(),
             })?
             .wait()
             .await
-            .context(error::ExecuteExternalTextEditor {
+            .context(error::ExecuteExternalTextEditorSnafu {
                 program: self.editor.to_owned(),
             })?;
 
         let data =
             tokio::fs::read_to_string(&tmp_file)
                 .await
-                .context(error::ReadTemporaryFile {
+                .context(error::ReadTemporaryFileSnafu {
                     filename: tmp_file.to_owned(),
                 })?;
-        tokio::fs::remove_file(&tmp_file.to_owned())
-            .await
-            .context(error::RemoveTemporaryFile {
+        tokio::fs::remove_file(&tmp_file.to_owned()).await.context(
+            error::RemoveTemporaryFileSnafu {
                 filename: tmp_file.to_owned(),
-            })?;
+            },
+        )?;
 
         Ok(data)
     }

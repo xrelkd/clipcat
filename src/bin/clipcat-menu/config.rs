@@ -3,8 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use app_dirs::AppDataType;
-
 use crate::finder::FinderType;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -80,12 +78,11 @@ impl Default for CustomFinder {
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        app_dirs::get_app_dir(
-            AppDataType::UserConfig,
-            &clipcat::APP_INFO,
-            clipcat::MENU_CONFIG_NAME,
-        )
-        .expect("app_dirs")
+        directories::BaseDirs::new()
+            .expect("app_dirs")
+            .config_dir()
+            .join(clipcat::PROJECT_NAME)
+            .join(clipcat::MENU_CONFIG_NAME)
     }
 
     #[inline]

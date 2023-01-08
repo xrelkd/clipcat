@@ -32,27 +32,26 @@ required-features = ["clipcat-notify"]
 futures = "0.3"
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 
-snafu = "0.6"
+snafu = "0.7"
 
-tonic = "0.4"
-prost = "0.7"
+tonic = "0.8"
+prost = "0.11"
 http = "0.2"
 
 tracing = "0.1"
-tracing-subscriber = { version = "0.2", optional = true }
-tracing-journald = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", optional = true }
+tracing-journald = { version = "0.3", optional = true }
 tracing-futures = { version = "0.2", optional = true }
 
 structopt = { version = "0.3", optional = true }
-app_dirs = { version = "1", optional = true }
+directories = { version = "4", optional = true }
 toml = { version = "0.5", optional = true }
 
 serde = { version = "1", features = ["derive"] }
-serde_with = "1"
 serde_json = { version = "1", optional = true }
 
 x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
-wl-clipboard-rs = { version = "^0.4", optional = true }
+wl-clipboard-rs = { version = "0.7", optional = true }
 
 bincode = { version = "1", optional = true }
 
@@ -65,7 +64,7 @@ skim = { version = "0.10", optional = true }
 all-bins = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
 default = ["clipcatd", "clipcatctl", "clipcat-menu"]
 
-app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
+app = ["directories", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
 monitor = ["x11-clipboard"]
 daemon = [
   "daemonize", "libc",
@@ -84,7 +83,7 @@ clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
 clipcat-notify = ["structopt", "monitor"]
 
 [build-dependencies]
-tonic-build = { version = "0.4", features = ["prost"] }
+tonic-build = { version = "0.8", features = ["prost"] }
 
 [profile.release]
 opt-level = 3

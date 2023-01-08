@@ -205,7 +205,7 @@ struct ClipboardWaitProvider {
 #[cfg(not(feature = "wayland"))]
 impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
-        let clipboard = Clipboard::new().context(error::InitializeX11Clipboard)?;
+        let clipboard = Clipboard::new().context(error::InitializeX11ClipboardSnafu)?;
         Ok(Self {
             clipboard,
             clipboard_type,

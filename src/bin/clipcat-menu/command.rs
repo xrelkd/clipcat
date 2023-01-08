@@ -129,7 +129,7 @@ impl Command {
         }
 
         let mut config =
-            Config::load_or_default(&self.config_file.unwrap_or_else(Config::default_path));
+            Config::load_or_default(self.config_file.unwrap_or_else(Config::default_path));
 
         let finder = {
             if let Some(finder) = self.finder {
@@ -175,7 +175,7 @@ impl Command {
                         let new_data = editor
                             .execute(&clip.data)
                             .await
-                            .context(error::CallEditor)?;
+                            .context(error::CallEditorSnafu)?;
                         let (ok, new_id) = client.update(clip.id, &new_data).await?;
                         if ok {
                             tracing::info!("Editing clip (id: {:016x})", new_id);
@@ -192,7 +192,7 @@ impl Command {
             Ok(())
         };
 
-        let runtime = Runtime::new().context(error::CreateTokioRuntime)?;
+        let runtime = Runtime::new().context(error::CreateTokioRuntimeSnafu)?;
         runtime.block_on(fut)
     }
 }

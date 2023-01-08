@@ -52,7 +52,7 @@ pub fn start(
                 }
             })
             .await
-            .context(error::ServeGrpc)?;
+            .context(error::ServeGrpcSnafu)?;
 
         Ok(())
     });

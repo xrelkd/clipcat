@@ -1,5 +1,5 @@
 #[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility(pub))]
 pub enum HistoryError {
     #[snafu(display("IO error: {}", source))]
     Io { source: std::io::Error },

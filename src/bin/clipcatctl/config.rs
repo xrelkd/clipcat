@@ -3,8 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use app_dirs::AppDataType;
-
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Config {
     pub server_host: IpAddr,
@@ -13,7 +11,7 @@ pub struct Config {
 
     #[serde(
         default = "Config::default_log_level",
-        with = "serde_with::rust::display_fromstr"
+        with = "clipcat::display_from_str"
     )]
     pub log_level: tracing::Level,
 }
@@ -33,12 +31,11 @@ impl Default for Config {
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        app_dirs::get_app_dir(
-            AppDataType::UserConfig,
-            &clipcat::APP_INFO,
-            clipcat::CTL_CONFIG_NAME,
-        )
-        .expect("app_dirs")
+        directories::BaseDirs::new()
+            .expect("app_dirs")
+            .config_dir()
+            .join(clipcat::PROJECT_NAME)
+            .join(clipcat::CTL_CONFIG_NAME)
     }
 
     #[inline]
