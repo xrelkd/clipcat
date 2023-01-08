@@ -16,7 +16,7 @@ rustPlatform.buildRustPackage {
 
   src = ./.;
 
-  cargoSha256 = "sha256-s80CGlIXcChyX5CEjIV8W7n//LmOSJA8SdC3CoZN2vg=";
+  cargoSha256 = "sha256-ZHZeM69iFOTPpqhOGENxrXNnO921s2E5Shcazobgizs=";
 
   # needed for internal protobuf c wrapper library
   PROTOC = "${protobuf}/bin/protoc";
