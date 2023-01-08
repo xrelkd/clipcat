@@ -124,7 +124,7 @@ impl ClipboardData {
                 let line_count = data.lines().count();
                 if char_count > limit {
                     let line_info = if line_count > 1 {
-                        format!("...({} lines)", line_count)
+                        format!("...({line_count} lines)")
                     } else {
                         "...".to_owned()
                     };

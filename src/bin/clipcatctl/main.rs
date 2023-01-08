@@ -19,7 +19,7 @@ fn main() {
             std::process::exit(exit_code);
         }
         Err(err) => {
-            eprintln!("Error: {}", err);
+            eprintln!("Error: {err}");
             std::process::exit(1);
         }
     }

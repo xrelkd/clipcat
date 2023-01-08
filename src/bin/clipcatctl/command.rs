@@ -187,7 +187,7 @@ impl Command {
                 MonitorState::Enabled => "Clipcat monitor is running",
                 MonitorState::Disabled => "Clipcat monitor is not running",
             };
-            println!("{}", msg);
+            println!("{msg}");
         }
 
         match self.subcommand {
@@ -265,7 +265,7 @@ impl Command {
                                 .unwrap_or_default()
                         }
                     };
-                    println!("{}", data);
+                    println!("{data}");
                 }
                 Some(SubCommand::Insert { data }) => {
                     client.insert_clipboard(&data).await?;
@@ -275,7 +275,7 @@ impl Command {
                 }
                 Some(SubCommand::Length) => {
                     let len = client.length().await?;
-                    println!("{}", len);
+                    println!("{len}");
                 }
                 Some(SubCommand::Load { file_path }) => {
                     let data = load_file_or_read_stdin(file_path).await?;
@@ -299,7 +299,7 @@ impl Command {
                         .filter_map(|id| match parse_hex(&id) {
                             Ok(id) => Some(id),
                             Err(err) => {
-                                eprintln!("Failed to parse ID {}, error: {:?}", id, err);
+                                eprintln!("Failed to parse ID {id}, error: {err:?}");
                                 None
                             }
                         })
@@ -323,14 +323,14 @@ impl Command {
                         .context(error::CallEditorSnafu)?;
                     let (ok, new_id) = client.update(id, &data).await?;
                     if ok {
-                        println!("{:016x}", new_id);
+                        println!("{new_id:016x}");
                     }
                     client.mark_as_clipboard(new_id).await?;
                 }
                 Some(SubCommand::Update { id, data }) => {
                     let (ok, new_id) = client.update(id, &data).await?;
                     if ok {
-                        println!("{:016x}", new_id);
+                        println!("{new_id:016x}");
                     }
                 }
                 Some(SubCommand::MarkAsClipboard { id }) => {

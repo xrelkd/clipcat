@@ -11,7 +11,7 @@ use self::command::Command;
 fn main() {
     let command = Command::new();
     if let Err(err) = command.run() {
-        eprintln!("Error: {}", err);
+        eprintln!("Error: {err}");
         std::process::exit(1);
     }
 }

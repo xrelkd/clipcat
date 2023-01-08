@@ -97,7 +97,7 @@ impl Command {
 fn main() {
     let cmd = Command::from_args();
     if let Err(err) = cmd.run() {
-        eprintln!("Error: {}", err);
+        eprintln!("Error: {err}");
         std::process::exit(1);
     }
 }
