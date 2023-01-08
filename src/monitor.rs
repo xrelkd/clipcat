@@ -212,43 +212,24 @@ impl ClipboardWaitProvider {
         })
     }
 
-    fn atoms(&self) -> (u32, u32, u32, u32) {
+    fn atoms(&self) -> (u32, u32, u32) {
         let atom_clipboard = match self.clipboard_type {
             ClipboardType::Clipboard => self.clipboard.getter.atoms.clipboard,
             ClipboardType::Primary => self.clipboard.getter.atoms.primary,
         };
         let atom_utf8string = self.clipboard.getter.atoms.utf8_string;
-        let atom_string = self.clipboard.getter.atoms.string;
         let atom_property = self.clipboard.getter.atoms.property;
-        (atom_clipboard, atom_utf8string, atom_string, atom_property)
+        (atom_clipboard, atom_utf8string, atom_property)
     }
 
     pub(crate) fn load(&self) -> Result<Vec<u8>, x11_clipboard::error::Error> {
-        let (c, utf8, string, prop) = self.atoms();
-
-        let result = self.clipboard.load(c, utf8, prop, None);
-
-        result.or_else(|err| {
-            if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
-                self.clipboard.load(c, string, prop, None)
-            } else {
-                Err(err)
-            }
-        })
+        let (c, utf8, prop) = self.atoms();
+        self.clipboard.load(c, utf8, prop, None)
     }
 
     pub(crate) fn load_wait(&self) -> Result<Vec<u8>, x11_clipboard::error::Error> {
-        let (c, utf8, string, prop) = self.atoms();
-
-        let result = self.clipboard.load_wait(c, utf8, prop);
-
-        result.or_else(|err| {
-            if matches!(err, x11_clipboard::error::Error::UnexpectedType(_target)) {
-                self.clipboard.load_wait(c, string, prop)
-            } else {
-                Err(err)
-            }
-        })
+        let (c, utf8, prop) = self.atoms();
+        self.clipboard.load_wait(c, utf8, prop)
     }
 }
 #[cfg(feature = "wayland")]
