@@ -8,16 +8,20 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
-      in rec {
+      let
+        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+        inherit (pkgs) callPackage;
+      in
+      {
         packages = rec {
-          clipcat = pkgs.callPackage ./default.nix { };
+          clipcat = callPackage ./default.nix { };
           default = clipcat;
         };
         devShells = rec {
-          clipcat = import ./shell.nix { inherit (packages) clipcat; inherit (pkgs) mkShell; };
+          clipcat = callPackage ./shell.nix { };
           default = clipcat;
         };
+        formatter = pkgs.nixpkgs-fmt;
       }
     );
 }
