@@ -4,28 +4,6 @@ version = "0.5.0"
 authors = ["xrelkd 46590321+xrelkd@users.noreply.github.com"]
 edition = "2018"
 
-[features]
-all = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
-default = ["clipcatd", "clipcatctl", "clipcat-menu"]
-
-app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
-monitor = ["x11-clipboard"]
-daemon = [
-  "daemonize", "libc",
-  "tracing-subscriber", "tracing-journald",
-  "tokio/signal", "serde_json",
-  "bincode"
-]
-external_editor = ["tokio/process"]
-builtin_finder = ["skim"]
-
-wayland = ["wl-clipboard-rs"]
-
-clipcatd = ["app", "monitor", "daemon"]
-clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
-clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
-clipcat-notify = ["structopt", "monitor"]
-
 [lib]
 name = "clipcat"
 path = "src/lib.rs"
@@ -83,12 +61,31 @@ daemonize = { version = "0.4", optional = true }
 
 skim = { version = "0.10", optional = true }
 
+[features]
+all-bins = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
+default = ["clipcatd", "clipcatctl", "clipcat-menu"]
+
+app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
+monitor = ["x11-clipboard"]
+daemon = [
+  "daemonize", "libc",
+  "tracing-subscriber", "tracing-journald",
+  "tokio/signal", "serde_json",
+  "bincode"
+]
+external_editor = ["tokio/process"]
+builtin_finder = ["skim"]
+
+wayland = ["wl-clipboard-rs"]
+
+clipcatd = ["app", "monitor", "daemon"]
+clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
+clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
+clipcat-notify = ["structopt", "monitor"]
+
 [build-dependencies]
 tonic-build = { version = "0.4", features = ["prost"] }
 
 [profile.release]
 opt-level = 3
 lto = true
-
-[profile.dev]
-opt-level = 0

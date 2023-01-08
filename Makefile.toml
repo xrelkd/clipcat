@@ -7,14 +7,24 @@ command = "cargo"
 args = ["build"]
 dependencies = ["format"]
 
-[tasks.build-all]
+[tasks.build-all-x11]
 command = "cargo"
-args = ["build", "--features=all"]
+args = ["build", "--features=all-bins"]
 dependencies = ["format"]
 
-[tasks.build-release]
+[tasks.build-all-wayland]
 command = "cargo"
-args = ["build", "--release", "--features=all"]
+args = ["build", "--features=all-bins,wayland"]
+dependencies = ["format"]
+
+[tasks.build-release-x11]
+command = "cargo"
+args = ["build", "--release", "--features=all-bins"]
+dependencies = ["format"]
+
+[tasks.build-release-wayland]
+command = "cargo"
+args = ["build", "--release", "--features=all-bins,wayland"]
 dependencies = ["format"]
 
 [tasks.test]

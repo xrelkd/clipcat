@@ -28,7 +28,7 @@ $ cargo install --path . --features clipcatd,clipcat-menu,clipcatctl,clipcat-not
 ```
 or with wayland support:
 ```shell
-$ cargo install --path . --features all
+$ cargo install --path . --features all-bins
 ```
 
 ## Architecture
