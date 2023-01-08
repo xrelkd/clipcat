@@ -1,7 +1,6 @@
 name: Build
 
-on:
-  push:
+on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
@@ -31,27 +30,33 @@ jobs:
         run: cargo fmt --all --check
 
       - name: Clippy X11
-        run: cargo clippy --all --all-targets --features all
+        run: cargo clippy --all --all-targets --features all-bins
 
       - name: Clippy wayland
-        run: cargo clippy --all --all-targets --features 'all wayland'
+        run: cargo clippy --all --all-targets --features all-bins,wayland
 
       - name: Test X11
-        run: cargo test --all --features all 
+        run: cargo test --all --features all-bins
 
       - name: Test wayland
-        run: cargo test --all --features 'all wayland'
+        run: cargo test --all --features all-bins,wayland
 
       - name: Build X11
-        run: cargo build --features all --release
+        run: cargo build --features all-bins --release
 
-      - name: Build wayland
-        run: cargo build --features 'all wayland' --release
-
-      - name: Upload
+      - name: Upload X11 daemon
         uses: actions/upload-artifact@v3
         with:
-          name: clipcatd
+          name: clipcatd-x11
+          path: target/release/clipcatd
+
+      - name: Build wayland
+        run: cargo build --features all-bins,wayland --release
+
+      - name: Upload wayland daemon
+        uses: actions/upload-artifact@v3
+        with:
+          name: clipcatd-wayland
           path: target/release/clipcatd
       - uses: actions/upload-artifact@v3
         with:
