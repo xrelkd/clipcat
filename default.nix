@@ -12,7 +12,7 @@
 
 rustPlatform.buildRustPackage {
   pname = "clipcat";
-  version = "0.5.0";
+  version = "dev";
 
   src = ./.;
 
