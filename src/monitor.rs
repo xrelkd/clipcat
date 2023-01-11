@@ -240,7 +240,11 @@ impl ClipboardWaitProvider {
         let mut err = ClipboardError::NoBackendFound;
         #[cfg(feature = "wayland")]
         match ClipboardWaitProviderWayland::new(clipboard_type) {
-            Ok(b) => return Ok(Self::Wayland(b)),
+            Ok(b) => {
+                if b.load().is_ok() {
+                    return Ok(Self::Wayland(b));
+                }
+            }
             Err(e) => err = e,
         }
         #[cfg(feature = "x11")]
