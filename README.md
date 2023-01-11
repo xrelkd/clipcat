@@ -22,16 +22,16 @@ This also adds configuration value to the [monitor] section of `clipcatd.toml`; 
 It filters the copy actions for a minimum size. See the example configuration below for more info.
 If you use Vim and set this to 1, holding `x` no longer ruins the Clipcat history; Vim's 1 byte long copy actions aren't saved.
 
-You can install all the binaries with
+You can install all the binaries (with both X11 and Wayland support) using
 
 ```shell
-$ cargo install --path . -F all-bins,x11
+$ cargo install --path . -F all-bins
 ```
 
-or with wayland support:
+or with only wayland support:
 
 ```shell
-$ cargo install --path . -F all-bins,wayland
+$ cargo install --path . --no-default-features -F all-bins,wayland
 ```
 
 ## Architecture

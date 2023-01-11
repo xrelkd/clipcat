@@ -41,7 +41,7 @@ rustPlatform.buildRustPackage {
   ];
   buildInputs = [ xorg.libxcb ];
 
-  buildFeatures = [ "all-bins,x11" ];
+  buildFeatures = [ "all-bins,all-backends" ];
 
   postInstall = ''
     installShellCompletion --bash completions/bash-completion/completions/*
