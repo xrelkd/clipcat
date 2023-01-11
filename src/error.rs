@@ -22,6 +22,11 @@ pub mod display_from_str {
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
 pub enum ClipboardError {
+    #[snafu(display(
+        "X11 nor wayland were compiled as backends - we have no clipboard to watch!"
+    ))]
+    NoBackendFound,
+
     #[snafu(display("Could not spawn tokio task, error: {}", source))]
     SpawnBlockingTask { source: tokio::task::JoinError },
 

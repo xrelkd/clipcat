@@ -62,7 +62,9 @@ skim = { version = "0.10", optional = true }
 
 [features]
 all-bins = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
-default = ["clipcatd", "clipcatctl", "clipcat-menu"]
+all-backends = ["x11", "wayland"]
+full = ["all-bins", "all-backends"]
+default = ["clipcatd", "clipcatctl", "clipcat-menu", "all-backends"]
 
 app = ["directories", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
 daemon = [

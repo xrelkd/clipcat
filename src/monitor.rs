@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+use std::fmt::Display;
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -198,13 +199,84 @@ fn build_thread(
     Ok(join_handle)
 }
 
-#[cfg(all(feature = "x11", not(feature = "wayland")))]
-struct ClipboardWaitProvider {
+#[derive(Debug)]
+enum ClipboardWaitError {
+    #[cfg(feature = "x11")]
+    X11(x11_clipboard::error::Error),
+    #[cfg(feature = "wayland")]
+    Wayland(wl_clipboard_rs::paste::Error),
+}
+#[cfg(feature = "wayland")]
+impl From<wl_clipboard_rs::paste::Error> for ClipboardWaitError {
+    fn from(e: wl_clipboard_rs::paste::Error) -> Self {
+        Self::Wayland(e)
+    }
+}
+#[cfg(feature = "x11")]
+impl From<x11_clipboard::error::Error> for ClipboardWaitError {
+    fn from(e: x11_clipboard::error::Error) -> Self {
+        Self::X11(e)
+    }
+}
+impl Display for ClipboardWaitError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            #[cfg(feature = "x11")]
+            ClipboardWaitError::X11(e) => e.fmt(f),
+            #[cfg(feature = "wayland")]
+            ClipboardWaitError::Wayland(e) => e.fmt(f),
+        }
+    }
+}
+enum ClipboardWaitProvider {
+    #[cfg(feature = "x11")]
+    X11(ClipboardWaitProviderX11),
+    #[cfg(feature = "wayland")]
+    Wayland(ClipboardWaitProviderWayland),
+}
+impl ClipboardWaitProvider {
+    #[allow(unused_assignments)] // if no feature is enabled
+    pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
+        let mut err = ClipboardError::NoBackendFound;
+        #[cfg(feature = "wayland")]
+        match ClipboardWaitProviderWayland::new(clipboard_type) {
+            Ok(b) => return Ok(Self::Wayland(b)),
+            Err(e) => err = e,
+        }
+        #[cfg(feature = "x11")]
+        match ClipboardWaitProviderX11::new(clipboard_type) {
+            Ok(b) => return Ok(Self::X11(b)),
+            Err(e) => err = e,
+        }
+        Err(err)
+    }
+
+    pub(crate) fn load(&self) -> Result<Vec<u8>, ClipboardWaitError> {
+        match self {
+            #[cfg(feature = "x11")]
+            ClipboardWaitProvider::X11(c) => c.load().map_err(Into::into),
+            #[cfg(feature = "wayland")]
+            ClipboardWaitProvider::Wayland(c) => c.load().map_err(Into::into),
+        }
+    }
+
+    pub(crate) fn load_wait(&mut self) -> Result<Vec<u8>, ClipboardWaitError> {
+        match self {
+            #[cfg(feature = "x11")]
+            ClipboardWaitProvider::X11(c) => c.load_wait().map_err(Into::into),
+            #[cfg(feature = "wayland")]
+            ClipboardWaitProvider::Wayland(c) => c.load_wait().map_err(Into::into),
+        }
+    }
+}
+
+#[cfg(feature = "x11")]
+struct ClipboardWaitProviderX11 {
     clipboard_type: ClipboardType,
     clipboard: Clipboard,
 }
-#[cfg(all(feature = "x11", not(feature = "wayland")))]
-impl ClipboardWaitProvider {
+#[cfg(feature = "x11")]
+impl ClipboardWaitProviderX11 {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         let clipboard = Clipboard::new().context(error::InitializeX11ClipboardSnafu)?;
         Ok(Self {
@@ -234,12 +306,12 @@ impl ClipboardWaitProvider {
     }
 }
 #[cfg(feature = "wayland")]
-struct ClipboardWaitProvider {
+struct ClipboardWaitProviderWayland {
     clipboard_type: ClipboardType,
     last: Option<Vec<u8>>,
 }
 #[cfg(feature = "wayland")]
-impl ClipboardWaitProvider {
+impl ClipboardWaitProviderWayland {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         tracing::info!("Creating new wayland clipboard watcher");
         let mut s = Self {
