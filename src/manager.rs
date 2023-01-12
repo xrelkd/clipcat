@@ -5,9 +5,9 @@ use crate::{ClipboardData, ClipboardError, ClipboardType};
 const DEFAULT_CAPACITY: usize = 40;
 
 enum Backend {
-    #[cfg(feature = "x11")]
-    Wl,
     #[cfg(feature = "wayland")]
+    Wl,
+    #[cfg(feature = "x11")]
     X11,
 }
 pub struct ClipboardManager {
