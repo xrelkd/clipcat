@@ -45,7 +45,8 @@ pub async fn start(config: Config) -> Result<(), Error> {
             "Initialize ClipboardManager with capacity {}",
             config.max_history
         );
-        let mut clipboard_manager = ClipboardManager::with_capacity(config.max_history);
+        let mut clipboard_manager = ClipboardManager::with_capacity(config.max_history)
+            .context(error::CreateClipboardManagerSnafu)?;
 
         tracing::info!("Import {} clip(s) into ClipboardManager", clip_count);
         clipboard_manager.import(&history_clips);

@@ -1,14 +1,17 @@
 use std::{collections::HashMap, time::SystemTime};
 
+#[cfg(feature = "x11")]
+use snafu::ResultExt;
+
 use crate::{ClipboardData, ClipboardError, ClipboardType};
 
 const DEFAULT_CAPACITY: usize = 40;
 
 enum Backend {
     #[cfg(feature = "wayland")]
-    Wl,
+    Wayland(wl_clipboard_rs::copy::Options),
     #[cfg(feature = "x11")]
-    X11,
+    X11(x11_clipboard::Clipboard),
 }
 pub struct ClipboardManager {
     clips: HashMap<u64, ClipboardData>,
@@ -18,44 +21,44 @@ pub struct ClipboardManager {
     backend: Backend,
 }
 
-impl Default for ClipboardManager {
-    fn default() -> ClipboardManager {
-        Self::with_capacity(DEFAULT_CAPACITY)
-    }
-}
-
 impl ClipboardManager {
-    pub fn with_capacity(capacity: usize) -> ClipboardManager {
+    pub fn with_capacity(capacity: usize) -> Result<ClipboardManager, ClipboardError> {
         let backend = {
             #[cfg(all(feature = "wayland", feature = "x11"))]
             {
                 if std::env::var_os("WAYLAND_DISPLAY").is_some() {
-                    Backend::Wl
+                    Backend::Wayland(wl_clipboard_rs::copy::Options::new())
                 } else {
-                    Backend::X11
+                    Backend::X11(
+                        x11_clipboard::Clipboard::new()
+                            .context(crate::error::InitializeX11ClipboardSnafu)?,
+                    )
                 }
             }
             #[cfg(all(feature = "wayland", not(feature = "x11")))]
             {
-                Backend::Wl
+                Backend::Wayland(wl_clipboard_rs::copy::Options::new())
             }
             #[cfg(all(feature = "x11", not(feature = "wayland")))]
             {
-                Backend::X11
+                Backend::X11(
+                    x11_clipboard::Clipboard::new()
+                        .context(crate::error::InitializeX11ClipboardSnafu)?,
+                )
             }
         };
-        ClipboardManager {
+        Ok(ClipboardManager {
             capacity,
             clips: HashMap::default(),
             current_clipboard: None,
             current_primary: None,
             backend,
-        }
+        })
     }
 
     #[inline]
-    pub fn new() -> ClipboardManager {
-        Self::default()
+    pub fn new() -> Result<ClipboardManager, ClipboardError> {
+        Self::with_capacity(DEFAULT_CAPACITY)
     }
 
     #[inline]
@@ -213,8 +216,7 @@ impl ClipboardManager {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark_as_clipboard();
             let clipboard_content = clip.data.clone();
-            self.update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard)
-                .await?;
+            self.update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard)?;
         }
         Ok(())
     }
@@ -223,27 +225,27 @@ impl ClipboardManager {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark_as_primary();
             let clipboard_content = clip.data.clone();
-            self.update_sys_clipboard(&clipboard_content, ClipboardType::Primary)
-                .await?;
+            self.update_sys_clipboard(&clipboard_content, ClipboardType::Primary)?;
         }
         Ok(())
     }
 
-    async fn update_sys_clipboard(
-        &self,
+    fn update_sys_clipboard(
+        &mut self,
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {
-        match self.backend {
+        match &mut self.backend {
             #[cfg(feature = "x11")]
-            Backend::X11 => Self::update_sys_clipboard_x11(data, clipboard_type).await,
+            Backend::X11(cb) => Self::update_sys_clipboard_x11(cb, data, clipboard_type),
             #[cfg(feature = "wayland")]
-            Backend::Wl => Self::update_sys_clipboard_wayland(data, clipboard_type).await,
+            Backend::Wayland(cb) => Self::update_sys_clipboard_wayland(cb, data, clipboard_type),
         }
     }
 
     #[cfg(feature = "wayland")]
-    async fn update_sys_clipboard_wayland(
+    fn update_sys_clipboard_wayland(
+        opts: &mut wl_clipboard_rs::copy::Options,
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {
@@ -251,8 +253,7 @@ impl ClipboardManager {
             ClipboardType::Clipboard => wl_clipboard_rs::copy::ClipboardType::Regular,
             ClipboardType::Primary => wl_clipboard_rs::copy::ClipboardType::Primary,
         };
-        wl_clipboard_rs::copy::Options::new()
-            .clipboard(cb)
+        opts.clipboard(cb)
             .clone()
             .copy(
                 wl_clipboard_rs::copy::Source::Bytes(data.as_bytes().to_vec().into_boxed_slice()),
@@ -263,14 +264,11 @@ impl ClipboardManager {
         Ok(())
     }
     #[cfg(feature = "x11")]
-    async fn update_sys_clipboard_x11(
+    fn update_sys_clipboard_x11(
+        clipboard: &x11_clipboard::Clipboard,
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {
-        use snafu::ResultExt;
-        use x11_clipboard::Clipboard;
-        let clipboard = Clipboard::new().context(crate::error::InitializeX11ClipboardSnafu)?;
-
         let atom_clipboard = match clipboard_type {
             ClipboardType::Clipboard => clipboard.setter.atoms.clipboard,
             ClipboardType::Primary => clipboard.setter.atoms.primary,
@@ -278,14 +276,10 @@ impl ClipboardManager {
         let atom_utf8string = clipboard.setter.atoms.utf8_string;
         let data = data.to_owned();
 
-        tokio::task::spawn_blocking(move || -> Result<(), ClipboardError> {
-            clipboard
-                .store(atom_clipboard, atom_utf8string, data.as_bytes())
-                .context(crate::error::PasteToX11ClipboardSnafu)?;
-            Ok(())
-        })
-        .await
-        .context(crate::error::SpawnBlockingTaskSnafu)??;
+        clipboard
+            .store(atom_clipboard, atom_utf8string, data.as_bytes())
+            .context(crate::error::PasteToX11ClipboardSnafu)?;
+
         Ok(())
     }
 }
@@ -307,7 +301,7 @@ mod tests {
 
     #[test]
     fn test_construction() {
-        let mgr = ClipboardManager::new();
+        let mgr = ClipboardManager::new().unwrap();
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), DEFAULT_CAPACITY);
@@ -315,7 +309,7 @@ mod tests {
         assert!(mgr.get_current_primary().is_none());
 
         let cap = 20;
-        let mgr = ClipboardManager::with_capacity(cap);
+        let mgr = ClipboardManager::with_capacity(cap).unwrap();
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
@@ -325,7 +319,7 @@ mod tests {
 
     #[test]
     fn test_zero_capacity() {
-        let mut mgr = ClipboardManager::with_capacity(0);
+        let mut mgr = ClipboardManager::with_capacity(0).unwrap();
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), 0);
@@ -354,7 +348,7 @@ mod tests {
     #[test]
     fn test_capacity() {
         let cap = 10;
-        let mut mgr = ClipboardManager::with_capacity(cap);
+        let mut mgr = ClipboardManager::with_capacity(cap).unwrap();
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
 
@@ -379,7 +373,7 @@ mod tests {
     fn test_insert() {
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new();
+        let mut mgr = ClipboardManager::new().unwrap();
         clips.iter().for_each(|clip| {
             mgr.insert(clip.clone());
         });
@@ -398,7 +392,7 @@ mod tests {
     fn test_import() {
         let n = 10;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::with_capacity(20);
+        let mut mgr = ClipboardManager::with_capacity(20).unwrap();
 
         mgr.import(&clips);
         assert_eq!(mgr.len(), n);
@@ -418,7 +412,7 @@ mod tests {
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
         let clip = ClipboardData::new_clipboard(data1);
-        let mut mgr = ClipboardManager::new();
+        let mut mgr = ClipboardManager::new().unwrap();
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
 
@@ -434,7 +428,7 @@ mod tests {
 
     #[test]
     fn test_remove() {
-        let mut mgr = ClipboardManager::new();
+        let mut mgr = ClipboardManager::new().unwrap();
         assert_eq!(mgr.len(), 0);
         assert!(!mgr.remove(43));
 
@@ -458,7 +452,7 @@ mod tests {
     fn test_clear() {
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new();
+        let mut mgr = ClipboardManager::new().unwrap();
 
         mgr.import(&clips);
         assert!(!mgr.is_empty());

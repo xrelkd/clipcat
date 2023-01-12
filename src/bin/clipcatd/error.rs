@@ -22,8 +22,10 @@ pub enum Error {
     #[snafu(display("Could not clear HistoryManager, error: {}", source))]
     ClearHistoryManager { source: HistoryError },
 
-    #[snafu(display("Could not create HistoryManager, error: {}", source))]
+    #[snafu(display("Could not create ClipboardMonitor, error: {}", source))]
     CreateClipboardMonitor { source: clipcat::ClipboardError },
+    #[snafu(display("Could not create ClipboardManager, error: {}", source))]
+    CreateClipboardManager { source: clipcat::ClipboardError },
 
     #[snafu(display("Failed to parse socket address, error: {}", source))]
     ParseSockAddr { source: std::net::AddrParseError },
