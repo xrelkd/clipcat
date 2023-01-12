@@ -7,7 +7,10 @@ use crate::{ClipboardData, ClipboardError, ClipboardType};
 
 const DEFAULT_CAPACITY: usize = 40;
 
+#[cfg_attr(test, allow(dead_code))]
 enum Backend {
+    #[cfg(test)]
+    Test,
     #[cfg(feature = "wayland")]
     Wayland(wl_clipboard_rs::copy::Options),
     #[cfg(feature = "x11")]
@@ -22,8 +25,9 @@ pub struct ClipboardManager {
 }
 
 impl ClipboardManager {
-    pub fn with_capacity(capacity: usize) -> Result<ClipboardManager, ClipboardError> {
-        let backend = {
+    #[cfg_attr(test, allow(dead_code))]
+    fn get_backend() -> Result<Backend, ClipboardError> {
+        let b = {
             #[cfg(all(feature = "wayland", feature = "x11"))]
             {
                 if std::env::var_os("WAYLAND_DISPLAY").is_some() {
@@ -47,6 +51,13 @@ impl ClipboardManager {
                 )
             }
         };
+        Ok(b)
+    }
+    pub fn with_capacity(capacity: usize) -> Result<ClipboardManager, ClipboardError> {
+        #[cfg(test)]
+        let backend = Backend::Test;
+        #[cfg(not(test))]
+        let backend = Self::get_backend()?;
         Ok(ClipboardManager {
             capacity,
             clips: HashMap::default(),
@@ -240,6 +251,11 @@ impl ClipboardManager {
             Backend::X11(cb) => Self::update_sys_clipboard_x11(cb, data, clipboard_type),
             #[cfg(feature = "wayland")]
             Backend::Wayland(cb) => Self::update_sys_clipboard_wayland(cb, data, clipboard_type),
+            #[cfg(test)]
+            Backend::Test => {
+                println!("Update system clipboard {clipboard_type:?} with {data:?}");
+                Ok(())
+            }
         }
     }
 
