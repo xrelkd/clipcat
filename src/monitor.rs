@@ -235,7 +235,7 @@ enum ClipboardWaitProvider {
     Wayland(ClipboardWaitProviderWayland),
 }
 impl ClipboardWaitProvider {
-    #[allow(unused_assignments)] // if no feature is enabled
+    #[allow(unused_assignments, unused_mut)] // if no feature is enabled
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         let mut err = ClipboardError::NoBackendFound;
         #[cfg(feature = "wayland")]
