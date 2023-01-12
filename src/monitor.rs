@@ -239,13 +239,8 @@ impl ClipboardWaitProvider {
     pub(crate) fn new(clipboard_type: ClipboardType) -> Result<Self, ClipboardError> {
         let mut err = ClipboardError::NoBackendFound;
         #[cfg(feature = "wayland")]
-        match ClipboardWaitProviderWayland::new(clipboard_type) {
-            Ok(b) => {
-                if b.load().is_ok() {
-                    return Ok(Self::Wayland(b));
-                }
-            }
-            Err(e) => err = e,
+        if std::env::var_os("WAYLAND_DISPLAY").is_some() {
+            return ClipboardWaitProviderWayland::new(clipboard_type).map(Self::Wayland);
         }
         #[cfg(feature = "x11")]
         match ClipboardWaitProviderX11::new(clipboard_type) {

@@ -4,11 +4,18 @@ use crate::{ClipboardData, ClipboardError, ClipboardType};
 
 const DEFAULT_CAPACITY: usize = 40;
 
+enum Backend {
+    #[cfg(feature = "x11")]
+    Wl,
+    #[cfg(feature = "wayland")]
+    X11,
+}
 pub struct ClipboardManager {
     clips: HashMap<u64, ClipboardData>,
     capacity: usize,
     current_clipboard: Option<ClipboardData>,
     current_primary: Option<ClipboardData>,
+    backend: Backend,
 }
 
 impl Default for ClipboardManager {
@@ -19,11 +26,30 @@ impl Default for ClipboardManager {
 
 impl ClipboardManager {
     pub fn with_capacity(capacity: usize) -> ClipboardManager {
+        let backend = {
+            #[cfg(all(feature = "wayland", feature = "x11"))]
+            {
+                if std::env::var_os("WAYLAND_DISPLAY").is_some() {
+                    Backend::Wl
+                } else {
+                    Backend::X11
+                }
+            }
+            #[cfg(all(feature = "wayland", not(feature = "x11")))]
+            {
+                Backend::Wl
+            }
+            #[cfg(all(feature = "x11", not(feature = "wayland")))]
+            {
+                Backend::X11
+            }
+        };
         ClipboardManager {
             capacity,
             clips: HashMap::default(),
             current_clipboard: None,
             current_primary: None,
+            backend,
         }
     }
 
@@ -187,7 +213,8 @@ impl ClipboardManager {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark_as_clipboard();
             let clipboard_content = clip.data.clone();
-            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard).await?;
+            self.update_sys_clipboard(&clipboard_content, ClipboardType::Clipboard)
+                .await?;
         }
         Ok(())
     }
@@ -196,13 +223,27 @@ impl ClipboardManager {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark_as_primary();
             let clipboard_content = clip.data.clone();
-            Self::update_sys_clipboard(&clipboard_content, ClipboardType::Primary).await?;
+            self.update_sys_clipboard(&clipboard_content, ClipboardType::Primary)
+                .await?;
         }
         Ok(())
     }
 
-    #[cfg(feature = "wayland")]
     async fn update_sys_clipboard(
+        &self,
+        data: &str,
+        clipboard_type: ClipboardType,
+    ) -> Result<(), ClipboardError> {
+        match self.backend {
+            #[cfg(feature = "x11")]
+            Backend::X11 => Self::update_sys_clipboard_x11(data, clipboard_type).await,
+            #[cfg(feature = "wayland")]
+            Backend::Wl => Self::update_sys_clipboard_wayland(data, clipboard_type).await,
+        }
+    }
+
+    #[cfg(feature = "wayland")]
+    async fn update_sys_clipboard_wayland(
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {
@@ -221,8 +262,8 @@ impl ClipboardManager {
             .ok_or(ClipboardError::WaylandWrite)?;
         Ok(())
     }
-    #[cfg(all(feature = "x11", not(feature = "wayland")))]
-    async fn update_sys_clipboard(
+    #[cfg(feature = "x11")]
+    async fn update_sys_clipboard_x11(
         data: &str,
         clipboard_type: ClipboardType,
     ) -> Result<(), ClipboardError> {

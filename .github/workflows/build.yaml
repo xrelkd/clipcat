@@ -32,20 +32,21 @@ jobs:
               run: cargo fmt --all --check
 
             - name: Clippy X11
-              run: cargo clippy --all --all-targets --features all-bins,x11
-
+              run: cargo clippy --all --all-targets --features all-bins,x11 --no-default-features
             - name: Clippy wayland
-              run: cargo clippy --all --all-targets --features all-bins,wayland
+              run: cargo clippy --all --all-targets --features all-bins,wayland --no-default-features
+            - name: Clippy all backends
+              run: cargo clippy --all --all-targets --features all-bins,all-backends
 
             - name: Test X11
-              run: cargo test --all --features all-bins,x11
-
+              run: cargo test --all --features all-bins,x11 --no-default-features
             - name: Test wayland
-              run: cargo test --all --features all-bins,wayland
+              run: cargo test --all --features all-bins,wayland --no-default-features
+            - name: Test all backends
+              run: cargo test --all --features all-bins,all-backends
 
             - name: Build X11
-              run: cargo build --features all-bins,x11 --release
-
+              run: cargo build --features all-bins,x11 --release --no-default-features
             - name: Upload X11 daemon
               uses: actions/upload-artifact@v3
               with:
@@ -58,13 +59,31 @@ jobs:
                   path: target/release/clipcat-notify
 
             - name: Build wayland
-              run: cargo build --features all-bins,wayland --release
-
+              run: cargo build --features all-bins,wayland --release --no-default-features
             - name: Upload wayland daemon
               uses: actions/upload-artifact@v3
               with:
                   name: clipcatd-wayland
                   path: target/release/clipcatd
+            - name: Upload wayland clipcat-notify
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcat-notify-wayland
+                  path: target/release/clipcat-notify
+
+            - name: Build with all backends
+              run: cargo build --features all-bins,all-backends --release
+            - name: Upload daemon with all backends
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcatd
+                  path: target/release/clipcatd
+            - name: Upload clipcat-notify with all backends
+              uses: actions/upload-artifact@v3
+              with:
+                  name: clipcat-notify
+                  path: target/release/clipcat-notify
+
             - uses: actions/upload-artifact@v3
               with:
                   name: clipcatctl
@@ -73,8 +92,3 @@ jobs:
               with:
                   name: clipcat-menu
                   path: target/release/clipcat-menu
-            - name: Upload wayland clipcat-notify
-              uses: actions/upload-artifact@v3
-              with:
-                  name: clipcat-notify-wayland
-                  path: target/release/clipcat-notify
