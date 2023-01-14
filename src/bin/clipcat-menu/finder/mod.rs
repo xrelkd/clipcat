@@ -24,8 +24,9 @@ pub enum SelectionMode {
     Multiple,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default)]
 pub enum FinderType {
+    #[default]
     #[serde(rename = "builtin")]
     Builtin,
 
@@ -56,12 +57,6 @@ impl FinderType {
             FinderType::Fzf,
             FinderType::Custom,
         ]
-    }
-}
-
-impl Default for FinderType {
-    fn default() -> FinderType {
-        FinderType::Builtin
     }
 }
 
