@@ -20,3 +20,6 @@
 
 # nix build result
 result
+
+# direnv cache
+.direnv
