@@ -2322,7 +2322,7 @@ dependencies = [
 [[package]]
 name = "x11-clipboard"
 version = "0.7.0"
-source = "git+https://github.com/wrvsrx/x11-clipboard?rev=357e7c7fbb2fc9fd6a8b46ed6ce191f8182a594d#357e7c7fbb2fc9fd6a8b46ed6ce191f8182a594d"
+source = "git+https://github.com/wrvsrx/x11-clipboard?rev=d7eb4d7de3b6560ae461ad55562517fed3ca0f04#d7eb4d7de3b6560ae461ad55562517fed3ca0f04"
 dependencies = [
  "x11rb",
 ]

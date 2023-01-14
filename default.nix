@@ -19,7 +19,7 @@ rustPlatform.buildRustPackage {
   cargoLock = {
     lockFile = ./Cargo.lock;
     outputHashes = {
-      "x11-clipboard-0.7.0" = "sha256-E/3R94DB3gHhK2mnEc1UF/i0FvbRHi4uDFmRZsAtXS0=";
+      "x11-clipboard-0.7.0" = "sha256-ToDy7vWPRYk8mrmL+77HJypE91b6z/NaDTUDgRe20d0=";
     };
   };
 

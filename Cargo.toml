@@ -50,7 +50,7 @@ toml = { version = "0.5", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", optional = true }
 
-x11-clipboard = { git = "https://github.com/wrvsrx/x11-clipboard", rev = "357e7c7fbb2fc9fd6a8b46ed6ce191f8182a594d", optional = true }
+x11-clipboard = { git = "https://github.com/wrvsrx/x11-clipboard", rev = "d7eb4d7de3b6560ae461ad55562517fed3ca0f04", optional = true }
 wl-clipboard-rs = { version = "0.7", optional = true }
 
 bincode = { version = "1", optional = true }
