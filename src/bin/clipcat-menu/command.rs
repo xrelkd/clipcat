@@ -35,6 +35,9 @@ pub struct Command {
         help = "Specifies the length of a line showing on finder"
     )]
     line_length: Option<usize>,
+
+    #[structopt(long = "log-level", help = "Specifies a log level")]
+    log_level: Option<tracing::Level>,
 }
 
 #[derive(Debug, Clone, StructOpt)]
@@ -114,11 +117,22 @@ impl Command {
         {
             use tracing_subscriber::prelude::*;
 
+            let mut level_filter = tracing::Level::INFO;
+            if let Ok(log_level) = std::env::var("RUST_LOG") {
+                use std::str::FromStr;
+                level_filter = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
+            }
+
+            if let Some(log_level) = self.log_level {
+                level_filter = log_level;
+            }
+
             let fmt_layer = tracing_subscriber::fmt::layer().with_target(false);
-            let level_filter = tracing_subscriber::filter::LevelFilter::INFO;
 
             let registry = tracing_subscriber::registry()
-                .with(level_filter)
+                .with(tracing_subscriber::filter::LevelFilter::from_level(
+                    level_filter,
+                ))
                 .with(fmt_layer);
             match tracing_journald::layer() {
                 Ok(layer) => registry.with(layer).init(),
