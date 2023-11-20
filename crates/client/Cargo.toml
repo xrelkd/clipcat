@@ -1,0 +1,28 @@
+[package]
+name                 = "clipcat-client"
+description          = "Clipcat client"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+async-trait = "0.1"
+
+http = "1"
+
+tonic = { version = "0.10", features = ["gzip"] }
+
+snafu = "0.7"
+mime  = "0.3"
+
+clipcat       = { path = "../core" }
+clipcat-proto = { path = "../proto" }
+
+[lints]
+workspace = true

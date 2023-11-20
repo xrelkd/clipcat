@@ -1,0 +1,25 @@
+[package]
+name                 = "clipcat-notify"
+description          = "Clipcat Notification tool"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
+
+clap          = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+snafu         = "0.7"
+
+clipcat        = { path = "../crates/core" }
+clipcat-server = { path = "../crates/server" }
+
+[lints]
+workspace = true
