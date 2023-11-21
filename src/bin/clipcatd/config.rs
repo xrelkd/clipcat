@@ -62,9 +62,9 @@ impl Default for Monitor {
     }
 }
 
-impl Into<clipcat::ClipboardMonitorOptions> for Monitor {
-    fn into(self) -> clipcat::ClipboardMonitorOptions {
-        let Monitor { load_current, enable_clipboard, enable_primary } = self;
+impl From<Monitor> for clipcat::ClipboardMonitorOptions {
+    fn from(val: Monitor) -> Self {
+        let Monitor { load_current, enable_clipboard, enable_primary } = val;
         clipcat::ClipboardMonitorOptions { load_current, enable_clipboard, enable_primary }
     }
 }

@@ -121,7 +121,7 @@ impl Command {
         }
 
         let mut config =
-            Config::load_or_default(&self.config_file.unwrap_or_else(Config::default_path));
+            Config::load_or_default(self.config_file.unwrap_or_else(Config::default_path));
 
         let finder = {
             if let Some(finder) = self.finder {
@@ -193,7 +193,7 @@ async fn insert_clip(
     mut client: GrpcClient,
     clipboard_type: ClipboardType,
 ) -> Result<(), Error> {
-    let selection = finder.single_select(&clips).await?;
+    let selection = finder.single_select(clips).await?;
     if let Some((index, clip)) = selection {
         tracing::info!(
             "Inserting clip (index: {}, id: {:016x}, content: {:?})",

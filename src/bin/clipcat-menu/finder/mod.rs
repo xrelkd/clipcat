@@ -24,9 +24,10 @@ pub enum SelectionMode {
     Multiple,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default)]
 pub enum FinderType {
     #[serde(rename = "builtin")]
+    #[default]
     Builtin,
 
     #[serde(rename = "rofi")]
@@ -57,10 +58,6 @@ impl FinderType {
             FinderType::Custom,
         ]
     }
-}
-
-impl Default for FinderType {
-    fn default() -> FinderType { FinderType::Builtin }
 }
 
 impl FromStr for FinderType {
@@ -126,7 +123,7 @@ impl FinderRunner {
         }
 
         let selected_index = *selected_indices.first().expect("selected_indices is not empty");
-        let selected_data = &clips[selected_index as usize];
+        let selected_data = &clips[selected_index];
 
         Ok(Some((selected_index, selected_data.clone())))
     }
@@ -177,7 +174,7 @@ impl FinderRunner {
                 return Ok(vec![]);
             }
 
-            let selected_indices = external.parse_output(&output.stdout.as_slice());
+            let selected_indices = external.parse_output(output.stdout.as_slice());
             Ok(selected_indices)
         } else {
             Ok(vec![])
