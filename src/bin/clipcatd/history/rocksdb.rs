@@ -4,9 +4,8 @@ use std::{
     time::SystemTime,
 };
 
-use rocksdb::{IteratorMode, Options as RocksDBOptions, WriteBatch, DB as RocksDB};
-
 use clipcat::ClipboardData;
+use rocksdb::{IteratorMode, Options as RocksDBOptions, WriteBatch, DB as RocksDB};
 
 use crate::history::{HistoryDriver, HistoryError};
 
@@ -35,14 +34,12 @@ impl RocksDBDriver {
 
     fn serialize_id(id: u64) -> Vec<u8> { bincode::serialize(&id).expect("u64 is serializable") }
 
-    fn deserialize_id(id: &[u8]) -> u64 {
-        bincode::deserialize(&id).expect("u64 is deserializable")
-    }
+    fn deserialize_id(id: &[u8]) -> u64 { bincode::deserialize(id).expect("u64 is deserializable") }
 
     fn deserialize_data(id: u64, raw_data: &[u8]) -> Option<ClipboardData> {
         use clipcat::ClipboardType;
 
-        bincode::deserialize::<ClipboardValue>(&raw_data)
+        bincode::deserialize::<ClipboardValue>(raw_data)
             .map(|value| ClipboardData {
                 id,
                 data: value.data.clone(),
@@ -75,7 +72,13 @@ impl HistoryDriver for RocksDBDriver {
         let db = self.db.as_ref().expect("RocksDB must be some");
         let iter = db.iterator(IteratorMode::Start);
         let clips = iter
-            .filter_map(|(id, data)| Self::deserialize_entry(id.as_ref(), data.as_ref()))
+            .filter_map(|maybe_data| {
+                if let Ok((id, data)) = maybe_data {
+                    Self::deserialize_entry(id.as_ref(), data.as_ref())
+                } else {
+                    None
+                }
+            })
             .collect();
         Ok(clips)
     }
@@ -84,13 +87,17 @@ impl HistoryDriver for RocksDBDriver {
         let db = self.db.as_mut().expect("RocksDB must be some");
 
         let iter = db.iterator(IteratorMode::Start);
-        let ids_in_db: HashSet<Vec<u8>> = iter.map(|(k, _v)| k.into_vec()).collect();
+        let ids_in_db: HashSet<Vec<u8>> = iter
+            .filter_map(
+                |maybe_data| if let Ok((k, _v)) = maybe_data { Some(k.into_vec()) } else { None },
+            )
+            .collect();
 
         let mut batch = WriteBatch::default();
         let unsaved_ids: HashSet<_> = data
             .iter()
             .map(|clip| {
-                let (id, data) = Self::serialize_entry(clip.id, &clip);
+                let (id, data) = Self::serialize_entry(clip.id, clip);
                 batch.put(id.clone(), data);
                 id
             })
@@ -112,10 +119,14 @@ impl HistoryDriver for RocksDBDriver {
 
         let iter = db.iterator(IteratorMode::Start);
         let timestamps = iter
-            .filter_map(|(k, v)| {
-                let id = Self::deserialize_id(&k);
-                let v = Self::deserialize_data(id, &v);
-                v.map(|v| (v, Vec::from(k.as_ref())))
+            .filter_map(|maybe_data| {
+                if let Ok((k, v)) = maybe_data {
+                    let id = Self::deserialize_id(&k);
+                    let v = Self::deserialize_data(id, &v);
+                    v.map(|v| (v, Vec::from(k.as_ref())))
+                } else {
+                    None
+                }
             })
             .map(|(v, id)| (v.timestamp, id))
             .collect::<HashMap<SystemTime, Vec<u8>>>();
@@ -125,7 +136,7 @@ impl HistoryDriver for RocksDBDriver {
             keys.sort();
             let len = keys.len();
             keys.resize(len - min_capacity, SystemTime::now());
-            keys.iter().filter_map(|ts| timestamps.get(&ts)).fold(
+            keys.iter().filter_map(|ts| timestamps.get(ts)).fold(
                 WriteBatch::default(),
                 |mut batch, id| {
                     batch.delete(id);
@@ -153,14 +164,14 @@ impl HistoryDriver for RocksDBDriver {
 
     fn put(&mut self, data: &ClipboardData) -> Result<(), HistoryError> {
         let db = self.db.as_mut().expect("RocksDB must be some");
-        db.put(Self::serialize_id(data.id), Self::serialize_data(&data))?;
+        db.put(Self::serialize_id(data.id), Self::serialize_data(data))?;
         Ok(())
     }
 
     fn get(&self, id: u64) -> Result<Option<ClipboardData>, HistoryError> {
         let db = self.db.as_ref().expect("RocksDB must be some");
         let serialized_id = Self::serialize_id(id);
-        match db.get(&serialized_id)? {
+        match db.get(serialized_id)? {
             Some(data) => Ok(Self::deserialize_data(id, &data)),
             None => Ok(None),
         }

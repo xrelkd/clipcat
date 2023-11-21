@@ -26,7 +26,7 @@ impl From<crate::ClipboardType> for i32 {
 impl From<crate::ClipboardData> for ClipboardData {
     fn from(data: crate::ClipboardData) -> ClipboardData {
         ClipboardData {
-            id: data.id as u64,
+            id: data.id,
             data: data.data,
             clipboard_type: data.clipboard_type.into(),
             timestamp: data
@@ -47,9 +47,9 @@ impl From<MonitorState> for crate::MonitorState {
     }
 }
 
-impl Into<MonitorState> for crate::MonitorState {
-    fn into(self) -> MonitorState {
-        match self {
+impl From<crate::MonitorState> for MonitorState {
+    fn from(val: crate::MonitorState) -> Self {
+        match val {
             crate::MonitorState::Enabled => MonitorState::Enabled,
             crate::MonitorState::Disabled => MonitorState::Disabled,
         }

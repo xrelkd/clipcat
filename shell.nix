@@ -9,7 +9,7 @@ pkgs.mkShell {
     clang
     llvmPackages.libclang
 
-    pkgconfig
+    pkg-config
 
     protobuf
     python3
@@ -19,7 +19,7 @@ pkgs.mkShell {
 
   RUST_BACKTRACE = 1;
 
-  LIBCLANG_PATH = "${pkgs.llvmPackages.libclang}/lib";
+  LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
 
   PROTOC = "${pkgs.protobuf}/bin/protoc";
   PROTOC_INCLUDE = "${pkgs.protobuf}/include";

@@ -37,7 +37,7 @@ impl ExternalEditor {
             path
         };
 
-        let _ = tokio::fs::write(&tmp_file, data)
+        tokio::fs::write(&tmp_file, data)
             .await
             .context(error::CreateTemporaryFile { filename: tmp_file.to_owned() })?;
 
@@ -52,7 +52,7 @@ impl ExternalEditor {
         let data = tokio::fs::read_to_string(&tmp_file)
             .await
             .context(error::ReadTemporaryFile { filename: tmp_file.to_owned() })?;
-        let _ = tokio::fs::remove_file(&tmp_file.to_owned())
+        tokio::fs::remove_file(&tmp_file.to_owned())
             .await
             .context(error::RemoveTemporaryFile { filename: tmp_file.to_owned() })?;
 
@@ -85,7 +85,7 @@ mod tests {
         let editor = ExternalEditor::new("echo");
 
         let data = "this is a string.\nЭто вох";
-        let ret = runtime.block_on(async { editor.execute(&data).await.unwrap() });
+        let ret = runtime.block_on(async { editor.execute(data).await.unwrap() });
         assert_eq!(&ret, data);
     }
 }

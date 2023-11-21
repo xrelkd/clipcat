@@ -11,16 +11,26 @@ default = ["clipcatd", "clipcatctl", "clipcat-menu"]
 app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
 monitor = ["x11-clipboard"]
 daemon = [
-  "daemonize", "libc",
-  "tracing-subscriber", "tracing-journald",
-  "tokio/signal", "serde_json",
-  "bincode", "rocksdb"
+  "daemonize",
+  "libc",
+  "tracing-subscriber",
+  "tracing-journald",
+  "tokio/signal",
+  "serde_json",
+  "bincode",
+  "rocksdb",
 ]
 external_editor = ["tokio/process"]
 builtin_finder = ["skim"]
 
 clipcatd = ["app", "monitor", "daemon"]
-clipcatctl = ["app", "tokio/process", "tokio/io-std", "tokio/fs", "external_editor"]
+clipcatctl = [
+  "app",
+  "tokio/process",
+  "tokio/io-std",
+  "tokio/fs",
+  "external_editor",
+]
 clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
 clipcat-notify = ["structopt", "monitor"]
 
@@ -73,7 +83,7 @@ serde_json = { version = "1", optional = true }
 
 x11-clipboard = { git = "https://github.com/xrelkd/x11-clipboard", tag = "v0.6.0", optional = true }
 
-rocksdb = { version = "0.15", optional = true }
+rocksdb = { version = "0.21", optional = true }
 bincode = { version = "1", optional = true }
 
 libc = { version = "0.2", optional = true }

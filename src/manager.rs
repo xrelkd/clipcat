@@ -70,13 +70,13 @@ impl ClipboardManager {
 
     #[inline]
     pub fn insert_clipboard(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_clipboard(&data);
+        let data = ClipboardData::new_clipboard(data);
         self.insert_inner(data)
     }
 
     #[inline]
     pub fn insert_primary(&mut self, data: &str) -> u64 {
-        let data = ClipboardData::new_primary(&data);
+        let data = ClipboardData::new_primary(data);
         self.insert_inner(data)
     }
 
@@ -342,7 +342,7 @@ mod tests {
     fn test_remove() {
         let mut mgr = ClipboardManager::new();
         assert_eq!(mgr.len(), 0);
-        assert_eq!(mgr.remove(43), false);
+        assert!(!mgr.remove(43));
 
         let clip = ClipboardData::new_primary("АБВГДЕ");
         let id = mgr.insert(clip);

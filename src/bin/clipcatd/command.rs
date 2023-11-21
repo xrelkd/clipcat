@@ -56,7 +56,7 @@ impl Command {
 
     fn load_config(&self) -> Result<Config, ConfigError> {
         let config_file = &self.config_file.clone().unwrap_or_else(Config::default_path);
-        let mut config = Config::load(&config_file)?;
+        let mut config = Config::load(config_file)?;
 
         config.daemonize = !self.no_daemon;
 
@@ -96,7 +96,7 @@ impl Command {
                 let config_text =
                     toml::to_string_pretty(&Config::default()).expect("Config is serializable");
                 std::io::stdout()
-                    .write_all(&config_text.as_bytes())
+                    .write_all(config_text.as_bytes())
                     .expect("failed to write to stdout");
                 return Ok(());
             }
@@ -178,7 +178,7 @@ impl PidFile {
     fn path(&self) -> &Path { &self.path }
 
     fn try_load(&self) -> Result<u64, Error> {
-        let pid_data = std::fs::read_to_string(&self)
+        let pid_data = std::fs::read_to_string(self)
             .context(error::ReadPidFile { filename: self.clone_path() })?;
         let pid = pid_data.trim().parse().context(error::ParseProcessId { value: pid_data })?;
         Ok(pid)

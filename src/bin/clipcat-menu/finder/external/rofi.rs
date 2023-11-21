@@ -59,7 +59,7 @@ impl FinderStream for Rofi {
     }
 
     fn parse_output(&self, data: &[u8]) -> Vec<usize> {
-        String::from_utf8_lossy(&data)
+        String::from_utf8_lossy(data)
             .trim()
             .split(ENTRY_SEPARATOR)
             .filter_map(|index| index.parse().ok())
