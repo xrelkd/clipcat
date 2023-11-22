@@ -30,7 +30,6 @@ pkgs.mkShell {
     pkg-config
 
     protobuf
-    python3
 
     jq
 
@@ -45,10 +44,6 @@ pkgs.mkShell {
     clang-tools
 
     shellcheck
-  ];
-
-  buildInputs = with pkgs; [
-    xorg.libxcb
   ];
 
   PROTOC = "${pkgs.protobuf}/bin/protoc";
