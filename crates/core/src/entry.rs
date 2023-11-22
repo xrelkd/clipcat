@@ -7,6 +7,8 @@ use std::{
 };
 
 use chrono::{offset::Utc, DateTime};
+use image::ImageEncoder as _;
+use snafu::{ResultExt, Snafu};
 
 use crate::{ClipboardContent, ClipboardKind};
 
@@ -23,27 +25,48 @@ pub struct ClipEntry {
 }
 
 impl ClipEntry {
+    /// # Errors
     #[inline]
-    #[must_use]
     pub fn new(
         data: &[u8],
         mime: &mime::Mime,
         clipboard_kind: ClipboardKind,
         timestamp: Option<SystemTime>,
-    ) -> Self {
+    ) -> Result<Self, Error> {
         let content = if mime.type_() == mime::TEXT {
             ClipboardContent::Plaintext(String::from_utf8_lossy(data).to_string())
+        } else if mime.subtype() == mime::PNG {
+            let cursor = std::io::Cursor::new(&data);
+            let mut reader = image::io::Reader::new(cursor);
+            reader.set_format(image::ImageFormat::Png);
+            reader
+                .decode()
+                .map(|img| {
+                    let image = img.into_rgba8();
+                    let (w, h) = image.dimensions();
+                    ClipboardContent::Image {
+                        width: w as usize,
+                        height: h as usize,
+                        bytes: image.into_raw().into(),
+                    }
+                })
+                .context(ConverseImageSnafu {})?
         } else {
-            // FIXME:
-            ClipboardContent::Plaintext(String::new())
+            return Err(Error::FormatNotAvailable);
         };
-        let id = Self::compute_id(&content);
-        Self { id, content, clipboard_kind, timestamp: timestamp.unwrap_or_else(SystemTime::now) }
+
+        Ok(Self {
+            id: Self::compute_id(&content),
+            content,
+            clipboard_kind,
+            timestamp: timestamp.unwrap_or_else(SystemTime::now),
+        })
     }
 
     #[inline]
     pub fn from_string<S: fmt::Display>(s: S, clipboard_kind: ClipboardKind) -> Self {
         Self::new(s.to_string().as_bytes(), &mime::TEXT_PLAIN_UTF_8, clipboard_kind, None)
+            .unwrap_or_default()
     }
 
     #[inline]
@@ -152,10 +175,25 @@ impl ClipEntry {
 
     #[inline]
     #[must_use]
+    pub fn is_empty(&self) -> bool { self.content.is_empty() }
+
+    #[inline]
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         match &self.content {
             ClipboardContent::Plaintext(text) => text.as_bytes(),
             ClipboardContent::Image { bytes, .. } => bytes,
+        }
+    }
+
+    /// # Errors
+    #[inline]
+    pub fn encoded(&self) -> Result<Vec<u8>, Error> {
+        match &self.content {
+            ClipboardContent::Plaintext(text) => Ok(text.as_bytes().to_vec()),
+            ClipboardContent::Image { width, height, bytes } => {
+                encode_as_png(*width, *height, bytes)
+            }
         }
     }
 
@@ -199,4 +237,33 @@ impl Ord for ClipEntry {
 
 impl Hash for ClipEntry {
     fn hash<H: Hasher>(&self, state: &mut H) { self.content.hash(state); }
+}
+
+fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, Error> {
+    let (width, height) =
+        (u32::try_from(width).unwrap_or_default(), u32::try_from(height).unwrap_or_default());
+    if bytes.is_empty() || width == 0 || height == 0 {
+        return Err(Error::EmptyImage);
+    }
+
+    let mut png_bytes = Vec::new();
+    let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
+    encoder
+        .write_image(bytes.as_ref(), width, height, image::ColorType::Rgba8)
+        .context(ConverseImageSnafu {})?;
+
+    Ok(png_bytes)
+}
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum Error {
+    #[snafu(display("The format is not available"))]
+    FormatNotAvailable,
+
+    #[snafu(display("The image is empty"))]
+    EmptyImage,
+
+    #[snafu(display("Error occurs while conversing image, error: {source}"))]
+    ConverseImage { source: image::ImageError },
 }
