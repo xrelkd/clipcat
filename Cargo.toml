@@ -1,101 +1,186 @@
-[package]
-name    = "clipcat"
-version = "0.5.0"
-authors = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
-edition = "2018"
+[workspace.package]
+version     = "0.5.1"
+authors     = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
+homepage    = "https://github.com/xrelkd/clipcat"
+repository  = "https://github.com/xrelkd/clipcat"
+readme      = "README.md"
+license     = "GPL-3.0-only"
+edition     = "2021"
+description = "Clipboard manager written in Rust Programming Language."
+categories  = ["clipboard manager"]
+keywords    = ["clipboard"]
 
-[features]
-default = ["all"]
-all     = ["clipcatd", "clipcatctl", "clipcat-menu", "clipcat-notify"]
-
-app = ["app_dirs", "structopt", "toml", "tracing-subscriber", "tracing-futures"]
-watcher = ["caracal/x11"]
-daemon = [
-  "daemonize",
-  "libc",
-  "tracing-subscriber",
-  "tracing-journald",
-  "tokio/signal",
-  "serde_json",
-  "bincode",
-  "rocksdb",
+[workspace]
+resolver = "2"
+members = [
+  "clipcat-menu",
+  "clipcat-notify",
+  "clipcatctl",
+  "clipcatd",
+  "crates/client",
+  "crates/core",
+  "crates/external-editor",
+  "crates/proto",
+  "crates/server",
 ]
-external_editor = ["tokio/process"]
-builtin_finder = ["skim"]
 
-clipcatd = ["app", "watcher", "daemon"]
-clipcatctl = [
-  "app",
-  "tokio/process",
-  "tokio/io-std",
-  "tokio/fs",
-  "external_editor",
-]
-clipcat-menu = ["app", "tokio/process", "external_editor", "builtin_finder"]
-clipcat-notify = ["structopt", "watcher"]
+[workspace.lints.rust]
+box_pointers = "allow"
 
-[lib]
-name = "clipcat"
-path = "src/lib.rs"
+unstable_features = "warn"
 
-[[bin]]
-name              = "clipcatd"
-path              = "src/bin/clipcatd/main.rs"
-required-features = ["clipcatd"]
+absolute_paths_not_starting_with_crate  = "deny"
+deprecated_in_future                    = "deny"
+elided_lifetimes_in_paths               = "deny"
+explicit_outlives_requirements          = "deny"
+ffi_unwind_calls                        = "deny"
+keyword_idents                          = "deny"
+let_underscore_drop                     = "deny"
+macro_use_extern_crate                  = "deny"
+meta_variable_misuse                    = "deny"
+missing_abi                             = "deny"
+non_ascii_idents                        = "deny"
+pointer_structural_match                = "deny"
+rust_2021_incompatible_closure_captures = "deny"
+rust_2021_incompatible_or_patterns      = "deny"
+rust_2021_prefixes_incompatible_syntax  = "deny"
+rust_2021_prelude_collisions            = "deny"
+single_use_lifetimes                    = "deny"
+trivial_casts                           = "deny"
+trivial_numeric_casts                   = "deny"
+unsafe_code                             = "deny"
+unsafe_op_in_unsafe_fn                  = "deny"
+unused_crate_dependencies               = "deny"
+unused_extern_crates                    = "deny"
+unused_import_braces                    = "deny"
+unused_lifetimes                        = "deny"
+unused_macro_rules                      = "deny"
+unused_qualifications                   = "deny"
+unused_results                          = "deny"
+unused_tuple_struct_fields              = "deny"
+variant_size_differences                = "deny"
 
-[[bin]]
-name              = "clipcatctl"
-path              = "src/bin/clipcatctl/main.rs"
-required-features = ["clipcatctl"]
+ambiguous_glob_imports                   = "deny"
+ambiguous_glob_reexports                 = "deny"
+anonymous_parameters                     = "deny"
+array_into_iter                          = "deny"
+asm_sub_register                         = "deny"
+bad_asm_style                            = "deny"
+bare_trait_objects                       = "deny"
+break_with_label_and_loop                = "deny"
+byte_slice_in_packed_struct_with_derive  = "deny"
+clashing_extern_declarations             = "deny"
+coherence_leak_check                     = "deny"
+coinductive_overlap_in_coherence         = "deny"
+confusable_idents                        = "deny"
+const_evaluatable_unchecked              = "deny"
+const_item_mutation                      = "deny"
+const_patterns_without_partial_eq        = "deny"
+dead_code                                = "deny"
+deprecated                               = "deny"
+deprecated_where_clause_location         = "deny"
+deref_into_dyn_supertrait                = "deny"
+deref_nullptr                            = "deny"
+dropping_copy_types                      = "deny"
+dropping_references                      = "deny"
+drop_bounds                              = "deny"
+duplicate_macro_attributes               = "deny"
+dyn_drop                                 = "deny"
+elided_lifetimes_in_associated_constant  = "deny"
+ellipsis_inclusive_range_patterns        = "deny"
+exported_private_dependencies            = "deny"
+forbidden_lint_groups                    = "deny"
+forgetting_copy_types                    = "deny"
+forgetting_references                    = "deny"
+for_loops_over_fallibles                 = "deny"
+function_item_references                 = "deny"
+hidden_glob_reexports                    = "deny"
+illegal_floating_point_literal_pattern   = "deny"
+improper_ctypes                          = "deny"
+improper_ctypes_definitions              = "deny"
+incomplete_features                      = "deny"
+indirect_structural_match                = "deny"
+inline_no_sanitize                       = "deny"
+internal_features                        = "deny"
+invalid_doc_attributes                   = "deny"
+invalid_from_utf8                        = "deny"
+invalid_macro_export_arguments           = "deny"
+invalid_nan_comparisons                  = "deny"
+invalid_value                            = "deny"
+irrefutable_let_patterns                 = "deny"
+large_assignments                        = "deny"
+late_bound_lifetime_arguments            = "deny"
+legacy_derive_helpers                    = "deny"
+map_unit_fn                              = "deny"
+mixed_script_confusables                 = "deny"
+named_arguments_used_positionally        = "deny"
+nontrivial_structural_match              = "deny"
+non_camel_case_types                     = "deny"
+non_fmt_panics                           = "deny"
+non_shorthand_field_patterns             = "deny"
+non_snake_case                           = "deny"
+non_upper_case_globals                   = "deny"
+noop_method_call                         = "deny"
+no_mangle_generic_items                  = "deny"
+opaque_hidden_inferred_bound             = "deny"
+overlapping_range_endpoints              = "deny"
+path_statements                          = "deny"
+private_bounds                           = "deny"
+private_interfaces                       = "deny"
+redundant_semicolons                     = "deny"
+refining_impl_trait                      = "deny"
+renamed_and_removed_lints                = "deny"
+repr_transparent_external_private_fields = "deny"
+semicolon_in_expressions_from_macros     = "deny"
+special_module_name                      = "deny"
+stable_features                          = "deny"
+suspicious_auto_trait_impls              = "deny"
+suspicious_double_ref_op                 = "deny"
+temporary_cstring_as_ptr                 = "deny"
+trivial_bounds                           = "deny"
+type_alias_bounds                        = "deny"
+tyvar_behind_raw_pointer                 = "deny"
+uncommon_codepoints                      = "deny"
+unconditional_recursion                  = "deny"
+undefined_naked_function_abi             = "deny"
+unexpected_cfgs                          = "deny"
+ungated_async_fn_track_caller            = "deny"
+uninhabited_static                       = "deny"
+unknown_lints                            = "deny"
+unnameable_test_items                    = "deny"
+unreachable_code                         = "deny"
+unreachable_patterns                     = "deny"
+unstable_name_collisions                 = "deny"
+unstable_syntax_pre_expansion            = "deny"
+unsupported_calling_conventions          = "deny"
+unused_allocation                        = "deny"
+unused_assignments                       = "deny"
+unused_associated_type_bounds            = "deny"
+unused_attributes                        = "deny"
+unused_braces                            = "deny"
+unused_comparisons                       = "deny"
+unused_doc_comments                      = "deny"
+unused_features                          = "deny"
+unused_imports                           = "deny"
+unused_labels                            = "deny"
+unused_macros                            = "deny"
+unused_must_use                          = "deny"
+unused_mut                               = "deny"
+unused_parens                            = "deny"
+unused_unsafe                            = "deny"
+unused_variables                         = "deny"
+useless_ptr_null_checks                  = "deny"
+where_clauses_object_safety              = "deny"
+while_true                               = "deny"
 
-[[bin]]
-name              = "clipcat-menu"
-path              = "src/bin/clipcat-menu/main.rs"
-required-features = ["clipcat-menu"]
+[workspace.lints.clippy]
+module_name_repetitions = { level = "allow", priority = 1 }
+multiple_crate_versions = { level = "allow", priority = 1 }
 
-[[bin]]
-name              = "clipcat-notify"
-path              = "src/bin/clipcat-notify/main.rs"
-required-features = ["clipcat-notify"]
-
-[dependencies]
-futures = "0.3"
-tokio   = { version = "1", features = ["rt-multi-thread", "sync"] }
-
-snafu = "0.6"
-
-tonic = "0.4"
-prost = "0.7"
-http  = "0.2"
-
-chrono = "0.4"
-mime   = "0.3"
-
-tracing            = "0.1"
-tracing-subscriber = { version = "0.2", optional = true }
-tracing-journald   = { version = "0.1", optional = true }
-tracing-futures    = { version = "0.2", optional = true }
-
-structopt = { version = "0.3", optional = true }
-app_dirs  = { version = "1", optional = true }
-toml      = { version = "0.5", optional = true }
-
-serde      = { version = "1", features = ["derive"] }
-serde_with = "1"
-serde_json = { version = "1", optional = true }
-
-caracal = { git = "https://github.com/xrelkd/caracal.git", tag = "v0.1.0", optional = true }
-
-rocksdb = { version = "0.21", optional = true }
-bincode = { version = "1", optional = true }
-
-libc      = { version = "0.2", optional = true }
-daemonize = { version = "0.4", optional = true }
-
-skim = { version = "0.9", optional = true }
-
-[build-dependencies]
-tonic-build = { version = "0.4", features = ["prost"] }
+all      = "deny"
+cargo    = "deny"
+nursery  = "deny"
+pedantic = "deny"
 
 [profile.release]
 opt-level = 3

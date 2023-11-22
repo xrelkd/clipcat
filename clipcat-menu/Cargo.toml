@@ -1,0 +1,35 @@
+[package]
+name                 = "clipcat-menu"
+description          = "Clipcat Menu"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+tracing            = "0.1"
+tracing-journald   = "0.3"
+tracing-subscriber = "0.3"
+
+serde = { version = "1", features = ["derive"] }
+toml  = "0.8"
+
+tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
+
+clap          = { version = "4", features = ["derive", "env"] }
+clap_complete = "4"
+http          = "1"
+skim          = "0.9"
+snafu         = "0.7"
+
+clipcat                 = { path = "../crates/core" }
+clipcat-client          = { path = "../crates/client" }
+clipcat-external-editor = { path = "../crates/external-editor" }
+
+[lints]
+workspace = true

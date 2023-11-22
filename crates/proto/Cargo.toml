@@ -1,0 +1,29 @@
+[package]
+name                 = "clipcat-proto"
+description          = "Clipcat protobuf"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+prost = "0.12"
+tonic = { version = "0.10", features = ["gzip"] }
+
+mime = "0.3"
+
+clipcat = { path = "../core" }
+
+[build-dependencies]
+tonic-build = { version = "0.10", default-features = false, features = [
+  "prost",
+  "transport",
+] }
+
+[lints]
+workspace = true
