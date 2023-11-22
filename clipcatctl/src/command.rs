@@ -25,7 +25,7 @@ pub struct Cli {
     #[clap(long = "config", short = 'c', help = "Specifies a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "host", short = 'h', help = "Specifies a server host")]
+    #[clap(long = "host", short = 'H', help = "Specifies a server host")]
     server_host: Option<std::net::IpAddr>,
 
     #[clap(long = "port", short = 'p', help = "Specifies a server port")]
@@ -46,7 +46,7 @@ pub enum Commands {
     #[clap(about = "Outputs default configuration")]
     DefaultConfig,
 
-    #[clap(aliases = &["paste"], about = "Insert new clip into clipboard")]
+    #[clap(about = "Insert new clip into clipboard")]
     Insert {
         #[clap(
             long = "kind",
@@ -258,8 +258,8 @@ impl Cli {
                     let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
                 }
                 Some(Commands::Save { file_path, kind }) => {
-                    let data = client.get_current_clip(kind).await?;
-                    save_file_or_write_stdout(file_path, data.as_bytes()).await?;
+                    let data = client.get_current_clip(kind).await?.encoded()?;
+                    save_file_or_write_stdout(file_path, data).await?;
                 }
                 Some(Commands::Remove { ids }) => {
                     let ids = ids

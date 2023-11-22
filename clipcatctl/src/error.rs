@@ -24,7 +24,10 @@ pub enum Error {
     Client { source: clipcat_client::Error },
 
     #[snafu(display("Error occurs while interactive with server, error: {error}"))]
-    Inter { error: String },
+    OperationError { error: String },
+
+    #[snafu(display("{error}"))]
+    EncodeData { error: clipcat::ClipEntryError },
 }
 
 impl From<clipcat_external_editor::Error> for Error {
@@ -37,84 +40,88 @@ impl From<clipcat_client::Error> for Error {
 
 impl From<clipcat_client::error::InsertClipError> for Error {
     fn from(err: clipcat_client::error::InsertClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::GetClipError> for Error {
     fn from(err: clipcat_client::error::GetClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::GetCurrentClipError> for Error {
     fn from(err: clipcat_client::error::GetCurrentClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::GetLengthError> for Error {
     fn from(err: clipcat_client::error::GetLengthError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::ClearClipError> for Error {
     fn from(err: clipcat_client::error::ClearClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::RemoveClipError> for Error {
     fn from(err: clipcat_client::error::RemoveClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::BatchRemoveClipError> for Error {
     fn from(err: clipcat_client::error::BatchRemoveClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::MarkClipError> for Error {
     fn from(err: clipcat_client::error::MarkClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::UpdateClipError> for Error {
     fn from(err: clipcat_client::error::UpdateClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::ListClipError> for Error {
     fn from(err: clipcat_client::error::ListClipError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::EnableWatcherError> for Error {
     fn from(err: clipcat_client::error::EnableWatcherError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::DisableWatcherError> for Error {
     fn from(err: clipcat_client::error::DisableWatcherError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::ToggleWatcherError> for Error {
     fn from(err: clipcat_client::error::ToggleWatcherError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
 }
 
 impl From<clipcat_client::error::GetWatcherStateError> for Error {
     fn from(err: clipcat_client::error::GetWatcherStateError) -> Self {
-        Self::Inter { error: err.to_string() }
+        Self::OperationError { error: err.to_string() }
     }
+}
+
+impl From<clipcat::ClipEntryError> for Error {
+    fn from(error: clipcat::ClipEntryError) -> Self { Self::EncodeData { error } }
 }

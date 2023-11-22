@@ -61,20 +61,6 @@ impl ClipboardManager {
     #[inline]
     pub fn insert(&mut self, data: ClipEntry) -> u64 { self.insert_inner(data) }
 
-    #[allow(dead_code)]
-    #[inline]
-    pub fn insert_clipboard(&mut self, data: &[u8], mime: &mime::Mime) -> u64 {
-        let data = ClipEntry::new(data, mime, ClipboardKind::Clipboard, None);
-        self.insert_inner(data)
-    }
-
-    #[allow(dead_code)]
-    #[inline]
-    pub fn insert_primary(&mut self, data: &[u8], mime: &mime::Mime) -> u64 {
-        let data = ClipEntry::new(data, mime, ClipboardKind::Primary, None);
-        self.insert_inner(data)
-    }
-
     fn insert_inner(&mut self, entry: ClipEntry) -> u64 {
         let id = entry.id();
         drop(self.current_clips.insert(entry.kind(), entry.clone()));
@@ -125,10 +111,11 @@ impl ClipboardManager {
 
     pub fn replace(&mut self, old_id: u64, data: &[u8], mime: &mime::Mime) -> (bool, u64) {
         let kind = self.clips.remove(&old_id).map_or(ClipboardKind::Primary, |v| v.kind());
-        let entry = ClipEntry::new(data, mime, kind, None);
-        let new_id = entry.id();
-        let _ = self.insert_inner(entry);
-        (true, new_id)
+        ClipEntry::new(data, mime, kind, None).map_or((false, old_id), |entry| {
+            let new_id = entry.id();
+            let _ = self.insert_inner(entry);
+            (true, new_id)
+        })
     }
 
     pub async fn mark(&mut self, id: u64, clipboard_kind: ClipboardKind) -> Result<(), Error> {
@@ -281,7 +268,7 @@ mod tests {
 
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
-        let clip = ClipEntry::new(data1.as_bytes(), &MIME, ClipboardKind::Clipboard, None);
+        let clip = ClipEntry::new(data1.as_bytes(), &MIME, ClipboardKind::Clipboard, None).unwrap();
         let driver = Arc::new(MockClipboardDriver::new());
         let mut mgr = ClipboardManager::new(driver);
         let old_id = mgr.insert(clip);

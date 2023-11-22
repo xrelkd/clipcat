@@ -8,7 +8,11 @@ use std::path::PathBuf;
 use bytes::Bytes;
 use directories::ProjectDirs;
 
-pub use self::{entry::ClipEntry, kind::ClipboardKind, watcher_state::ClipboardWatcherState};
+pub use self::{
+    entry::{ClipEntry, Error as ClipEntryError},
+    kind::ClipboardKind,
+    watcher_state::ClipboardWatcherState,
+};
 
 pub const PROJECT_NAME: &str = "clipcat";
 
@@ -43,4 +47,13 @@ pub static ref PROJECT_CONFIG_DIR: PathBuf = ProjectDirs::from("", PROJECT_NAME,
 pub enum ClipboardContent {
     Plaintext(String),
     Image { width: usize, height: usize, bytes: Bytes },
+}
+
+impl ClipboardContent {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Self::Plaintext(s) => s.is_empty(),
+            Self::Image { bytes, .. } => bytes.is_empty(),
+        }
+    }
 }

@@ -161,8 +161,7 @@ async fn serve_worker(
         };
 
         match event {
-            Ok(event) => {
-                let data = event;
+            Ok(data) => {
                 tracing::info!(
                     "On new event: {kind} [{printable}]",
                     kind = data.kind(),

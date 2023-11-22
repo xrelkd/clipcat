@@ -18,14 +18,17 @@ impl FileContents {
         Self {
             version: 1,
             last_update: SystemTime::now(),
-            data: data.into_iter().map(ClipboardValue::from).collect(),
+            data: data
+                .into_iter()
+                .filter_map(|e| if e.is_empty() { None } else { Some(ClipboardValue::from(e)) })
+                .collect(),
         }
     }
 }
 
 impl From<FileContents> for Vec<ClipEntry> {
     fn from(FileContents { data, .. }: FileContents) -> Self {
-        data.into_iter().map(ClipEntry::from).collect()
+        data.into_iter().map(ClipEntry::from).filter(|e| !e.is_empty()).collect()
     }
 }
 
@@ -44,12 +47,16 @@ pub struct ClipboardValue {
 
 impl From<ClipboardValue> for ClipEntry {
     fn from(ClipboardValue { data, mime, timestamp }: ClipboardValue) -> Self {
-        Self::new(&data, &mime, ClipboardKind::Clipboard, Some(timestamp))
+        Self::new(&data, &mime, ClipboardKind::Clipboard, Some(timestamp)).unwrap_or_default()
     }
 }
 
 impl From<ClipEntry> for ClipboardValue {
     fn from(entry: ClipEntry) -> Self {
-        Self { data: entry.as_bytes().to_vec(), mime: entry.mime(), timestamp: entry.timestamp() }
+        Self {
+            data: entry.encoded().unwrap_or_default(),
+            mime: entry.mime(),
+            timestamp: entry.timestamp(),
+        }
     }
 }

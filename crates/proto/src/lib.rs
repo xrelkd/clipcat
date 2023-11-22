@@ -62,7 +62,7 @@ impl From<clipcat::ClipboardKind> for ClipboardKind {
 impl From<clipcat::ClipEntry> for ClipboardData {
     fn from(entry: clipcat::ClipEntry) -> Self {
         let mime = entry.mime().essence_str().to_owned();
-        let data = entry.as_bytes().into();
+        let data = entry.encoded().unwrap_or_default();
         let id = entry.id();
         let kind = entry.kind();
         let timestamp = u64::try_from(
@@ -86,7 +86,7 @@ impl From<ClipboardData> for clipcat::ClipEntry {
 
         let kind = clipcat::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
-        Self::new(&data, &mime, kind, Some(timestamp))
+        Self::new(&data, &mime, kind, Some(timestamp)).unwrap_or_default()
     }
 }
 
