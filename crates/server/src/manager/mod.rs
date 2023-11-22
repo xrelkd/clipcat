@@ -233,6 +233,7 @@ mod tests {
         assert_eq!(mgr.capacity(), cap);
     }
 
+    #[allow(clippy::mutable_key_type)]
     #[test]
     fn test_insert() {
         let n = 20;
@@ -247,13 +248,14 @@ mod tests {
         assert_eq!(mgr.get_current_clip(ClipboardKind::Primary), clips.last());
         assert_eq!(mgr.len(), n);
 
-        let dumped: HashSet<_> = mgr.list().into_iter().collect();
-        let clips: HashSet<_> = clips.into_iter().collect();
+        let dumped = mgr.list().into_iter().collect::<HashSet<_>>();
+        let clips = clips.into_iter().collect::<HashSet<_>>();
 
         assert_eq!(dumped, clips);
     }
 
     #[test]
+    #[allow(clippy::mutable_key_type)]
     fn test_import() {
         let n = 10;
         let clips = create_clips(n);
