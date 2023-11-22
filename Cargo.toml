@@ -18,6 +18,7 @@ members = [
   "clipcatctl",
   "clipcatd",
   "crates/client",
+  "crates/clipboard",
   "crates/core",
   "crates/external-editor",
   "crates/proto",
@@ -26,6 +27,9 @@ members = [
 
 [workspace.lints.rust]
 box_pointers = "allow"
+
+# TODO: deny `unused_crate_dependencies` after https://github.com/rust-lang/rust/issues/95513 being solved
+unused_crate_dependencies = "allow"
 
 unstable_features = "warn"
 
@@ -50,7 +54,6 @@ trivial_casts                           = "deny"
 trivial_numeric_casts                   = "deny"
 unsafe_code                             = "deny"
 unsafe_op_in_unsafe_fn                  = "deny"
-unused_crate_dependencies               = "deny"
 unused_extern_crates                    = "deny"
 unused_import_braces                    = "deny"
 unused_lifetimes                        = "deny"
