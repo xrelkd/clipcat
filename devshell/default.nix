@@ -47,10 +47,6 @@ pkgs.mkShell {
     shellcheck
   ];
 
-  buildInputs = with pkgs; [
-    xorg.libxcb
-  ];
-
   PROTOC = "${pkgs.protobuf}/bin/protoc";
   PROTOC_INCLUDE = "${pkgs.protobuf}/include";
 
