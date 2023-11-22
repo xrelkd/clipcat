@@ -7,7 +7,7 @@ pub enum Error {
     Driver { error: crate::clipboard_driver::Error },
 
     #[snafu(display("Could not send clipboard event"))]
-    SendClipboardEvent,
+    SendClipEntry,
 
     #[snafu(display("Subscriber is closed"))]
     SubscriberClosed,

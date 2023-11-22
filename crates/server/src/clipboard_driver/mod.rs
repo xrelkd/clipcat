@@ -4,8 +4,8 @@ mod x11;
 
 use std::{pin::Pin, sync::Arc};
 
-use caracal::{ClipboardWait, MimeData};
-use clipcat::ClipboardMode;
+use clipcat::{ClipboardContent, ClipboardKind};
+use clipcat_clipboard::ClipboardWait;
 use futures::Future;
 use tokio::{sync::mpsc, task};
 
@@ -22,12 +22,12 @@ pub fn new_shared() -> Result<Arc<dyn ClipboardDriver>> {
 
 #[derive(Debug)]
 pub struct Subscriber {
-    receiver: mpsc::UnboundedReceiver<ClipboardMode>,
+    receiver: mpsc::UnboundedReceiver<ClipboardKind>,
     _join_handles: Vec<task::JoinHandle<()>>,
 }
 
-impl From<Vec<caracal::Subscriber>> for Subscriber {
-    fn from(subs: Vec<caracal::Subscriber>) -> Self {
+impl From<Vec<clipcat_clipboard::Subscriber>> for Subscriber {
+    fn from(subs: Vec<clipcat_clipboard::Subscriber>) -> Self {
         let (sender, receiver) = mpsc::unbounded_channel();
 
         let join_handles = subs
@@ -35,12 +35,12 @@ impl From<Vec<caracal::Subscriber>> for Subscriber {
             .map(|subscriber| {
                 let event_sender = sender.clone();
                 task::spawn_blocking(move || {
-                    while let Ok(mode) = subscriber.wait() {
+                    while let Ok(kind) = subscriber.wait() {
                         if event_sender.is_closed() {
                             break;
                         }
 
-                        if let Err(_err) = event_sender.send(mode.into()) {
+                        if let Err(_err) = event_sender.send(kind) {
                             break;
                         }
                     }
@@ -53,24 +53,19 @@ impl From<Vec<caracal::Subscriber>> for Subscriber {
 }
 
 impl Subscriber {
-    pub async fn next(&mut self) -> Option<ClipboardMode> { self.receiver.recv().await }
+    pub async fn next(&mut self) -> Option<ClipboardKind> { self.receiver.recv().await }
 }
 
-type LoadFuture = Pin<Box<dyn Future<Output = Result<Vec<u8>>> + Send + 'static>>;
-type LoadMimeDataFuture = Pin<Box<dyn Future<Output = Result<MimeData>> + Send + 'static>>;
+type LoadFuture = Pin<Box<dyn Future<Output = Result<ClipboardContent>> + Send + 'static>>;
 type StoreFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
 type ClearFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
 
 pub trait ClipboardDriver: Sync + Send {
-    fn load(&self, mime: &mime::Mime, mode: ClipboardMode) -> LoadFuture;
+    fn load(&self, kind: ClipboardKind) -> LoadFuture;
 
-    fn load_mime_data(&self, mode: ClipboardMode) -> LoadMimeDataFuture;
+    fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> StoreFuture;
 
-    fn store(&self, mime: mime::Mime, data: &[u8], mode: ClipboardMode) -> StoreFuture;
-
-    fn store_mime_data(&self, data: MimeData, mode: ClipboardMode) -> StoreFuture;
-
-    fn clear(&self, mode: ClipboardMode) -> ClearFuture;
+    fn clear(&self, kind: ClipboardKind) -> ClearFuture;
 
     /// # Errors
     fn subscribe(&self) -> Result<Subscriber>;

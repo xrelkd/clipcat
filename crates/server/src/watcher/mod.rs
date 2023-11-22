@@ -8,8 +8,7 @@ use std::{
     },
 };
 
-use caracal::MimeData;
-use clipcat::{ClipboardEvent, ClipboardMode, ClipboardWatcherState};
+use clipcat::{ClipEntry, ClipboardKind, ClipboardWatcherState};
 use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
@@ -18,7 +17,7 @@ use crate::clipboard_driver::{ClipboardDriver, Error as DriverError};
 
 pub struct ClipboardWatcher {
     is_watching: Arc<AtomicBool>,
-    event_sender: broadcast::Sender<ClipboardEvent>,
+    event_sender: broadcast::Sender<ClipEntry>,
     _join_handle: task::JoinHandle<Result<(), Error>>,
 }
 
@@ -40,22 +39,22 @@ impl ClipboardWatcher {
         driver: Arc<dyn ClipboardDriver>,
         opts: ClipboardWatcherOptions,
     ) -> Result<Self, Error> {
-        let enabled_modes = {
-            let mut modes = Vec::new();
+        let enabled_kinds = {
+            let mut kinds = Vec::new();
 
             if opts.enable_clipboard {
-                modes.push(ClipboardMode::Clipboard);
+                kinds.push(ClipboardKind::Clipboard);
             }
 
             if opts.enable_primary {
-                modes.push(ClipboardMode::Selection);
+                kinds.push(ClipboardKind::Primary);
             }
 
-            if modes.is_empty() {
+            if kinds.is_empty() {
                 tracing::warn!("Both clipboard and selection are not watched");
             }
 
-            modes
+            kinds
         };
 
         let (event_sender, _event_receiver) = broadcast::channel(16);
@@ -67,17 +66,17 @@ impl ClipboardWatcher {
 
             let mut subscriber = driver.subscribe()?;
             async move {
-                let mut current_data: HashMap<ClipboardMode, MimeData> = HashMap::new();
+                let mut current_data = HashMap::new();
                 if opts.load_current {
-                    for &mode in &enabled_modes {
-                        match driver.load_mime_data(mode).await {
+                    for &kind in &enabled_kinds {
+                        match driver.load(kind).await {
                             Ok(data) => {
-                                drop(current_data.insert(mode, data.clone()));
+                                drop(current_data.insert(kind, data.clone()));
                                 if let Err(_err) =
-                                    event_sender.send(ClipboardEvent::new(data, mode))
+                                    event_sender.send(ClipEntry::from_clipboard_content(data, kind))
                                 {
-                                    tracing::info!("ClipboardEvent receiver is closed.");
-                                    return Err(Error::SendClipboardEvent);
+                                    tracing::info!("ClipEntry receiver is closed.");
+                                    return Err(Error::SendClipEntry);
                                 }
                             }
                             Err(
@@ -91,11 +90,11 @@ impl ClipboardWatcher {
                 }
 
                 loop {
-                    let mode = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
+                    let kind = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
 
-                    if is_watching.load(Ordering::Relaxed) && enabled_modes.contains(&mode) {
-                        let new_data = match driver.load_mime_data(mode).await {
-                            Ok(new_data) => match current_data.get(&mode) {
+                    if is_watching.load(Ordering::Relaxed) && enabled_kinds.contains(&kind) {
+                        let new_data = match driver.load(kind).await {
+                            Ok(new_data) => match current_data.get(&kind) {
                                 Some(current_data) if new_data != *current_data => new_data,
                                 None => new_data,
                                 _ => continue,
@@ -115,13 +114,13 @@ impl ClipboardWatcher {
                         };
 
                         let send_event_result = {
-                            drop(current_data.insert(mode, new_data.clone()));
-                            event_sender.send(ClipboardEvent::new(new_data, mode))
+                            drop(current_data.insert(kind, new_data.clone()));
+                            event_sender.send(ClipEntry::from_clipboard_content(new_data, kind))
                         };
 
                         if let Err(_err) = send_event_result {
-                            tracing::info!("ClipboardEvent receiver is closed.");
-                            return Err(Error::SendClipboardEvent);
+                            tracing::info!("ClipEntry receiver is closed.");
+                            return Err(Error::SendClipEntry);
                         }
                     }
                 }
@@ -132,7 +131,7 @@ impl ClipboardWatcher {
     }
 
     #[inline]
-    pub fn subscribe(&self) -> broadcast::Receiver<ClipboardEvent> { self.event_sender.subscribe() }
+    pub fn subscribe(&self) -> broadcast::Receiver<ClipEntry> { self.event_sender.subscribe() }
 
     #[inline]
     pub fn enable(&mut self) {

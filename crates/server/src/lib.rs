@@ -8,7 +8,6 @@ mod watcher;
 
 use std::{future::Future, net::SocketAddr, pin::Pin, sync::Arc};
 
-use clipcat::{ClipEntry, ClipboardMode};
 use clipcat_proto::{ManagerServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
@@ -166,22 +165,12 @@ async fn serve_worker(
 
         match event {
             Ok(event) => {
-                let data = ClipEntry::from(event);
-                match data.mode {
-                    ClipboardMode::Clipboard => {
-                        tracing::info!(
-                            "On new event: Clipboard [{}]",
-                            data.printable_data(Some(20))
-                        );
-                    }
-                    ClipboardMode::Selection => {
-                        tracing::info!(
-                            "On new event: Selection [{}]",
-                            data.printable_data(Some(20))
-                        );
-                    }
-                }
-
+                let data = event;
+                tracing::info!(
+                    "On new event: {kind} [{printable}]",
+                    kind = data.kind(),
+                    printable = data.printable_data(Some(20))
+                );
                 let _ = clipboard_manager.lock().await.insert(data.clone());
                 let _unused = history_manager.lock().await.put(&data);
             }
