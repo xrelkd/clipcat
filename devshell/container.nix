@@ -1,7 +1,7 @@
 { name
 , version
 , dockerTools
-, fixa
+, clipcat
 , buildEnv
 , ...
 }:
@@ -12,11 +12,11 @@ dockerTools.buildImage {
 
   copyToRoot = buildEnv {
     name = "image-root";
-    paths = [ fixa ];
+    paths = [ clipcat ];
     pathsToLink = [ "/bin" ];
   };
 
   config = {
-    Entrypoint = [ "${fixa}/bin/fixa" ];
+    Entrypoint = [ "${clipcat}/bin/clipcatd" ];
   };
 }

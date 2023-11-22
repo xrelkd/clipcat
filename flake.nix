@@ -1,5 +1,5 @@
 {
-  description = "Fika - Rust template";
+  description = "Clipcat - clipboard manager written in Rust Programming Language";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -16,8 +16,8 @@
 
   outputs = { self, nixpkgs, flake-utils, fenix, crane }:
     let
-      name = "fixa";
-      version = "0.0.0";
+      name = "clipcat";
+      version = "0.6.0";
     in
     (flake-utils.lib.eachDefaultSystem
       (system:
@@ -87,12 +87,12 @@
           };
 
           packages = rec {
-            default = fixa;
-            fixa = pkgs.callPackage ./devshell/package.nix {
+            default = clipcat;
+            clipcat = pkgs.callPackage ./devshell/package.nix {
               inherit name version rustPlatform;
             };
             container = pkgs.callPackage ./devshell/container.nix {
-              inherit name version fixa;
+              inherit name version clipcat;
             };
           };
 
