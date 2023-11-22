@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clipcat::{ClipEntry, ClipboardMode};
+use clipcat::{ClipEntry, ClipboardKind};
 use clipcat_proto as proto;
 use tonic::Request;
 
@@ -15,7 +15,7 @@ use crate::{
 pub trait Manager {
     async fn get(&self, id: u64) -> Result<ClipEntry, GetClipError>;
 
-    async fn get_current_clip(&self, mode: ClipboardMode)
+    async fn get_current_clip(&self, kind: ClipboardKind)
         -> Result<ClipEntry, GetCurrentClipError>;
 
     async fn update(
@@ -25,13 +25,13 @@ pub trait Manager {
         mime: mime::Mime,
     ) -> Result<(bool, u64), UpdateClipError>;
 
-    async fn mark(&self, id: u64, mode: ClipboardMode) -> Result<bool, MarkClipError>;
+    async fn mark(&self, id: u64, kind: ClipboardKind) -> Result<bool, MarkClipError>;
 
     async fn insert(
         &self,
         data: &[u8],
         mime: mime::Mime,
-        clipboard_mode: ClipboardMode,
+        clipboard_kind: ClipboardKind,
     ) -> Result<u64, InsertClipError>;
 
     async fn insert_clipboard(
@@ -39,11 +39,11 @@ pub trait Manager {
         data: &[u8],
         mime: mime::Mime,
     ) -> Result<u64, InsertClipError> {
-        self.insert(data, mime, ClipboardMode::Clipboard).await
+        self.insert(data, mime, ClipboardKind::Clipboard).await
     }
 
     async fn insert_primary(&self, data: &[u8], mime: mime::Mime) -> Result<u64, InsertClipError> {
-        self.insert(data, mime, ClipboardMode::Selection).await
+        self.insert(data, mime, ClipboardKind::Primary).await
     }
 
     async fn length(&self) -> Result<usize, GetLengthError>;
@@ -71,12 +71,12 @@ impl Manager for Client {
 
     async fn get_current_clip(
         &self,
-        mode: ClipboardMode,
+        kind: ClipboardKind,
     ) -> Result<ClipEntry, GetCurrentClipError> {
         proto::ManagerClient::new(self.channel.clone())
-            .get_current_clip(Request::new(proto::GetCurrentClipRequest { mode: mode.into() }))
+            .get_current_clip(Request::new(proto::GetCurrentClipRequest { kind: kind.into() }))
             .await
-            .map_err(|source| GetCurrentClipError::Status { source, mode })?
+            .map_err(|source| GetCurrentClipError::Status { source, kind })?
             .into_inner()
             .data
             .map_or_else(|| Err(GetCurrentClipError::Empty), |data| Ok(data.into()))
@@ -100,11 +100,11 @@ impl Manager for Client {
         Ok((ok, new_id))
     }
 
-    async fn mark(&self, id: u64, mode: ClipboardMode) -> Result<bool, MarkClipError> {
+    async fn mark(&self, id: u64, kind: ClipboardKind) -> Result<bool, MarkClipError> {
         let proto::MarkResponse { ok } = proto::ManagerClient::new(self.channel.clone())
-            .mark(Request::new(proto::MarkRequest { id, mode: mode.into() }))
+            .mark(Request::new(proto::MarkRequest { id, kind: kind.into() }))
             .await
-            .map_err(|source| MarkClipError::Status { source, id, mode })?
+            .map_err(|source| MarkClipError::Status { source, id, kind })?
             .into_inner();
         Ok(ok)
     }
@@ -113,11 +113,11 @@ impl Manager for Client {
         &self,
         data: &[u8],
         mime: mime::Mime,
-        clipboard_mode: ClipboardMode,
+        clipboard_kind: ClipboardKind,
     ) -> Result<u64, InsertClipError> {
         let proto::InsertResponse { id } = proto::ManagerClient::new(self.channel.clone())
             .insert(Request::new(proto::InsertRequest {
-                mode: clipboard_mode.into(),
+                kind: clipboard_kind.into(),
                 data: data.to_owned(),
                 mime: mime.essence_str().to_owned(),
             }))

@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use clipcat::ClipboardMode;
+use clipcat::ClipboardKind;
 use snafu::{Backtrace, Snafu};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -51,7 +51,7 @@ impl fmt::Display for GetClipError {
 
 #[derive(Debug)]
 pub enum GetCurrentClipError {
-    Status { source: tonic::Status, mode: ClipboardMode },
+    Status { source: tonic::Status, kind: ClipboardKind },
     Empty,
 }
 
@@ -79,7 +79,7 @@ impl fmt::Display for UpdateClipError {
 
 #[derive(Debug)]
 pub enum MarkClipError {
-    Status { source: tonic::Status, id: u64, mode: ClipboardMode },
+    Status { source: tonic::Status, id: u64, kind: ClipboardKind },
 }
 
 impl fmt::Display for MarkClipError {
