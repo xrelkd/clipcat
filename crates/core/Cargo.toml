@@ -12,15 +12,16 @@ categories.workspace = true
 keywords.workspace   = true
 
 [dependencies]
-caracal = { git = "https://github.com/xrelkd/caracal.git", tag = "v0.1.0" }
+serde      = { version = "1", features = ["derive"] }
+serde_with = "3"
 
-serde = { version = "1", features = ["derive"] }
-
+bytes       = "1"
 chrono      = "0.4"
 directories = "5"
+image       = "0.24"
 lazy_static = "1"
 mime        = "0.3"
-snafu       = "0.6"
+snafu       = "0.7"
 
 [lints]
 workspace = true

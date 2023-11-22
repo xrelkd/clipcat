@@ -1,11 +1,11 @@
-use caracal::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MimeData, MockClipboard};
+use clipcat::ClipboardContent;
+use clipcat_clipboard::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MockClipboard};
 use futures::FutureExt;
 use snafu::ResultExt;
 use tokio::task;
 
 use crate::clipboard_driver::{
-    error, ClearFuture, ClipboardDriver, ClipboardMode, Error, LoadFuture, LoadMimeDataFuture,
-    StoreFuture, Subscriber,
+    error, ClearFuture, ClipboardDriver, ClipboardKind, Error, LoadFuture, StoreFuture, Subscriber,
 };
 
 #[derive(Clone, Default, Debug)]
@@ -18,17 +18,12 @@ impl MockClipboardDriver {
 
 impl ClipboardDriver for MockClipboardDriver {
     #[inline]
-    fn load(&self, mime: &mime::Mime, _mode: ClipboardMode) -> LoadFuture {
+    fn load(&self, _kind: ClipboardKind) -> LoadFuture {
         let clipboard = self.0.clone();
-        let mime = mime.clone();
         async move {
-            task::spawn_blocking(move || match clipboard.load(&mime) {
+            task::spawn_blocking(move || match clipboard.load() {
                 Ok(d) => Ok(d),
-                Err(caracal::Error::Empty) => Err(Error::EmptyClipboard),
-                Err(caracal::Error::MatchMime { expected_mime }) => {
-                    Err(Error::MatchMime { expected_mime })
-                }
-                Err(caracal::Error::UnknownContentType) => Err(Error::UnknownContentType),
+                Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
                 Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
             })
             .await
@@ -38,44 +33,10 @@ impl ClipboardDriver for MockClipboardDriver {
     }
 
     #[inline]
-    fn load_mime_data(&self, _mode: ClipboardMode) -> LoadMimeDataFuture {
+    fn store(&self, _kind: ClipboardKind, data: ClipboardContent) -> StoreFuture {
         let clipboard = self.0.clone();
         async move {
-            let data = task::spawn_blocking(move || match clipboard.load_mime_data() {
-                Ok(d) => Ok(d),
-                Err(caracal::Error::Empty) => Err(Error::EmptyClipboard),
-                Err(caracal::Error::MatchMime { expected_mime }) => {
-                    Err(Error::MatchMime { expected_mime })
-                }
-                Err(caracal::Error::UnknownContentType) => Err(Error::UnknownContentType),
-                Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
-            })
-            .await
-            .context(error::SpawnBlockingTaskSnafu)??;
-            Ok(data)
-        }
-        .boxed()
-    }
-
-    #[inline]
-    fn store(&self, mime: mime::Mime, data: &[u8], _mode: ClipboardMode) -> StoreFuture {
-        let clipboard = self.0.clone();
-        let data = MimeData::new(mime, data.into());
-        async move {
-            task::spawn_blocking(move || clipboard.store_mime_data(data))
-                .await
-                .context(error::SpawnBlockingTaskSnafu)?
-                .context(error::StoreDataToX11ClipboardSnafu)?;
-            Ok(())
-        }
-        .boxed()
-    }
-
-    #[inline]
-    fn store_mime_data(&self, data: MimeData, _mode: ClipboardMode) -> StoreFuture {
-        let clipboard = self.0.clone();
-        async move {
-            task::spawn_blocking(move || clipboard.store_mime_data(data))
+            task::spawn_blocking(move || clipboard.store(data))
                 .await
                 .context(error::SpawnBlockingTaskSnafu)?
                 .context(error::StoreDataToX11ClipboardSnafu)
@@ -84,7 +45,7 @@ impl ClipboardDriver for MockClipboardDriver {
     }
 
     #[inline]
-    fn clear(&self, _mode: ClipboardMode) -> ClearFuture {
+    fn clear(&self, _kind: ClipboardKind) -> ClearFuture {
         let clipboard = self.0.clone();
         async move {
             task::spawn_blocking(move || clipboard.clear())

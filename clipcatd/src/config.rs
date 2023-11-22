@@ -32,7 +32,7 @@ pub struct Config {
     pub grpc: GrpcConfig,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
     pub load_current: bool,
     pub enable_clipboard: bool,
@@ -41,14 +41,14 @@ pub struct WatcherConfig {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct GrpcConfig {
-    pub address: IpAddr,
+    pub host: IpAddr,
 
     pub port: u16,
 }
 
 impl GrpcConfig {
     #[inline]
-    pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.address, self.port) }
+    pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
 }
 
 impl Default for Config {
@@ -82,7 +82,7 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
 impl Default for GrpcConfig {
     fn default() -> Self {
         Self {
-            address: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
+            host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
             port: clipcat::DEFAULT_GRPC_PORT,
         }
     }

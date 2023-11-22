@@ -20,12 +20,12 @@ impl proto::Manager for ManagerService {
         &self,
         request: Request<proto::InsertRequest>,
     ) -> Result<Response<proto::InsertResponse>, Status> {
-        let proto::InsertRequest { data, mime, mode } = request.into_inner();
+        let proto::InsertRequest { data, mime, kind } = request.into_inner();
         let id = {
             let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            let id = manager.insert(clipcat::ClipEntry::new(&data, mime, mode.into()));
-            let _unused = manager.mark(id, mode.into()).await;
+            let id = manager.insert(clipcat::ClipEntry::new(&data, &mime, kind.into(), None));
+            let _unused = manager.mark(id, kind.into()).await;
             drop(manager);
             id
         };
@@ -84,9 +84,9 @@ impl proto::Manager for ManagerService {
         request: Request<proto::GetCurrentClipRequest>,
     ) -> Result<Response<proto::GetCurrentClipResponse>, Status> {
         let data = {
-            let mode = request.into_inner().mode.into();
+            let kind = request.into_inner().kind.into();
             let manager = self.manager.lock().await;
-            manager.get_current_clip(mode).map(|clip| clip.clone().into())
+            manager.get_current_clip(kind).map(|clip| clip.clone().into())
         };
         Ok(Response::new(proto::GetCurrentClipResponse { data }))
     }
@@ -110,7 +110,7 @@ impl proto::Manager for ManagerService {
         let (ok, new_id) = {
             let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            manager.replace(id, &data, mime)
+            manager.replace(id, &data, &mime)
         };
         Ok(Response::new(proto::UpdateResponse { ok, new_id }))
     }
@@ -119,10 +119,10 @@ impl proto::Manager for ManagerService {
         &self,
         request: Request<proto::MarkRequest>,
     ) -> Result<Response<proto::MarkResponse>, Status> {
-        let proto::MarkRequest { id, mode } = request.into_inner();
+        let proto::MarkRequest { id, kind } = request.into_inner();
         let ok = {
             let mut manager = self.manager.lock().await;
-            manager.mark(id, mode.into()).await.is_ok()
+            manager.mark(id, kind.into()).await.is_ok()
         };
         Ok(Response::new(proto::MarkResponse { ok }))
     }

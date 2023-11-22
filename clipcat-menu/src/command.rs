@@ -1,7 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipEntry, ClipboardMode};
+use clipcat::{ClipEntry, ClipboardKind};
 use clipcat_client::{Client, Manager};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -53,12 +53,13 @@ pub enum Commands {
     #[clap(about = "Insert selected clip into clipboard")]
     Insert {
         #[clap(
-            long = "mode",
-            short = 'm',
+            long = "kind",
+            short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
+                    \"secondary\")"
         )]
-        mode: ClipboardMode,
+        kind: ClipboardKind,
     },
 
     #[clap(
@@ -143,13 +144,13 @@ impl Cli {
             let clips = client.list().await?;
 
             match subcommand {
-                Some(Commands::Insert { mode }) => {
-                    insert_clip(&clips, finder, &client, mode).await?;
+                Some(Commands::Insert { kind }) => {
+                    insert_clip(&clips, finder, &client, kind).await?;
                 }
-                None => insert_clip(&clips, finder, &client, ClipboardMode::Clipboard).await?,
+                None => insert_clip(&clips, finder, &client, ClipboardKind::Clipboard).await?,
                 Some(Commands::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
-                    let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
+                    let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id()).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
                         tracing::info!("Removing clip (id: {:016x})", id);
@@ -165,11 +166,11 @@ impl Cli {
                                 .await
                                 .context(error::CallEditorSnafu)?;
                             let (ok, new_id) =
-                                client.update(clip.id, new_data.as_bytes(), clip.mime).await?;
+                                client.update(clip.id(), new_data.as_bytes(), clip.mime()).await?;
                             if ok {
                                 tracing::info!("Editing clip (id: {:016x})", new_id);
                             }
-                            let _ok = client.mark(new_id, ClipboardMode::Clipboard).await?;
+                            let _ok = client.mark(new_id, ClipboardKind::Clipboard).await?;
                             drop(client);
                         }
                     } else {
@@ -191,17 +192,17 @@ async fn insert_clip(
     clips: &[ClipEntry],
     finder: FinderRunner,
     client: &Client,
-    clipboard_mode: ClipboardMode,
+    clipboard_kind: ClipboardKind,
 ) -> Result<(), Error> {
     let selection = finder.single_select(clips).await?;
     if let Some((index, clip)) = selection {
         tracing::info!(
             "Inserting clip (index: {}, id: {:016x}, content: {:?})",
             index,
-            clip.id,
+            clip.id(),
             clip.printable_data(Some(LINE_LENGTH)),
         );
-        let _ok = client.mark(clip.id, clipboard_mode).await?;
+        let _ok = client.mark(clip.id(), clipboard_kind).await?;
     } else {
         tracing::info!("Nothing is selected");
     }

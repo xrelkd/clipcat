@@ -3,7 +3,7 @@ mod error;
 use std::io::Write;
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::ClipboardMode;
+use clipcat::ClipboardKind;
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
 
@@ -15,11 +15,14 @@ struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,
 
-    #[clap(long = "no-clipboard", help = "Does not watch clipboard")]
+    #[clap(long = "no-clipboard", help = "Does not listen clipboard")]
     no_clipboard: bool,
 
-    #[clap(long = "no-primary", help = "Does not watch primary")]
+    #[clap(long = "no-primary", help = "Does not listen primary")]
     no_primary: bool,
+
+    #[clap(long = "no-secondary", help = "Does not listen secondary")]
+    no_secondary: bool,
 }
 
 #[derive(Subcommand, Clone)]
@@ -49,27 +52,32 @@ impl Cli {
             None => {
                 let enable_clipboard = !self.no_clipboard;
                 let enable_primary = !self.no_primary;
+                let enable_secondary = !self.no_secondary;
 
-                if !enable_clipboard && !enable_primary {
-                    return Err(Error::MonitorNothing);
+                if !enable_clipboard && !enable_primary && !enable_secondary {
+                    return Err(Error::ListenNothing);
                 }
 
-                Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(async {
-                    let clipboard_driver = clipcat_server::clipboard_driver::new()
-                        .context(error::InitializeClipboardDriverSnafu)?;
-                    let mut subscriber = clipboard_driver.subscribe().unwrap();
-                    while let Some(mode) = subscriber.next().await {
-                        match mode {
-                            ClipboardMode::Clipboard if enable_clipboard => return Ok(()),
-                            ClipboardMode::Selection if enable_primary => return Ok(()),
-                            _ => continue,
+                let clipboard_driver = clipcat_server::clipboard_driver::new()
+                    .context(error::InitializeClipboardDriverSnafu)?;
+                let mut subscriber =
+                    clipboard_driver.subscribe().context(error::SubscribeClipboardSnafu)?;
+                Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
+                    async move {
+                        while let Some(kind) = subscriber.next().await {
+                            match kind {
+                                ClipboardKind::Clipboard if enable_clipboard => return Ok(()),
+                                ClipboardKind::Primary if enable_primary => return Ok(()),
+                                ClipboardKind::Secondary if enable_primary => return Ok(()),
+                                _ => continue,
+                            }
                         }
-                    }
 
-                    drop(clipboard_driver);
+                        drop(clipboard_driver);
 
-                    Err(Error::WaitForClipboardEvent)
-                })?;
+                        Err(Error::WaitForClipboardEvent)
+                    },
+                )?;
 
                 Ok(())
             }

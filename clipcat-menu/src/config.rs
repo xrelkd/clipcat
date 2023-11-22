@@ -8,33 +8,53 @@ use snafu::{ResultExt, Snafu};
 
 use crate::finder::FinderType;
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
     pub server_host: IpAddr,
+
     pub server_port: u16,
+
+    #[serde(default)]
     pub finder: FinderType,
+
+    #[serde(default)]
     pub rofi: Option<Rofi>,
+
+    #[serde(default)]
     pub dmenu: Option<Dmenu>,
+
+    #[serde(default)]
     pub custom_finder: Option<CustomFinder>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Rofi {
+    #[serde(default = "default_line_length")]
     pub line_length: usize,
+
+    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
+
+    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Dmenu {
+    #[serde(default = "default_line_length")]
     pub line_length: usize,
+
+    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
+
+    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CustomFinder {
     pub program: String,
+
     pub args: Vec<String>,
 }
 
@@ -54,9 +74,9 @@ impl Default for Config {
 impl Default for Rofi {
     fn default() -> Self {
         Self {
-            line_length: 100,
-            menu_length: 30,
-            menu_prompt: clipcat::DEFAULT_MENU_PROMPT.to_owned(),
+            menu_prompt: default_menu_prompt(),
+            menu_length: default_menu_length(),
+            line_length: default_line_length(),
         }
     }
 }
@@ -64,15 +84,15 @@ impl Default for Rofi {
 impl Default for Dmenu {
     fn default() -> Self {
         Self {
-            line_length: 100,
-            menu_length: 30,
-            menu_prompt: clipcat::DEFAULT_MENU_PROMPT.to_owned(),
+            menu_prompt: default_menu_prompt(),
+            menu_length: default_menu_length(),
+            line_length: default_line_length(),
         }
     }
 }
 
 impl Default for CustomFinder {
-    fn default() -> Self { Self { program: "fzf".to_string(), args: vec![] } }
+    fn default() -> Self { Self { program: "fzf".to_string(), args: Vec::new() } }
 }
 
 impl Config {
@@ -106,6 +126,12 @@ impl Config {
         }
     }
 }
+
+fn default_menu_prompt() -> String { clipcat::DEFAULT_MENU_PROMPT.to_string() }
+
+const fn default_menu_length() -> usize { 30 }
+
+const fn default_line_length() -> usize { 100 }
 
 #[derive(Debug, Snafu)]
 pub enum Error {

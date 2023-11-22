@@ -1,0 +1,44 @@
+[package]
+name                 = "clipcat-clipboard"
+description          = "Clipcat clipboard"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+autoexamples = false
+
+[dependencies]
+tracing = "0.1"
+
+arboard = "3"
+bytes   = "1"
+snafu   = "0.7"
+
+clipcat = { path = "../core/" }
+
+[target.'cfg(all(unix, not(any(target_os="macos", target_os="android", target_os="emscripten"))))'.dependencies]
+x11rb = { version = "0.8", features = ["xfixes"] }
+
+[dev-dependencies]
+signal-hook = "0.3"
+
+[[example]]
+name = "load"
+path = "examples/load.rs"
+
+[[example]]
+name = "load-wait"
+path = "examples/load_wait.rs"
+
+[[example]]
+name = "store"
+path = "examples/store.rs"
+
+[lints]
+workspace = true

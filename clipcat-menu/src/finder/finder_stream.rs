@@ -40,7 +40,7 @@ pub trait FinderStream: Send + Sync {
 
 #[cfg(test)]
 mod tests {
-    use clipcat::{ClipEntry, ClipboardMode};
+    use clipcat::{ClipEntry, ClipboardKind};
 
     use crate::finder::FinderStream;
 
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn test_generate_input() {
-        const MODE: ClipboardMode = ClipboardMode::Clipboard;
+        const MODE: ClipboardKind = ClipboardKind::Clipboard;
         let d = Dummy;
         let clips = vec![];
         let v = d.generate_input(&clips);

@@ -20,21 +20,22 @@ service Manager {
   rpc Length(LengthRequest) returns (LengthResponse);
 }
 
-enum ClipboardMode {
+enum ClipboardKind {
   Clipboard = 0;
-  Selection = 1;
+  Primary = 1;
+  Secondary = 2;
 }
 
 message ClipboardData {
   uint64 id = 1;
   bytes data = 2;
   string mime = 3;
-  ClipboardMode mode = 4;
+  ClipboardKind kind = 4;
   uint64 timestamp = 5;
 }
 
 message InsertRequest {
-  ClipboardMode mode = 1;
+  ClipboardKind kind = 1;
   bytes data = 2;
   string mime = 3;
 }
@@ -43,7 +44,7 @@ message InsertResponse { uint64 id = 1; }
 message GetRequest { uint64 id = 1; }
 message GetResponse { ClipboardData data = 1; }
 
-message GetCurrentClipRequest { ClipboardMode mode = 1; }
+message GetCurrentClipRequest { ClipboardKind kind = 1; }
 message GetCurrentClipResponse { ClipboardData data = 1; }
 
 message ListRequest {}
@@ -61,7 +62,7 @@ message UpdateResponse {
 
 message MarkRequest {
   uint64 id = 1;
-  ClipboardMode mode = 2;
+  ClipboardKind kind = 2;
 }
 message MarkResponse { bool ok = 1; }
 

@@ -1,56 +1,56 @@
 use std::sync::Arc;
 
-use caracal::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MimeData, Mode, X11Clipboard};
+use clipcat::{ClipboardContent, ClipboardKind};
+use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubscribe};
 use futures::FutureExt;
 use snafu::ResultExt;
 use tokio::task;
 
 use crate::clipboard_driver::{
-    error, ClearFuture, ClipboardDriver, ClipboardMode, Error, LoadFuture, LoadMimeDataFuture,
-    StoreFuture, Subscriber,
+    error, ClearFuture, ClipboardDriver, Error, LoadFuture, StoreFuture, Subscriber,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct X11ClipboardDriver {
-    default_clipboard: Arc<X11Clipboard>,
-    primary_clipboard: Arc<X11Clipboard>,
+    default_clipboard: Arc<Clipboard>,
+    primary_clipboard: Arc<Clipboard>,
+    secondary_clipboard: Arc<Clipboard>,
 }
 
 impl X11ClipboardDriver {
     /// # Errors
     pub fn new(display_name: Option<&str>) -> Result<Self, Error> {
-        let default_clipboard = X11Clipboard::new(display_name, Mode::Clipboard)
+        let default_clipboard = Clipboard::new(display_name, ClipboardKind::Clipboard)
             .context(error::InitializeX11ClipboardSnafu)?;
-        let primary_clipboard = X11Clipboard::new(display_name, Mode::Selection)
+        let primary_clipboard = Clipboard::new(display_name, ClipboardKind::Primary)
+            .context(error::InitializeX11ClipboardSnafu)?;
+        let secondary_clipboard = Clipboard::new(display_name, ClipboardKind::Secondary)
             .context(error::InitializeX11ClipboardSnafu)?;
         Ok(Self {
             default_clipboard: Arc::new(default_clipboard),
             primary_clipboard: Arc::new(primary_clipboard),
+            secondary_clipboard: Arc::new(secondary_clipboard),
         })
     }
 
     #[inline]
-    fn select_clipboard(&self, mode: ClipboardMode) -> Arc<X11Clipboard> {
-        match mode {
-            ClipboardMode::Clipboard => Arc::clone(&self.default_clipboard),
-            ClipboardMode::Selection => Arc::clone(&self.primary_clipboard),
+    fn select_clipboard(&self, kind: ClipboardKind) -> Arc<Clipboard> {
+        match kind {
+            ClipboardKind::Clipboard => Arc::clone(&self.default_clipboard),
+            ClipboardKind::Primary => Arc::clone(&self.primary_clipboard),
+            ClipboardKind::Secondary => Arc::clone(&self.secondary_clipboard),
         }
     }
 }
 
 impl ClipboardDriver for X11ClipboardDriver {
     #[inline]
-    fn load(&self, mime: &mime::Mime, mode: ClipboardMode) -> LoadFuture {
-        let clipboard = self.select_clipboard(mode);
-        let mime = mime.clone();
+    fn load(&self, kind: ClipboardKind) -> LoadFuture {
+        let clipboard = self.select_clipboard(kind);
         async move {
-            let data = task::spawn_blocking(move || match clipboard.load(&mime) {
-                Ok(d) => Ok(d),
-                Err(caracal::Error::Empty) => Err(Error::EmptyClipboard),
-                Err(caracal::Error::MatchMime { expected_mime }) => {
-                    Err(Error::MatchMime { expected_mime })
-                }
-                Err(caracal::Error::UnknownContentType) => Err(Error::UnknownContentType),
+            let data = task::spawn_blocking(move || match clipboard.load() {
+                Ok(data) => Ok(data),
+                Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
                 Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
             })
             .await
@@ -61,30 +61,10 @@ impl ClipboardDriver for X11ClipboardDriver {
     }
 
     #[inline]
-    fn load_mime_data(&self, mode: ClipboardMode) -> LoadMimeDataFuture {
-        let clipboard = self.select_clipboard(mode);
+    fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> StoreFuture {
+        let clipboard = self.select_clipboard(kind);
         async move {
-            task::spawn_blocking(move || match clipboard.load_mime_data() {
-                Ok(d) => Ok(d),
-                Err(caracal::Error::Empty) => Err(Error::EmptyClipboard),
-                Err(caracal::Error::MatchMime { expected_mime }) => {
-                    Err(Error::MatchMime { expected_mime })
-                }
-                Err(caracal::Error::UnknownContentType) => Err(Error::UnknownContentType),
-                Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
-            })
-            .await
-            .context(error::SpawnBlockingTaskSnafu)?
-        }
-        .boxed()
-    }
-
-    #[inline]
-    fn store(&self, mime: mime::Mime, data: &[u8], mode: ClipboardMode) -> StoreFuture {
-        let clipboard = self.select_clipboard(mode);
-        let data = MimeData::new(mime, data.into());
-        async move {
-            task::spawn_blocking(move || clipboard.store_mime_data(data))
+            task::spawn_blocking(move || clipboard.store(data))
                 .await
                 .context(error::SpawnBlockingTaskSnafu)?
                 .context(error::StoreDataToX11ClipboardSnafu)
@@ -93,20 +73,8 @@ impl ClipboardDriver for X11ClipboardDriver {
     }
 
     #[inline]
-    fn store_mime_data(&self, data: MimeData, mode: ClipboardMode) -> StoreFuture {
-        let clipboard = self.select_clipboard(mode);
-        async move {
-            task::spawn_blocking(move || clipboard.store_mime_data(data))
-                .await
-                .context(error::SpawnBlockingTaskSnafu)?
-                .context(error::StoreDataToX11ClipboardSnafu)
-        }
-        .boxed()
-    }
-
-    #[inline]
-    fn clear(&self, mode: ClipboardMode) -> ClearFuture {
-        let clipboard = self.select_clipboard(mode);
+    fn clear(&self, kind: ClipboardKind) -> ClearFuture {
+        let clipboard = self.select_clipboard(kind);
         async move {
             task::spawn_blocking(move || clipboard.clear())
                 .await
@@ -119,8 +87,8 @@ impl ClipboardDriver for X11ClipboardDriver {
     #[inline]
     fn subscribe(&self) -> Result<Subscriber, Error> {
         let mut subs = Vec::with_capacity(2);
-        for &mode in &[ClipboardMode::Clipboard, ClipboardMode::Selection] {
-            let clipboard = self.select_clipboard(mode);
+        for &kind in &[ClipboardKind::Clipboard, ClipboardKind::Primary] {
+            let clipboard = self.select_clipboard(kind);
             let sub = clipboard.subscribe().context(error::SubscribeX11ClipboardSnafu)?;
             subs.push(sub);
         }

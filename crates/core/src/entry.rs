@@ -7,41 +7,61 @@ use std::{
 };
 
 use chrono::{offset::Utc, DateTime};
-use serde::{Deserialize, Serialize};
 
-use crate::{utils, ClipboardEvent, ClipboardMode};
+use crate::{ClipboardContent, ClipboardKind};
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Debug, Deserialize, Eq, Serialize)]
+#[derive(Clone, Debug, Eq)]
 pub struct ClipEntry {
-    pub id: u64,
-    pub data: Vec<u8>,
-    pub mode: ClipboardMode,
-    pub timestamp: SystemTime,
+    id: u64,
 
-    #[serde(
-        serialize_with = "utils::serialize_mime",
-        deserialize_with = "utils::deserialize_mime"
-    )]
-    pub mime: mime::Mime,
+    content: ClipboardContent,
+
+    clipboard_kind: ClipboardKind,
+
+    timestamp: SystemTime,
 }
 
 impl ClipEntry {
     #[inline]
     #[must_use]
-    pub fn new(data: &[u8], mime: mime::Mime, clipboard_mode: ClipboardMode) -> Self {
-        let id = Self::compute_id(data);
-        Self { id, data: data.into(), mime, mode: clipboard_mode, timestamp: SystemTime::now() }
+    pub fn new(
+        data: &[u8],
+        mime: &mime::Mime,
+        clipboard_kind: ClipboardKind,
+        timestamp: Option<SystemTime>,
+    ) -> Self {
+        let content = if mime.type_() == mime::TEXT {
+            ClipboardContent::Plaintext(String::from_utf8_lossy(data).to_string())
+        } else {
+            // FIXME:
+            ClipboardContent::Plaintext(String::new())
+        };
+        let id = Self::compute_id(&content);
+        Self { id, content, clipboard_kind, timestamp: timestamp.unwrap_or_else(SystemTime::now) }
     }
 
     #[inline]
-    pub fn from_string<S: fmt::Display>(s: S, clipboard_mode: ClipboardMode) -> Self {
-        Self::new(s.to_string().as_bytes(), mime::TEXT_PLAIN_UTF_8, clipboard_mode)
+    pub fn from_string<S: fmt::Display>(s: S, clipboard_kind: ClipboardKind) -> Self {
+        Self::new(s.to_string().as_bytes(), &mime::TEXT_PLAIN_UTF_8, clipboard_kind, None)
+    }
+
+    #[inline]
+    pub fn from_clipboard_content(
+        content: ClipboardContent,
+        clipboard_kind: ClipboardKind,
+    ) -> Self {
+        Self {
+            id: Self::compute_id(&content),
+            content,
+            clipboard_kind,
+            timestamp: SystemTime::now(),
+        }
     }
 
     #[inline]
     #[must_use]
-    pub fn compute_id(data: &[u8]) -> u64 {
+    pub fn compute_id(data: &ClipboardContent) -> u64 {
         let mut s = DefaultHasher::new();
         data.hash(&mut s);
         s.finish()
@@ -49,15 +69,35 @@ impl ClipEntry {
 
     #[inline]
     #[must_use]
-    pub fn is_text(&self) -> bool { self.mime.type_() == mime::TEXT }
+    pub const fn id(&self) -> u64 { self.id }
 
     #[inline]
     #[must_use]
-    pub fn is_utf8_string(&self) -> bool { self.mime.get_param(mime::CHARSET) == Some(mime::UTF_8) }
+    pub const fn kind(&self) -> ClipboardKind { self.clipboard_kind }
 
     #[inline]
     #[must_use]
-    pub fn as_utf8_string(&self) -> String { String::from_utf8_lossy(&self.data).into() }
+    pub const fn timestamp(&self) -> SystemTime { self.timestamp }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_text(&self) -> bool { matches!(self.content, ClipboardContent::Plaintext(_)) }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_utf8_string(&self) -> bool {
+        matches!(self.content, ClipboardContent::Plaintext(_))
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn as_utf8_string(&self) -> String {
+        if let ClipboardContent::Plaintext(text) = &self.content {
+            text.clone()
+        } else {
+            String::new()
+        }
+    }
 
     #[must_use]
     pub fn printable_data(&self, line_length: Option<usize>) -> String {
@@ -68,14 +108,14 @@ impl ClipEntry {
             }
         }
 
-        let data = if self.is_utf8_string() || self.is_text() {
-            self.as_utf8_string()
-        } else {
-            let content_type = self.mime.essence_str();
-            let size = self.data.len();
-            let timestamp = DateTime::<Utc>::from(self.timestamp).to_rfc3339();
-
-            format!("content-type: {content_type}, size: {size}, timestamp: {timestamp}")
+        let data = match &self.content {
+            ClipboardContent::Plaintext(text) => text.clone(),
+            ClipboardContent::Image { width: _, height: _, bytes } => {
+                let content_type = mime::IMAGE_PNG;
+                let size = bytes.len();
+                let timestamp = DateTime::<Utc>::from(self.timestamp).to_rfc3339();
+                format!("content-type: {content_type}, size: {size}, timestamp: {timestamp}")
+            }
         };
 
         let data = match line_length {
@@ -102,29 +142,30 @@ impl ClipEntry {
     }
 
     #[inline]
-    pub fn mark(&mut self, clipboard_mode: ClipboardMode) {
-        self.mode = clipboard_mode;
+    pub fn mark(&mut self, clipboard_kind: ClipboardKind) {
+        self.clipboard_kind = clipboard_kind;
         self.timestamp = SystemTime::now();
+    }
+
+    #[must_use]
+    pub fn to_clipboard_content(&self) -> ClipboardContent { self.content.clone() }
+
+    #[inline]
+    #[must_use]
+    pub fn as_bytes(&self) -> &[u8] {
+        match &self.content {
+            ClipboardContent::Plaintext(text) => text.as_bytes(),
+            ClipboardContent::Image { bytes, .. } => bytes,
+        }
     }
 
     #[inline]
     #[must_use]
-    pub fn as_bytes(&self) -> &[u8] { &self.data }
-
-    #[inline]
-    #[must_use]
-    pub const fn mime(&self) -> &mime::Mime { &self.mime }
-
-    #[inline]
-    #[must_use]
-    pub fn mime_str(&self) -> &str { self.mime.essence_str() }
-}
-
-impl From<ClipboardEvent> for ClipEntry {
-    fn from(ClipboardEvent { data, mime, mode }: ClipboardEvent) -> Self {
-        let id = Self::compute_id(&data);
-        let timestamp = SystemTime::now();
-        Self { id, data, mode, timestamp, mime }
+    pub const fn mime(&self) -> mime::Mime {
+        match self.content {
+            ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
+            ClipboardContent::Image { .. } => mime::IMAGE_PNG,
+        }
     }
 }
 
@@ -132,16 +173,15 @@ impl Default for ClipEntry {
     fn default() -> Self {
         Self {
             id: 0,
-            data: Vec::new(),
-            mime: mime::TEXT_PLAIN_UTF_8,
-            mode: ClipboardMode::Selection,
+            content: ClipboardContent::Plaintext(String::new()),
+            clipboard_kind: ClipboardKind::Clipboard,
             timestamp: SystemTime::UNIX_EPOCH,
         }
     }
 }
 
 impl PartialEq for ClipEntry {
-    fn eq(&self, other: &Self) -> bool { self.data == other.data }
+    fn eq(&self, other: &Self) -> bool { self.content == other.content }
 }
 
 impl PartialOrd for ClipEntry {
@@ -151,12 +191,12 @@ impl PartialOrd for ClipEntry {
 impl Ord for ClipEntry {
     fn cmp(&self, other: &Self) -> Ordering {
         match other.timestamp.cmp(&self.timestamp) {
-            Ordering::Equal => self.mode.cmp(&other.mode),
+            Ordering::Equal => self.clipboard_kind.cmp(&other.clipboard_kind),
             ord => ord,
         }
     }
 }
 
 impl Hash for ClipEntry {
-    fn hash<H: Hasher>(&self, state: &mut H) { self.data.hash(state); }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.content.hash(state); }
 }

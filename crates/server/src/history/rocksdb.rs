@@ -12,7 +12,7 @@ use crate::history::{Error, HistoryDriver};
 mod v2 {
     use std::time::SystemTime;
 
-    use clipcat::{utils, ClipEntry, ClipboardMode};
+    use clipcat::{utils, ClipEntry, ClipboardKind};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -27,21 +27,19 @@ mod v2 {
     }
 
     impl ClipboardValue {
-        pub fn into_data(self, id: u64) -> ClipEntry {
-            ClipEntry {
-                id,
-                data: self.data,
-                mime: self.mime,
-                timestamp: self.timestamp,
-                mode: ClipboardMode::Selection,
-            }
+        pub fn into_data(self, _id: u64) -> ClipEntry {
+            let Self { data, mime, timestamp } = self;
+            ClipEntry::new(&data, &mime, ClipboardKind::Clipboard, Some(timestamp))
         }
     }
 
     impl From<ClipEntry> for ClipboardValue {
-        fn from(data: ClipEntry) -> Self {
-            let ClipEntry { data, mime, timestamp, .. } = data;
-            Self { data, mime, timestamp }
+        fn from(entry: ClipEntry) -> Self {
+            Self {
+                data: entry.as_bytes().to_vec(),
+                mime: entry.mime(),
+                timestamp: entry.timestamp(),
+            }
         }
     }
 }
@@ -49,7 +47,7 @@ mod v2 {
 mod v1 {
     use std::time::SystemTime;
 
-    use clipcat::{ClipEntry, ClipboardMode};
+    use clipcat::{ClipEntry, ClipboardKind};
     use serde::{Deserialize, Serialize};
 
     #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -59,14 +57,14 @@ mod v1 {
     }
 
     impl ClipboardValue {
-        pub fn into_data(self, id: u64) -> ClipEntry {
-            ClipEntry {
-                id,
-                data: Vec::from(self.data.as_bytes()),
-                mime: mime::TEXT_PLAIN_UTF_8,
-                timestamp: self.timestamp,
-                mode: ClipboardMode::Selection,
-            }
+        pub fn into_data(self, _id: u64) -> ClipEntry {
+            let Self { data, timestamp } = self;
+            ClipEntry::new(
+                data.as_bytes(),
+                &mime::TEXT_PLAIN_UTF_8,
+                ClipboardKind::Clipboard,
+                Some(timestamp),
+            )
         }
     }
 }
@@ -99,7 +97,7 @@ impl RocksDBDriver {
             return Some(data);
         }
 
-        tracing::info!("Try to deserialize with v1::ClipboardValue");
+        tracing::trace!("Try to deserialize with v1::ClipboardValue");
         bincode::deserialize::<v1::ClipboardValue>(raw_data)
             .map(|value| value.into_data(id))
             .map_err(|_| {
@@ -110,7 +108,7 @@ impl RocksDBDriver {
 
     fn serialize_data(data: &ClipEntry) -> Vec<u8> {
         let value = v2::ClipboardValue::from(data.clone());
-        bincode::serialize(&value).expect("ClipboardData is serializable")
+        bincode::serialize(&value).expect("ClipboardValue is serializable")
     }
 
     fn serialize_entry(id: u64, data: &ClipEntry) -> (Vec<u8>, Vec<u8>) {
@@ -153,7 +151,7 @@ impl HistoryDriver for RocksDBDriver {
         let unsaved_ids: HashSet<_> = data
             .iter()
             .map(|clip| {
-                let (id, data) = Self::serialize_entry(clip.id, clip);
+                let (id, data) = Self::serialize_entry(clip.id(), clip);
                 batch.put(id.clone(), data);
                 id
             })
@@ -184,7 +182,7 @@ impl HistoryDriver for RocksDBDriver {
                     None
                 }
             })
-            .map(|(v, id)| (v.timestamp, id))
+            .map(|(v, id)| (v.timestamp(), id))
             .collect::<HashMap<SystemTime, Vec<u8>>>();
 
         let batch = {
@@ -220,7 +218,7 @@ impl HistoryDriver for RocksDBDriver {
 
     fn put(&mut self, data: &ClipEntry) -> Result<(), Error> {
         let db = self.db.as_mut().expect("RocksDB must be some");
-        db.put(Self::serialize_id(data.id), Self::serialize_data(data))?;
+        db.put(Self::serialize_id(data.id()), Self::serialize_data(data))?;
         Ok(())
     }
 

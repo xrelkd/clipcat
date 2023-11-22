@@ -28,9 +28,9 @@ rocksdb = "0.21"
 mime  = "0.3"
 snafu = "0.7"
 
-caracal       = { git = "https://github.com/xrelkd/caracal.git", tag = "v0.1.0" }
-clipcat       = { path = "../core" }
-clipcat-proto = { path = "../proto" }
+clipcat           = { path = "../core" }
+clipcat-clipboard = { path = "../clipboard" }
+clipcat-proto     = { path = "../proto" }
 
 [lints]
 workspace = true
