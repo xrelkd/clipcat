@@ -31,14 +31,11 @@ pub async fn serve_with_shutdown(
         clipboard_driver::new_shared().context(error::CreateClipboardDriverSnafu)?;
 
     let (clipboard_manager, history_manager) = {
-        let file_path = history_file_path;
+        tracing::info!("History file path: `{path}`", path = history_file_path.display());
+        let history_manager = HistoryManager::new(&history_file_path);
 
-        tracing::info!("History file path: {:?}", file_path);
-        let history_manager =
-            HistoryManager::new(&file_path).context(error::CreateHistoryManagerSnafu)?;
-
-        tracing::info!("Load history from {:?}", history_manager.path());
-        let history_clips = history_manager.load().context(error::LoadHistoryManagerSnafu)?;
+        tracing::info!("Load history from {path}", path = history_manager.path().display());
+        let history_clips = history_manager.load().await.context(error::LoadHistoryManagerSnafu)?;
         let clip_count = history_clips.len();
         tracing::info!("{clip_count} clip(s) loaded");
 
@@ -172,7 +169,7 @@ async fn serve_worker(
                     printable = data.printable_data(Some(20))
                 );
                 let _ = clipboard_manager.lock().await.insert(data.clone());
-                let _unused = history_manager.lock().await.put(&data);
+                let _unused = history_manager.lock().await.put(&data).await;
             }
             Err(RecvError::Closed) => {
                 tracing::info!("ClipboardWatcher is closing, no further event will be received");
@@ -195,7 +192,7 @@ async fn serve_worker(
         let mut hm = history_manager.lock().await;
 
         tracing::info!("Save history and shrink to capacity {history_capacity}");
-        if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity) {
+        if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
     }
