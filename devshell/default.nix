@@ -30,7 +30,6 @@ pkgs.mkShell {
     pkg-config
 
     protobuf
-    python3
 
     jq
 
