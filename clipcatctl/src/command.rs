@@ -1,7 +1,7 @@
 use std::{io::Write, num::ParseIntError, path::PathBuf, str::FromStr};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipboardMode, ClipboardWatcherState};
+use clipcat::{ClipboardKind, ClipboardWatcherState};
 use clipcat_client::{Client, Manager as _, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -49,12 +49,13 @@ pub enum Commands {
     #[clap(aliases = &["paste"], about = "Insert new clip into clipboard")]
     Insert {
         #[clap(
-            long = "mode",
-            short = 'm',
+            long = "kind",
+            short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
+                    \"secondary\")"
         )]
-        mode: ClipboardMode,
+        kind: ClipboardKind,
 
         data: String,
     },
@@ -62,12 +63,13 @@ pub enum Commands {
     #[clap(aliases = &["cut"], about = "Loads file into clipboard")]
     Load {
         #[clap(
-            long = "mode",
-            short = 'm',
+            long = "kind",
+            short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
+                    \"secondary\")"
         )]
-        mode: ClipboardMode,
+        kind: ClipboardKind,
 
         #[clap(long = "file", short = 'f')]
         file_path: Option<PathBuf>,
@@ -76,12 +78,13 @@ pub enum Commands {
     #[clap(aliases = &["paste"], about = "Pastes content of current clipboard into file")]
     Save {
         #[clap(
-            long = "mode",
-            short = 'm',
+            long = "kind",
+            short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
+                    \"secondary\")"
         )]
-        mode: ClipboardMode,
+        kind: ClipboardKind,
 
         #[clap(long = "file", short = 'f')]
         file_path: Option<PathBuf>,
@@ -125,12 +128,13 @@ pub enum Commands {
     #[clap(name = "promote", about = "Replaces content of clipboard with clip with <id>")]
     Mark {
         #[clap(
-            long = "mode",
-            short = 'm',
+            long = "kind",
+            short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"selection\")"
+            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
+                    \"secondary\")"
         )]
-        mode: ClipboardMode,
+        kind: ClipboardKind,
 
         #[clap(value_parser = parse_hex )]
         id: u64,
@@ -237,28 +241,24 @@ impl Cli {
                             .list()
                             .await?
                             .into_iter()
-                            .find(|entry| entry.mode == ClipboardMode::Clipboard)
+                            .find(|entry| entry.kind() == ClipboardKind::Clipboard)
                             .unwrap_or_default()
                     };
 
-                    if data.is_utf8_string() {
-                        println!("{}", data.as_utf8_string());
-                    } else {
-                        println!("{}", data.printable_data(None));
-                    }
+                    println!("{}", data.printable_data(None));
                 }
-                Some(Commands::Insert { mode, data }) => {
-                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, mode).await?;
+                Some(Commands::Insert { kind, data }) => {
+                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
                 }
                 Some(Commands::Length) => {
                     println!("{len}", len = client.length().await?);
                 }
-                Some(Commands::Load { file_path, mode }) => {
+                Some(Commands::Load { file_path, kind }) => {
                     let data = load_file_or_read_stdin(file_path).await?;
-                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, mode).await?;
+                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
                 }
-                Some(Commands::Save { file_path, mode }) => {
-                    let data = client.get_current_clip(mode).await?;
+                Some(Commands::Save { file_path, kind }) => {
+                    let data = client.get_current_clip(kind).await?;
                     save_file_or_write_stdout(file_path, data.as_bytes()).await?;
                 }
                 Some(Commands::Remove { ids }) => {
@@ -295,12 +295,12 @@ impl Cli {
                         if ok {
                             println!("{new_id:016x}");
                         }
-                        let _ok = client.mark(new_id, ClipboardMode::Clipboard).await?;
+                        let _ok = client.mark(new_id, ClipboardKind::Clipboard).await?;
                     } else {
                         println!(
                             "{:016x} is a {}, you could not edit with text editor",
                             id,
-                            data.mime_str()
+                            data.mime().essence_str()
                         );
                     }
                 }
@@ -311,8 +311,8 @@ impl Cli {
                         println!("{new_id:016x}");
                     }
                 }
-                Some(Commands::Mark { id, mode }) => {
-                    if client.mark(id, mode).await? {
+                Some(Commands::Mark { id, kind }) => {
+                    if client.mark(id, kind).await? {
                         println!("Ok");
                     }
                 }
@@ -351,7 +351,7 @@ async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
         if no_id {
             println!("{content}");
         } else {
-            println!("{:016x}: {content}", data.id);
+            println!("{:016x}: {content}", data.id());
         }
     }
     Ok(())
