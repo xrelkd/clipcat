@@ -25,8 +25,8 @@ pub enum SelectionMode {
 
 #[derive(Copy, Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub enum FinderType {
-    #[serde(rename = "builtin")]
     #[default]
+    #[serde(rename = "builtin")]
     Builtin,
 
     #[serde(rename = "rofi")]
