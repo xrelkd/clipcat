@@ -7,7 +7,7 @@ pub use self::fs::FileSystemDriver;
 use crate::history::Error;
 
 #[async_trait]
-pub trait HistoryDriver: Send + Sync {
+pub trait Driver: Send + Sync {
     async fn load(&self) -> Result<Vec<ClipEntry>, Error>;
 
     async fn save(&mut self, data: &[ClipEntry]) -> Result<(), Error>;
