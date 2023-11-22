@@ -94,7 +94,7 @@ impl Cli {
         }
 
         if let Some(host) = self.grpc_host {
-            config.grpc.address = host;
+            config.grpc.host = host;
         }
 
         if let Some(port) = self.grpc_port {
