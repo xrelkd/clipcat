@@ -32,51 +32,61 @@ pub use self::proto::{
     watcher_client::WatcherClient,
     watcher_server::{Watcher, WatcherServer},
     BatchRemoveRequest, BatchRemoveResponse, ClearRequest, ClearResponse, ClipboardData,
-    ClipboardMode, DisableWatcherRequest, EnableWatcherRequest, GetCurrentClipRequest,
+    ClipboardKind, DisableWatcherRequest, EnableWatcherRequest, GetCurrentClipRequest,
     GetCurrentClipResponse, GetRequest, GetResponse, GetWatcherStateRequest, InsertRequest,
     InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse, MarkRequest,
     MarkResponse, RemoveRequest, RemoveResponse, ToggleWatcherRequest, UpdateRequest,
     UpdateResponse, WatcherState, WatcherStateReply,
 };
 
-impl From<ClipboardMode> for clipcat::ClipboardMode {
-    fn from(t: ClipboardMode) -> Self {
+impl From<ClipboardKind> for clipcat::ClipboardKind {
+    fn from(t: ClipboardKind) -> Self {
         match t {
-            ClipboardMode::Clipboard => Self::Clipboard,
-            ClipboardMode::Selection => Self::Selection,
+            ClipboardKind::Clipboard => Self::Clipboard,
+            ClipboardKind::Primary => Self::Primary,
+            ClipboardKind::Secondary => Self::Secondary,
         }
     }
 }
 
-impl From<clipcat::ClipboardMode> for ClipboardMode {
-    fn from(t: clipcat::ClipboardMode) -> Self {
+impl From<clipcat::ClipboardKind> for ClipboardKind {
+    fn from(t: clipcat::ClipboardKind) -> Self {
         match t {
-            clipcat::ClipboardMode::Clipboard => Self::Clipboard,
-            clipcat::ClipboardMode::Selection => Self::Selection,
+            clipcat::ClipboardKind::Clipboard => Self::Clipboard,
+            clipcat::ClipboardKind::Primary => Self::Primary,
+            clipcat::ClipboardKind::Secondary => Self::Secondary,
         }
     }
 }
 
 impl From<clipcat::ClipEntry> for ClipboardData {
-    fn from(data: clipcat::ClipEntry) -> Self {
-        let clipcat::ClipEntry { id, data, mode, mime, timestamp } = data;
+    fn from(entry: clipcat::ClipEntry) -> Self {
+        let mime = entry.mime().essence_str().to_owned();
+        let data = entry.as_bytes().into();
+        let id = entry.id();
+        let kind = entry.kind();
         let timestamp = u64::try_from(
-            timestamp.duration_since(std::time::UNIX_EPOCH).expect("duration since").as_millis(),
+            entry
+                .timestamp()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("duration since")
+                .as_millis(),
         )
         .expect("`u64` should be enough for store timestamp");
 
-        Self { id, data, mode: mode.into(), mime: mime.essence_str().to_owned(), timestamp }
+        Self { id, data, kind: kind.into(), mime, timestamp }
     }
 }
 
 impl From<ClipboardData> for clipcat::ClipEntry {
-    fn from(ClipboardData { id, data, mime, mode, timestamp }: ClipboardData) -> Self {
+    fn from(ClipboardData { id: _, data, mime, kind, timestamp }: ClipboardData) -> Self {
         let timestamp = std::time::UNIX_EPOCH
             .checked_add(std::time::Duration::from_millis(timestamp))
             .unwrap_or_else(std::time::SystemTime::now);
+
+        let kind = clipcat::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
-        let mode = clipcat::ClipboardMode::from(mode);
-        Self { id, data, mode, timestamp, mime }
+        Self::new(&data, &mime, kind, Some(timestamp))
     }
 }
 
