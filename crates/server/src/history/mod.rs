@@ -9,7 +9,7 @@ pub use self::error::Error;
 
 pub struct HistoryManager {
     file_path: PathBuf,
-    driver: Box<dyn driver::HistoryDriver>,
+    driver: Box<dyn driver::Driver>,
 }
 
 impl HistoryManager {

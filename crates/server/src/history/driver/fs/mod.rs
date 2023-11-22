@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use clipcat::ClipEntry;
 use snafu::ResultExt;
 
-use crate::history::{driver::HistoryDriver, error, Error};
+use crate::history::{driver::Driver, error, Error};
 
 pub struct FileSystemDriver {
     file_path: PathBuf,
@@ -41,7 +41,7 @@ impl FileSystemDriver {
 }
 
 #[async_trait]
-impl HistoryDriver for FileSystemDriver {
+impl Driver for FileSystemDriver {
     async fn load(&self) -> Result<Vec<ClipEntry>, Error> {
         let file_path = self.file_path.clone();
         tokio::task::spawn_blocking(move || match std::fs::File::open(&file_path) {
