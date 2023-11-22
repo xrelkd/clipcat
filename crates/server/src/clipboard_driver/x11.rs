@@ -86,8 +86,8 @@ impl ClipboardDriver for X11ClipboardDriver {
 
     #[inline]
     fn subscribe(&self) -> Result<Subscriber, Error> {
-        let mut subs = Vec::with_capacity(2);
-        for &kind in &[ClipboardKind::Clipboard, ClipboardKind::Primary] {
+        let mut subs = Vec::with_capacity(3);
+        for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
             let clipboard = self.select_clipboard(kind);
             let sub = clipboard.subscribe().context(error::SubscribeX11ClipboardSnafu)?;
             subs.push(sub);

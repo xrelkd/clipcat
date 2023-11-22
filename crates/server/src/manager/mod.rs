@@ -285,7 +285,7 @@ mod tests {
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
 
-        let (ok, new_id) = mgr.replace(old_id, data2.as_bytes(), MIME);
+        let (ok, new_id) = mgr.replace(old_id, data2.as_bytes(), &MIME);
         assert!(ok);
         assert_ne!(old_id, new_id);
         assert_eq!(mgr.len(), 1);
