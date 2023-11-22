@@ -17,13 +17,12 @@ tracing = "0.1"
 bincode = "1"
 serde   = { version = "1", features = ["derive"] }
 
-futures = "0.3"
-tokio   = { version = "1", features = ["rt-multi-thread", "sync"] }
-sigfinn = "0.1"
+async-trait = "0.1"
+futures     = "0.3"
+tokio       = { version = "1", features = ["rt-multi-thread", "sync"] }
+sigfinn     = "0.1"
 
 tonic = { version = "0.10", features = ["gzip", "tls-webpki-roots"] }
-
-rocksdb = "0.21"
 
 mime  = "0.3"
 snafu = "0.7"
