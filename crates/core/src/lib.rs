@@ -1,17 +1,14 @@
 mod entry;
-mod event;
-mod mode;
+mod kind;
 pub mod utils;
 mod watcher_state;
 
 use std::path::PathBuf;
 
+use bytes::Bytes;
 use directories::ProjectDirs;
 
-pub use self::{
-    entry::ClipEntry, event::ClipboardEvent, mode::ClipboardMode,
-    watcher_state::ClipboardWatcherState,
-};
+pub use self::{entry::ClipEntry, kind::ClipboardKind, watcher_state::ClipboardWatcherState};
 
 pub const PROJECT_NAME: &str = "clipcat";
 
@@ -40,4 +37,10 @@ pub static ref PROJECT_CONFIG_DIR: PathBuf = ProjectDirs::from("", PROJECT_NAME,
             .expect("Creating `ProjectDirs` should always success")
             .config_dir()
             .to_path_buf();
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum ClipboardContent {
+    Plaintext(String),
+    Image { width: usize, height: usize, bytes: Bytes },
 }
