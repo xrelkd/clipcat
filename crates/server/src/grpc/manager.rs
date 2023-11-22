@@ -24,7 +24,9 @@ impl proto::Manager for ManagerService {
         let id = {
             let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
-            let id = manager.insert(clipcat::ClipEntry::new(&data, &mime, kind.into(), None));
+            let id = manager.insert(
+                clipcat::ClipEntry::new(&data, &mime, kind.into(), None).unwrap_or_default(),
+            );
             let _unused = manager.mark(id, kind.into()).await;
             drop(manager);
             id
@@ -97,7 +99,7 @@ impl proto::Manager for ManagerService {
     ) -> Result<Response<proto::ListResponse>, Status> {
         let data = {
             let manager = self.manager.lock().await;
-            manager.list().into_iter().map(Into::into).collect()
+            manager.list().into_iter().map(proto::ClipboardData::from).collect()
         };
         Ok(Response::new(proto::ListResponse { data }))
     }
