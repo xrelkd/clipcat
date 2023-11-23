@@ -2,11 +2,11 @@ mod error;
 mod mock;
 mod x11;
 
-use std::{pin::Pin, sync::Arc};
+use std::sync::Arc;
 
+use async_trait::async_trait;
 use clipcat::{ClipboardContent, ClipboardKind};
 use clipcat_clipboard::ClipboardWait;
-use futures::Future;
 use tokio::{sync::mpsc, task};
 
 use self::error::Result;
@@ -56,16 +56,13 @@ impl Subscriber {
     pub async fn next(&mut self) -> Option<ClipboardKind> { self.receiver.recv().await }
 }
 
-type LoadFuture = Pin<Box<dyn Future<Output = Result<ClipboardContent>> + Send + 'static>>;
-type StoreFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
-type ClearFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
-
+#[async_trait]
 pub trait ClipboardBackend: Sync + Send {
-    fn load(&self, kind: ClipboardKind) -> LoadFuture;
+    async fn load(&self, kind: ClipboardKind) -> Result<ClipboardContent>;
 
-    fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> StoreFuture;
+    async fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> Result<()>;
 
-    fn clear(&self, kind: ClipboardKind) -> ClearFuture;
+    async fn clear(&self, kind: ClipboardKind) -> Result<()>;
 
     /// # Errors
     fn subscribe(&self) -> Result<Subscriber>;

@@ -1,14 +1,12 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use clipcat::{ClipboardContent, ClipboardKind};
 use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubscribe};
-use futures::FutureExt;
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::backend::{
-    error, ClearFuture, ClipboardBackend, Error, LoadFuture, StoreFuture, Subscriber,
-};
+use crate::backend::{error, ClipboardBackend, Error, Result, Subscriber};
 
 #[derive(Clone)]
 pub struct X11ClipboardBackend {
@@ -19,7 +17,7 @@ pub struct X11ClipboardBackend {
 
 impl X11ClipboardBackend {
     /// # Errors
-    pub fn new(display_name: Option<&str>) -> Result<Self, Error> {
+    pub fn new(display_name: Option<&str>) -> Result<Self> {
         let default_clipboard = Clipboard::new(display_name, ClipboardKind::Clipboard)
             .context(error::InitializeX11ClipboardSnafu)?;
         let primary_clipboard = Clipboard::new(display_name, ClipboardKind::Primary)
@@ -43,49 +41,43 @@ impl X11ClipboardBackend {
     }
 }
 
+#[async_trait]
 impl ClipboardBackend for X11ClipboardBackend {
     #[inline]
-    fn load(&self, kind: ClipboardKind) -> LoadFuture {
+    async fn load(&self, kind: ClipboardKind) -> Result<ClipboardContent> {
         let clipboard = self.select_clipboard(kind);
-        async move {
-            let data = task::spawn_blocking(move || match clipboard.load() {
-                Ok(data) => Ok(data),
-                Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
-                Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
-            })
+        let data = task::spawn_blocking(move || match clipboard.load() {
+            Ok(data) => Ok(data),
+            Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
+            Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
+        })
+        .await
+        .context(error::SpawnBlockingTaskSnafu)??;
+        Ok(data)
+    }
+
+    #[inline]
+    async fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> Result<()> {
+        let clipboard = self.select_clipboard(kind);
+
+        task::spawn_blocking(move || clipboard.store(data))
             .await
-            .context(error::SpawnBlockingTaskSnafu)??;
-            Ok(data)
-        }
-        .boxed()
+            .context(error::SpawnBlockingTaskSnafu)?
+            .context(error::StoreDataToX11ClipboardSnafu)
     }
 
     #[inline]
-    fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> StoreFuture {
+    async fn clear(&self, kind: ClipboardKind) -> Result<()> {
         let clipboard = self.select_clipboard(kind);
-        async move {
-            task::spawn_blocking(move || clipboard.store(data))
-                .await
-                .context(error::SpawnBlockingTaskSnafu)?
-                .context(error::StoreDataToX11ClipboardSnafu)
-        }
-        .boxed()
+
+        task::spawn_blocking(move || clipboard.clear())
+            .await
+            .context(error::SpawnBlockingTaskSnafu)?
+            .context(error::ClearX11ClipboardSnafu)
     }
 
     #[inline]
-    fn clear(&self, kind: ClipboardKind) -> ClearFuture {
-        let clipboard = self.select_clipboard(kind);
-        async move {
-            task::spawn_blocking(move || clipboard.clear())
-                .await
-                .context(error::SpawnBlockingTaskSnafu)?
-                .context(error::ClearX11ClipboardSnafu)
-        }
-        .boxed()
-    }
-
-    #[inline]
-    fn subscribe(&self) -> Result<Subscriber, Error> {
+    fn subscribe(&self) -> Result<Subscriber> {
         let mut subs = Vec::with_capacity(3);
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
             let clipboard = self.select_clipboard(kind);
