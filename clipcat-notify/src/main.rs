@@ -10,33 +10,33 @@ use tokio::runtime::Runtime;
 use self::error::Error;
 
 #[derive(Parser)]
-#[clap(name = clipcat::NOTIFY_PROGRAM_NAME)]
+#[clap(name = clipcat::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
 struct Cli {
     #[clap(subcommand)]
-    subcommand: Option<Commands>,
+    commands: Option<Commands>,
 
-    #[clap(long = "no-clipboard", help = "Does not listen clipboard")]
+    #[clap(long = "no-clipboard", help = "Do not listen clipboard")]
     no_clipboard: bool,
 
-    #[clap(long = "no-primary", help = "Does not listen primary")]
+    #[clap(long = "no-primary", help = "Do not listen primary")]
     no_primary: bool,
 
-    #[clap(long = "no-secondary", help = "Does not listen secondary")]
+    #[clap(long = "no-secondary", help = "Do not listen secondary")]
     no_secondary: bool,
 }
 
-#[derive(Subcommand, Clone)]
+#[derive(Clone, Subcommand)]
 enum Commands {
-    #[clap(about = "Prints version information")]
+    #[clap(about = "Print version information")]
     Version,
 
-    #[clap(about = "Outputs shell completion code for the specified shell (bash, zsh, fish)")]
+    #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
 }
 
 impl Cli {
     fn run(self) -> Result<(), Error> {
-        match self.subcommand {
+        match self.commands {
             Some(Commands::Version) => {
                 std::io::stdout()
                     .write_all(Self::command().render_long_version().as_bytes())
