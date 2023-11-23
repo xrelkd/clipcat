@@ -3,12 +3,11 @@ use std::{
     collections::hash_map::DefaultHasher,
     fmt,
     hash::{Hash, Hasher},
-    time::SystemTime,
 };
 
-use chrono::{offset::Utc, DateTime};
 use image::ImageEncoder as _;
 use snafu::{ResultExt, Snafu};
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 use crate::{ClipboardContent, ClipboardKind};
 
@@ -21,7 +20,7 @@ pub struct ClipEntry {
 
     clipboard_kind: ClipboardKind,
 
-    timestamp: SystemTime,
+    timestamp: OffsetDateTime,
 }
 
 impl ClipEntry {
@@ -31,7 +30,7 @@ impl ClipEntry {
         data: &[u8],
         mime: &mime::Mime,
         clipboard_kind: ClipboardKind,
-        timestamp: Option<SystemTime>,
+        timestamp: Option<OffsetDateTime>,
     ) -> Result<Self, Error> {
         let content = if mime.type_() == mime::TEXT {
             ClipboardContent::Plaintext(String::from_utf8_lossy(data).to_string())
@@ -59,7 +58,7 @@ impl ClipEntry {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
-            timestamp: timestamp.unwrap_or_else(SystemTime::now),
+            timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
         })
     }
 
@@ -78,7 +77,7 @@ impl ClipEntry {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
-            timestamp: SystemTime::now(),
+            timestamp: OffsetDateTime::now_utc(),
         }
     }
 
@@ -100,7 +99,7 @@ impl ClipEntry {
 
     #[inline]
     #[must_use]
-    pub const fn timestamp(&self) -> SystemTime { self.timestamp }
+    pub const fn timestamp(&self) -> OffsetDateTime { self.timestamp }
 
     #[inline]
     #[must_use]
@@ -132,7 +131,7 @@ impl ClipEntry {
             ClipboardContent::Image { width: _, height: _, bytes } => {
                 let content_type = mime::IMAGE_PNG;
                 let size = bytes.len();
-                let timestamp = DateTime::<Utc>::from(self.timestamp).to_rfc3339();
+                let timestamp = self.timestamp.format(&Rfc3339).unwrap_or_default();
                 format!("content-type: {content_type}, size: {size}, timestamp: {timestamp}")
             }
         };
@@ -163,7 +162,7 @@ impl ClipEntry {
     #[inline]
     pub fn mark(&mut self, clipboard_kind: ClipboardKind) {
         self.clipboard_kind = clipboard_kind;
-        self.timestamp = SystemTime::now();
+        self.timestamp = OffsetDateTime::now_utc();
     }
 
     #[must_use]
@@ -209,7 +208,7 @@ impl Default for ClipEntry {
             id: 0,
             content: ClipboardContent::Plaintext(String::new()),
             clipboard_kind: ClipboardKind::Clipboard,
-            timestamp: SystemTime::UNIX_EPOCH,
+            timestamp: OffsetDateTime::now_utc(),
         }
     }
 }

@@ -425,13 +425,13 @@ name = "clipcat"
 version = "0.6.0"
 dependencies = [
  "bytes",
- "chrono",
  "directories",
  "image",
  "lazy_static",
  "mime",
  "serde",
  "snafu",
+ "time",
 ]
 
 [[package]]
@@ -512,6 +512,7 @@ dependencies = [
  "clipcat",
  "mime",
  "prost",
+ "time",
  "tonic",
  "tonic-build",
 ]
@@ -530,6 +531,7 @@ dependencies = [
  "serde",
  "sigfinn",
  "snafu",
+ "time",
  "tokio",
  "tonic",
  "tracing",

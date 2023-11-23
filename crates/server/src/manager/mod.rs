@@ -1,9 +1,10 @@
 mod error;
 
-use std::{collections::HashMap, sync::Arc, time::SystemTime};
+use std::{collections::HashMap, sync::Arc};
 
 use clipcat::{ClipEntry, ClipboardKind};
 use snafu::ResultExt;
+use time::OffsetDateTime;
 
 pub use self::error::Error;
 use crate::backend::ClipboardBackend;
@@ -78,7 +79,7 @@ impl ClipboardManager {
     fn remove_oldest(&mut self) {
         while self.clips.len() > self.capacity {
             let (_, oldest_id) =
-                self.clips.iter().fold((SystemTime::now(), 0), |oldest, (&id, clip)| {
+                self.clips.iter().fold((OffsetDateTime::now_utc(), 0), |oldest, (&id, clip)| {
                     if clip.timestamp() < oldest.0 {
                         (clip.timestamp(), id)
                     } else {
