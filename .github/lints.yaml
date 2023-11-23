@@ -1,0 +1,90 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - ci/*
+      - feat/*
+      - feature/*
+      - hotfix/*
+      - release/*
+
+  pull_request:
+
+jobs:
+  format:
+    name: Lint format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install treefmt
+        run: nix profile install 'nixpkgs#treefmt'
+
+      - name: Install prettier
+        run: nix profile install 'nixpkgs#nodePackages.prettier'
+
+      - name: Install nixpkgs-fmt
+        run: nix profile install 'nixpkgs#nixpkgs-fmt'
+
+      - name: Install hclfmt
+        run: nix profile install 'nixpkgs#hclfmt'
+
+      - name: Install taplo
+        run: nix profile install 'nixpkgs#taplo'
+
+      - name: Install clang-tools
+        run: nix profile install 'nixpkgs#clang-tools'
+
+      - name: Run shfmt, shellcheck, checkbashisms
+        uses: luizm/action-sh-checker@v0.7.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          sh_checker_comment: true
+          sh_checker_checkbashisms_enable: true
+
+      - name: Run treefmt
+        run: |
+          treefmt \
+            --allow-missing-formatter \
+            --fail-on-change \
+            --no-cache \
+            --formatters \
+              prettier \
+              clang-format \
+              nix \
+              shell \
+              hcl \
+              toml
+
+  commit:
+    name: Lint commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run commitlint
+        uses: wagoid/commitlint-github-action@v5.4.1
+        with:
+          firstParent: false
+
+  codespell:
+    name: Codespell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: codespell-project/codespell-problem-matcher@v1
+
+      - name: Codespell
+        uses: codespell-project/actions-codespell@v2
