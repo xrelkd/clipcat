@@ -436,7 +436,6 @@ dependencies = [
  "lazy_static",
  "mime",
  "serde",
- "serde_with",
  "snafu",
 ]
 
@@ -461,8 +460,9 @@ dependencies = [
  "bytes",
  "clipcat",
  "mio",
- "signal-hook",
+ "sigfinn",
  "snafu",
+ "tokio",
  "tracing",
  "tracing-subscriber",
  "wl-clipboard-rs",
@@ -2306,16 +2306,6 @@ dependencies = [
  "snafu",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "signal-hook"
-version = "0.3.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8621587d4798caf8eb44879d42e56b9a93ea5dcd315a6487c357130095b62801"
-dependencies = [
- "libc",
- "signal-hook-registry",
 ]
 
 [[package]]

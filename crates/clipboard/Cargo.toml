@@ -16,8 +16,7 @@ autoexamples = false
 [dependencies]
 tracing = "0.1"
 
-arboard         = "3"
-wl-clipboard-rs = "0.8"
+arboard = "3"
 
 bytes = "1"
 mio   = { version = "0.8", features = ["os-ext"] }
@@ -26,12 +25,15 @@ snafu = "0.7"
 clipcat = { path = "../core/" }
 
 [target.'cfg(all(unix, not(any(target_os="macos", target_os="android", target_os="emscripten"))))'.dependencies]
-x11rb = { version = "0.12", features = ["xfixes"] }
+x11rb           = { version = "0.12", features = ["xfixes"] }
+wl-clipboard-rs = "0.8"
 
 [dev-dependencies]
 tracing-subscriber = "0.3"
 
-signal-hook = "0.3"
+tokio = { version = "1", features = ["rt", "signal", "sync"] }
+
+sigfinn = "0.1"
 
 [[example]]
 name = "load"
