@@ -12,8 +12,7 @@ categories.workspace = true
 keywords.workspace   = true
 
 [dependencies]
-serde      = { version = "1", features = ["derive"] }
-serde_with = "3"
+serde = { version = "1", features = ["derive"] }
 
 bytes       = "1"
 chrono      = "0.4"
