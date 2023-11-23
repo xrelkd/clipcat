@@ -454,9 +454,11 @@ dependencies = [
  "arboard",
  "bytes",
  "clipcat",
+ "mio",
  "signal-hook",
  "snafu",
  "tracing",
+ "tracing-subscriber",
  "x11rb 0.8.1",
 ]
 
@@ -1553,6 +1555,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dce281c5e46beae905d4de1870d8b1509a9142b62eedf18b443b011ca8343d0"
 dependencies = [
  "libc",
+ "log",
  "wasi",
  "windows-sys",
 ]

@@ -21,7 +21,7 @@ pub struct Clipboard {
 
 impl Clipboard {
     /// # Errors
-    pub fn new(display_name: Option<&str>, clipboard_kind: ClipboardKind) -> Result<Self, Error> {
+    pub fn new(display_name: Option<String>, clipboard_kind: ClipboardKind) -> Result<Self, Error> {
         let listener = Arc::new(Listener::new(display_name, clipboard_kind)?);
         let clear_on_drop = Arc::new(AtomicBool::from(false));
         let clipboard_kind = match clipboard_kind {

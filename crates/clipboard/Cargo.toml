@@ -18,6 +18,7 @@ tracing = "0.1"
 
 arboard = "3"
 bytes   = "1"
+mio     = "0.8"
 snafu   = "0.7"
 
 clipcat = { path = "../core/" }
@@ -26,6 +27,8 @@ clipcat = { path = "../core/" }
 x11rb = { version = "0.8", features = ["xfixes"] }
 
 [dev-dependencies]
+tracing-subscriber = "0.3"
+
 signal-hook = "0.3"
 
 [[example]]
