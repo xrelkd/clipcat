@@ -24,7 +24,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 http          = "1"
-skim          = "0.9"
+skim          = "0.10"
 snafu         = "0.7"
 
 clipcat                 = { path = "../crates/core" }
