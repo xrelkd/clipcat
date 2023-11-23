@@ -1,0 +1,154 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - ci/*
+      - feat/*
+      - feature/*
+      - hotfix/*
+      - release/*
+
+  pull_request:
+    paths:
+      - "*/src/**"
+      - ".github/**"
+      - "src/**"
+      - Cargo.lock
+      - Cargo.toml
+      - deny.toml
+      - rust-toolchain.toml
+      - rustfmt.toml
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rustfmt:
+    name: Check Rust format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+
+      - name: Show rustfmt version
+        run: |
+          nix develop --command cargo fmt --version
+
+      - name: Run cargo fmt
+        run: |
+          nix develop --command cargo fmt --all --verbose --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    needs:
+      - rustfmt
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Show cargo clippy version
+        run: |
+          nix develop --command cargo clippy --version
+
+      - name: Run cargo clippy
+        run: |
+          nix develop --command cargo clippy-all
+
+  # FIXME: enable `Test`
+  # test:
+  #   name: Test
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - clippy
+  #
+  #   env:
+  #     NEXTEST_RETRIES: 5
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       mode:
+  #         - release
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #
+  #     - name: Install Nix
+  #       uses: cachix/install-nix-action@v22
+  #
+  #     - name: Pre Cache
+  #       run: |
+  #         rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+  #
+  #     - name: Cache
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry/index/
+  #           ~/.cargo/registry/cache/
+  #           ~/.cargo/git/db/
+  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  #
+  #     - name: Show cargo-nextest version
+  #       run: |
+  #         nix develop --command cargo nextest --version
+  #
+  #     - name: Test with cargo-test
+  #       uses: coactions/setup-xvfb@v1
+  #       with:
+  #         run: |
+  #           nix develop --command cargo test-all -j1 ${{ matrix.mode == 'release' && '--release' || '' }}
+
+  doc:
+    name: Doc
+    runs-on: ubuntu-latest
+    needs:
+      - clippy
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "true"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v22
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo doc
+        run: |
+          nix develop --command cargo doc-all
