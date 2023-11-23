@@ -42,7 +42,7 @@ jobs:
           submodules: "true"
 
       - name: Install docker-buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           version: latest
 
