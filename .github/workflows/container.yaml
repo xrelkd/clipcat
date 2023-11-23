@@ -1,0 +1,83 @@
+name: Container
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - ci/*
+      - feat/*
+      - feature/*
+      - hotfix/*
+      - release/*
+    tags:
+      - v*
+  pull_request:
+
+env:
+  CI: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Build and publish images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode:
+          - release
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+
+      - name: Install docker-buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: Login to the GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup container metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=edge
+            type=raw,enable=${{ github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/') }},value=build-{{date 'YYYY.MM.DD'}}-{{sha}}
+          flavor: |
+            latest=auto
+            suffix=${{ matrix.mode == 'debug' && '-debug' || ''}}
+          bake-target: clipcat
+
+      - name: Build container image
+        uses: docker/bake-action@v3
+        with:
+          pull: true
+          push: true
+
+          files: |
+            ./dev-support/containers/docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: clipcat
