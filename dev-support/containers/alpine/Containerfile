@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.4
+
+FROM sccache AS sccache
+
+# This is the build stage for fixa. Here we create the binary in a temporary image.
+FROM rust AS builder
+
+COPY --from=sccache /usr/bin/sccache /usr/bin/sccache
+
+RUN <<EOF
+#!/usr/bin/env ash
+
+set -eu
+
+apk add --no-cache \
+    musl-dev \
+    protobuf-dev
+
+EOF
+
+ARG RUSTC_WRAPPER="/usr/bin/sccache"
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ARG SCCACHE_BUCKET
+ARG SCCACHE_ENDPOINT
+ARG SCCACHE_S3_USE_SSL
+
+WORKDIR /build
+COPY . /build
+
+RUN cargo build --locked --release
+
+# This is the 2nd stage: a very small image where we copy the binaries."
+FROM alpine as clipcat
+
+COPY --from=builder /build/target/release/clipcatd       /usr/bin
+COPY --from=builder /build/target/release/clipcatctl     /usr/bin
+COPY --from=builder /build/target/release/clipcat-menu   /usr/bin
+COPY --from=builder /build/target/release/clipcat-notify /usr/bin
+
+RUN <<EOF
+#!/usr/bin/env ash
+
+set -eu
+
+# check if executable works in this container
+/usr/bin/clipcatd       version
+/usr/bin/clipcatctl     version
+/usr/bin/clipcat-menu   version
+/usr/bin/clipcat-notify version
+
+EOF
+
+ENTRYPOINT [ "/usr/bin/clipcatd", "version" ]
