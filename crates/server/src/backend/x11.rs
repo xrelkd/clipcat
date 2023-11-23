@@ -19,11 +19,11 @@ impl X11ClipboardBackend {
     /// # Errors
     pub fn new(display_name: Option<&str>) -> Result<Self> {
         let default_clipboard = Clipboard::new(display_name, ClipboardKind::Clipboard)
-            .context(error::InitializeX11ClipboardSnafu)?;
+            .context(error::InitializeClipboardSnafu)?;
         let primary_clipboard = Clipboard::new(display_name, ClipboardKind::Primary)
-            .context(error::InitializeX11ClipboardSnafu)?;
+            .context(error::InitializeClipboardSnafu)?;
         let secondary_clipboard = Clipboard::new(display_name, ClipboardKind::Secondary)
-            .context(error::InitializeX11ClipboardSnafu)?;
+            .context(error::InitializeClipboardSnafu)?;
         Ok(Self {
             default_clipboard: Arc::new(default_clipboard),
             primary_clipboard: Arc::new(primary_clipboard),
@@ -49,7 +49,7 @@ impl ClipboardBackend for X11ClipboardBackend {
         let data = task::spawn_blocking(move || match clipboard.load() {
             Ok(data) => Ok(data),
             Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
-            Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
+            Err(source) => Err(Error::LoadDataFromClipboard { source }),
         })
         .await
         .context(error::SpawnBlockingTaskSnafu)??;
@@ -63,7 +63,7 @@ impl ClipboardBackend for X11ClipboardBackend {
         task::spawn_blocking(move || clipboard.store(data))
             .await
             .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::StoreDataToX11ClipboardSnafu)
+            .context(error::StoreDataToClipboardSnafu)
     }
 
     #[inline]
@@ -73,7 +73,7 @@ impl ClipboardBackend for X11ClipboardBackend {
         task::spawn_blocking(move || clipboard.clear())
             .await
             .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::ClearX11ClipboardSnafu)
+            .context(error::ClearClipboardSnafu)
     }
 
     #[inline]
@@ -81,7 +81,7 @@ impl ClipboardBackend for X11ClipboardBackend {
         let mut subs = Vec::with_capacity(3);
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
             let clipboard = self.select_clipboard(kind);
-            let sub = clipboard.subscribe().context(error::SubscribeX11ClipboardSnafu)?;
+            let sub = clipboard.subscribe().context(error::SubscribeClipboardSnafu)?;
             subs.push(sub);
         }
 

@@ -22,7 +22,7 @@ impl ClipboardBackend for MockClipboardBackend {
         task::spawn_blocking(move || match clipboard.load() {
             Ok(d) => Ok(d),
             Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
-            Err(source) => Err(Error::LoadDataFromX11Clipboard { source }),
+            Err(source) => Err(Error::LoadDataFromClipboard { source }),
         })
         .await
         .context(error::SpawnBlockingTaskSnafu)?
@@ -35,7 +35,7 @@ impl ClipboardBackend for MockClipboardBackend {
         task::spawn_blocking(move || clipboard.store(data))
             .await
             .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::StoreDataToX11ClipboardSnafu)
+            .context(error::StoreDataToClipboardSnafu)
     }
 
     #[inline]
@@ -45,7 +45,7 @@ impl ClipboardBackend for MockClipboardBackend {
         task::spawn_blocking(move || clipboard.clear())
             .await
             .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::ClearX11ClipboardSnafu)
+            .context(error::ClearClipboardSnafu)
     }
 
     #[inline]
@@ -53,6 +53,6 @@ impl ClipboardBackend for MockClipboardBackend {
         self.0
             .subscribe()
             .map(|sub| Subscriber::from(vec![sub]))
-            .context(error::SubscribeX11ClipboardSnafu)
+            .context(error::SubscribeClipboardSnafu)
     }
 }
