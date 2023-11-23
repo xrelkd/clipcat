@@ -58,10 +58,9 @@ impl Cli {
                     return Err(Error::ListenNothing);
                 }
 
-                let clipboard_driver = clipcat_server::clipboard_driver::new()
-                    .context(error::InitializeClipboardDriverSnafu)?;
-                let mut subscriber =
-                    clipboard_driver.subscribe().context(error::SubscribeClipboardSnafu)?;
+                let backend = clipcat_server::backend::new()
+                    .context(error::InitializeClipboardBackendSnafu)?;
+                let mut subscriber = backend.subscribe().context(error::SubscribeClipboardSnafu)?;
                 Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
                     async move {
                         while let Some(kind) = subscriber.next().await {
@@ -73,7 +72,7 @@ impl Cli {
                             }
                         }
 
-                        drop(clipboard_driver);
+                        drop(backend);
 
                         Err(Error::WaitForClipboardEvent)
                     },

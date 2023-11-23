@@ -8,8 +8,8 @@ pub enum Error {
     #[snafu(display("Error occurs while starting tonic server, error: {source}"))]
     StartTonicServer { source: tonic::transport::Error, backtrace: Backtrace },
 
-    #[snafu(display("Could not create clipboard driver, error: {source}"))]
-    CreateClipboardDriver { source: crate::clipboard_driver::Error },
+    #[snafu(display("Could not create clipboard backend, error: {source}"))]
+    CreateClipboardBackend { source: crate::backend::Error },
 
     #[snafu(display("Could not create HistoryManager, error: {source}"))]
     CreateHistoryManager { source: crate::history::Error },

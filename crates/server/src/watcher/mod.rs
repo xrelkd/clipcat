@@ -13,7 +13,7 @@ use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
 pub use self::error::Error;
-use crate::clipboard_driver::{ClipboardDriver, Error as DriverError};
+use crate::backend::{ClipboardBackend, Error as DriverError};
 
 pub struct ClipboardWatcher {
     is_watching: Arc<AtomicBool>,
@@ -36,7 +36,7 @@ impl Default for ClipboardWatcherOptions {
 
 impl ClipboardWatcher {
     pub fn new(
-        driver: Arc<dyn ClipboardDriver>,
+        backend: Arc<dyn ClipboardBackend>,
         opts: ClipboardWatcherOptions,
     ) -> Result<Self, Error> {
         let enabled_kinds = {
@@ -64,12 +64,12 @@ impl ClipboardWatcher {
             let event_sender = event_sender.clone();
             let is_watching = is_watching.clone();
 
-            let mut subscriber = driver.subscribe()?;
+            let mut subscriber = backend.subscribe()?;
             async move {
                 let mut current_data = HashMap::new();
                 if opts.load_current {
                     for &kind in &enabled_kinds {
-                        match driver.load(kind).await {
+                        match backend.load(kind).await {
                             Ok(data) => {
                                 drop(current_data.insert(kind, data.clone()));
                                 if let Err(_err) =
@@ -93,7 +93,7 @@ impl ClipboardWatcher {
                     let kind = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
 
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds.contains(&kind) {
-                        let new_data = match driver.load(kind).await {
+                        let new_data = match backend.load(kind).await {
                             Ok(new_data) => match current_data.get(&kind) {
                                 Some(current_data) if new_data != *current_data => new_data,
                                 None => new_data,

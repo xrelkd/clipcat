@@ -6,26 +6,26 @@ use clipcat::{ClipEntry, ClipboardKind};
 use snafu::ResultExt;
 
 pub use self::error::Error;
-use crate::clipboard_driver::ClipboardDriver;
+use crate::backend::ClipboardBackend;
 
 const DEFAULT_CAPACITY: usize = 40;
 
 pub struct ClipboardManager {
-    driver: Arc<dyn ClipboardDriver>,
+    backend: Arc<dyn ClipboardBackend>,
     capacity: usize,
     clips: HashMap<u64, ClipEntry>,
     current_clips: HashMap<ClipboardKind, ClipEntry>,
 }
 
 impl ClipboardManager {
-    pub fn with_capacity(driver: Arc<dyn ClipboardDriver>, capacity: usize) -> Self {
-        Self { driver, capacity, clips: HashMap::default(), current_clips: HashMap::default() }
+    pub fn with_capacity(backend: Arc<dyn ClipboardBackend>, capacity: usize) -> Self {
+        Self { backend, capacity, clips: HashMap::default(), current_clips: HashMap::default() }
     }
 
     #[allow(dead_code)]
     #[inline]
-    pub fn new(driver: Arc<dyn ClipboardDriver>) -> Self {
-        Self::with_capacity(driver, DEFAULT_CAPACITY)
+    pub fn new(backend: Arc<dyn ClipboardBackend>) -> Self {
+        Self::with_capacity(backend, DEFAULT_CAPACITY)
     }
 
     #[inline]
@@ -121,7 +121,7 @@ impl ClipboardManager {
     pub async fn mark(&mut self, id: u64, clipboard_kind: ClipboardKind) -> Result<(), Error> {
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark(clipboard_kind);
-            self.driver
+            self.backend
                 .store(clipboard_kind, clip.to_clipboard_content())
                 .await
                 .context(error::StoreClipboardContentSnafu)?;
@@ -138,7 +138,7 @@ mod tests {
     use clipcat::{ClipEntry, ClipboardKind};
 
     use crate::{
-        clipboard_driver::MockClipboardDriver,
+        backend::MockClipboardBackend,
         manager::{ClipboardManager, DEFAULT_CAPACITY},
     };
 
@@ -148,8 +148,8 @@ mod tests {
 
     #[test]
     fn test_construction() {
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mgr = ClipboardManager::new(driver);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mgr = ClipboardManager::new(backend);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), DEFAULT_CAPACITY);
@@ -157,8 +157,8 @@ mod tests {
         assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
 
         let cap = 20;
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mgr = ClipboardManager::with_capacity(driver, cap);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mgr = ClipboardManager::with_capacity(backend, cap);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
@@ -168,8 +168,8 @@ mod tests {
 
     #[test]
     fn test_zero_capacity() {
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mut mgr = ClipboardManager::with_capacity(driver, 0);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mut mgr = ClipboardManager::with_capacity(backend, 0);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), 0);
@@ -197,9 +197,9 @@ mod tests {
 
     #[test]
     fn test_capacity() {
-        let driver = Arc::new(MockClipboardDriver::new());
+        let backend = Arc::new(MockClipboardBackend::new());
         let cap = 10;
-        let mut mgr = ClipboardManager::with_capacity(driver, cap);
+        let mut mgr = ClipboardManager::with_capacity(backend, cap);
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
 
@@ -225,8 +225,8 @@ mod tests {
     fn test_insert() {
         let n = 20;
         let clips = create_clips(n);
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mut mgr = ClipboardManager::new(driver);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mut mgr = ClipboardManager::new(backend);
         for clip in &clips {
             let _ = mgr.insert(clip.clone());
         }
@@ -246,8 +246,8 @@ mod tests {
     fn test_import() {
         let n = 10;
         let clips = create_clips(n);
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mut mgr = ClipboardManager::with_capacity(driver, 20);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mut mgr = ClipboardManager::with_capacity(backend, 20);
 
         mgr.import(&clips);
         assert_eq!(mgr.len(), n);
@@ -269,8 +269,8 @@ mod tests {
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
         let clip = ClipEntry::new(data1.as_bytes(), &MIME, ClipboardKind::Clipboard, None).unwrap();
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mut mgr = ClipboardManager::new(driver);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mut mgr = ClipboardManager::new(backend);
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
 
@@ -286,8 +286,8 @@ mod tests {
 
     #[test]
     fn test_remove() {
-        let driver = Arc::new(MockClipboardDriver::new());
-        let mut mgr = ClipboardManager::new(driver);
+        let backend = Arc::new(MockClipboardBackend::new());
+        let mut mgr = ClipboardManager::new(backend);
         assert_eq!(mgr.len(), 0);
         assert!(!mgr.remove(43));
 
@@ -309,10 +309,10 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let driver = Arc::new(MockClipboardDriver::new());
+        let backend = Arc::new(MockClipboardBackend::new());
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new(driver);
+        let mut mgr = ClipboardManager::new(backend);
 
         mgr.import(&clips);
         assert!(!mgr.is_empty());

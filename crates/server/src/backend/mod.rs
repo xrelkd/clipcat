@@ -10,14 +10,14 @@ use futures::Future;
 use tokio::{sync::mpsc, task};
 
 use self::error::Result;
-pub use self::{error::Error, mock::MockClipboardDriver, x11::X11ClipboardDriver};
+pub use self::{error::Error, mock::MockClipboardBackend, x11::X11ClipboardBackend};
 
 /// # Errors
-pub fn new() -> Result<Box<dyn ClipboardDriver>> { Ok(Box::new(X11ClipboardDriver::new(None)?)) }
+pub fn new() -> Result<Box<dyn ClipboardBackend>> { Ok(Box::new(X11ClipboardBackend::new(None)?)) }
 
 /// # Errors
-pub fn new_shared() -> Result<Arc<dyn ClipboardDriver>> {
-    Ok(Arc::new(X11ClipboardDriver::new(None)?))
+pub fn new_shared() -> Result<Arc<dyn ClipboardBackend>> {
+    Ok(Arc::new(X11ClipboardBackend::new(None)?))
 }
 
 #[derive(Debug)]
@@ -60,7 +60,7 @@ type LoadFuture = Pin<Box<dyn Future<Output = Result<ClipboardContent>> + Send +
 type StoreFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
 type ClearFuture = Pin<Box<dyn Future<Output = Result<()>> + Send + 'static>>;
 
-pub trait ClipboardDriver: Sync + Send {
+pub trait ClipboardBackend: Sync + Send {
     fn load(&self, kind: ClipboardKind) -> LoadFuture;
 
     fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> StoreFuture;
