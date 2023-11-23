@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::os::{fd::AsRawFd, unix::prelude::RawFd};
 
 use snafu::ResultExt;
 use x11rb::{
     connection::Connection,
-    protocol::{xfixes, xproto, xproto::ConnectionExt},
+    protocol::{xfixes, xfixes::ConnectionExt as _, xproto, xproto::ConnectionExt as _},
     rust_connection::RustConnection,
 };
 
@@ -14,57 +14,37 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Context {
+    display_name: Option<String>,
     connection: RustConnection,
-    window: u32,
-    atom_cache: Arc<AtomCache>,
+    window: xproto::Window,
+    atom_cache: AtomCache,
     clipboard_kind: ClipboardKind,
 }
 
 impl Context {
-    #[inline]
-    pub fn new(display_name: Option<&str>, clipboard_kind: ClipboardKind) -> Result<Self, Error> {
-        let (connection, window) = Self::new_connection(display_name)?;
-        let atom_cache = Arc::new(AtomCache::new(&connection)?);
-        Ok(Self { connection, window, atom_cache, clipboard_kind })
+    pub fn new(display_name: Option<String>, clipboard_kind: ClipboardKind) -> Result<Self, Error> {
+        let (connection, window) = new_connection(display_name.as_deref())?;
+        let atom_cache = AtomCache::new(&connection)?;
+        let ctx = Self { display_name, connection, window, atom_cache, clipboard_kind };
+        ctx.prepare_for_monitoring_event()?;
+        Ok(ctx)
     }
 
-    fn new_connection(
-        display_name: Option<&str>,
-    ) -> Result<(RustConnection, xproto::Window), Error> {
-        let (connection, screen_num) =
-            RustConnection::connect(display_name).context(error::ConnectSnafu)?;
-
-        let window =
-            {
-                let window = connection.generate_id().context(error::GenerateX11IdentifierSnafu)?;
-                let screen = &connection.setup().roots[screen_num];
-
-                drop(connection
-                .create_window(
-                    x11rb::COPY_DEPTH_FROM_PARENT,
-                    window,
-                    screen.root,
-                    0,
-                    0,
-                    1,
-                    1,
-                    0,
-                    xproto::WindowClass::INPUT_OUTPUT,
-                    screen.root_visual,
-                    &xproto::CreateWindowAux::default().event_mask(
-                        xproto::EventMask::PROPERTY_CHANGE, // | EventMask::STRUCTURE_NOTIFY
-                    ),
-                )
-                .context(error::CreateWindowSnafu)?);
-
-                window
-            };
-
-        Ok((connection, window))
+    pub fn reconnect(&mut self) -> Result<(), Error> {
+        let (connection, window) = new_connection(self.display_name.as_deref())?;
+        self.atom_cache = AtomCache::new(&connection)?;
+        self.connection = connection;
+        self.window = window;
+        self.prepare_for_monitoring_event()
     }
 
     #[inline]
-    pub fn clipboard_type(&self) -> xproto::Atom {
+    pub fn poll_for_event(&self) -> Result<x11rb::protocol::Event, Error> {
+        self.connection.poll_for_event().context(error::PollForEventSnafu)?.ok_or(Error::NoEvent)
+    }
+
+    #[inline]
+    const fn clipboard_kind(&self) -> xproto::Atom {
         match self.clipboard_kind {
             ClipboardKind::Clipboard => self.atom_cache.clipboard_selection,
             ClipboardKind::Primary => self.atom_cache.primary_selection,
@@ -73,52 +53,12 @@ impl Context {
     }
 
     #[inline]
-    pub fn close_event(&self) -> xproto::ClientMessageEvent {
-        const CLOSE_CONNECTION_ATOM: xproto::Atom = 8293;
-        xproto::ClientMessageEvent {
-            response_type: xproto::CLIENT_MESSAGE_EVENT,
-            sequence: 0,
-            format: 32,
-            window: self.window,
-            type_: CLOSE_CONNECTION_ATOM,
-            data: [0u32; 5].into(),
-        }
-    }
-
-    #[inline]
-    pub fn is_close_event(&self, event: &xproto::ClientMessageEvent) -> bool {
-        let close_event = self.close_event();
-        close_event.response_type == event.response_type
-            && close_event.format == event.format
-            && close_event.sequence == event.sequence
-            && close_event.window == event.window
-            && close_event.type_ == event.type_
-    }
-
-    #[inline]
-    pub fn send_close_connection_event(&self) -> Result<(), Error> {
-        let close_event = self.close_event();
-        drop(
-            self.connection
-                .send_event(false, self.window, x11rb::NONE, close_event)
-                .context(error::SendEventSnafu)?,
-        );
-        self.flush_connection()?;
-        Ok(())
-    }
-
-    #[inline]
-    pub fn flush_connection(&self) -> Result<(), Error> {
+    fn flush(&self) -> Result<(), Error> {
         self.connection.flush().context(error::FlushConnectionSnafu)?;
         Ok(())
     }
 
-    #[inline]
-    pub fn wait_for_event(&self) -> Result<x11rb::protocol::Event, Error> {
-        self.connection.wait_for_event().context(error::WaitForEventSnafu)
-    }
-
-    pub fn prepare_for_monitoring_event(&self) -> Result<(), Error> {
+    fn prepare_for_monitoring_event(&self) -> Result<(), Error> {
         const EXT_NAME: &str = "XFIXES";
         let xfixes = self
             .connection
@@ -132,8 +72,6 @@ impl Context {
         }
 
         {
-            use xfixes::{ConnectionExt, SelectionEventMask};
-
             drop(
                 self.connection
                     .xfixes_query_version(5, 0)
@@ -144,7 +82,7 @@ impl Context {
                 self.connection
                     .xfixes_select_selection_input(
                         self.window,
-                        self.clipboard_type(),
+                        self.clipboard_kind(),
                         xproto::EventMask::NO_EVENT,
                     )
                     .context(error::SelectXfixesSelectionInputSnafu)?,
@@ -154,18 +92,22 @@ impl Context {
                 self.connection
                     .xfixes_select_selection_input(
                         self.window,
-                        self.clipboard_type(),
-                        SelectionEventMask::SET_SELECTION_OWNER
-                            | SelectionEventMask::SELECTION_WINDOW_DESTROY
-                            | SelectionEventMask::SELECTION_CLIENT_CLOSE,
+                        self.clipboard_kind(),
+                        xfixes::SelectionEventMask::SET_SELECTION_OWNER
+                            | xfixes::SelectionEventMask::SELECTION_WINDOW_DESTROY
+                            | xfixes::SelectionEventMask::SELECTION_CLIENT_CLOSE,
                     )
                     .context(error::SelectXfixesSelectionInputSnafu)?,
             );
         }
 
-        self.flush_connection()?;
+        self.flush()?;
         Ok(())
     }
+}
+
+impl AsRawFd for Context {
+    fn as_raw_fd(&self) -> RawFd { self.connection.stream().as_raw_fd() }
 }
 
 #[derive(Debug)]
@@ -192,4 +134,38 @@ pub fn get_intern_atom(conn: &impl Connection, atom_name: &str) -> Result<xproto
         .reply()
         .map(|r| r.atom)
         .context(error::ReplySnafu)
+}
+
+fn new_connection(display_name: Option<&str>) -> Result<(RustConnection, xproto::Window), Error> {
+    let (connection, screen_num) =
+        RustConnection::connect(display_name).context(error::ConnectSnafu)?;
+
+    let window = {
+        let window = connection.generate_id().context(error::GenerateX11IdentifierSnafu)?;
+        let screen = &connection.setup().roots[screen_num];
+
+        drop(
+            connection
+                .create_window(
+                    x11rb::COPY_DEPTH_FROM_PARENT,
+                    window,
+                    screen.root,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    xproto::WindowClass::INPUT_OUTPUT,
+                    screen.root_visual,
+                    &xproto::CreateWindowAux::default().event_mask(
+                        xproto::EventMask::PROPERTY_CHANGE, // | EventMask::STRUCTURE_NOTIFY
+                    ),
+                )
+                .context(error::CreateWindowSnafu)?,
+        );
+
+        window
+    };
+
+    Ok((connection, window))
 }

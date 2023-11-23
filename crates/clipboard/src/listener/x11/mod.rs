@@ -2,25 +2,30 @@ mod context;
 mod error;
 
 use std::{
+    os::fd::AsRawFd,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
     thread,
+    time::Duration,
 };
 
+use snafu::ResultExt;
 use x11rb::protocol::Event;
 
 use self::context::Context;
 pub use self::error::Error;
 use crate::{
+    listener::x11::error::InitializeMioPollSnafu,
     pubsub::{self, Subscriber},
     ClipboardKind, ClipboardSubscribe,
 };
 
+const CONTEXT_TOKEN: mio::Token = mio::Token(0);
+
 #[derive(Debug)]
 pub struct Listener {
-    context: Arc<Context>,
     is_running: Arc<AtomicBool>,
     thread: Option<thread::JoinHandle<Result<(), Error>>>,
     subscriber: Subscriber,
@@ -28,44 +33,63 @@ pub struct Listener {
 
 impl Listener {
     pub fn new(
-        display_name: Option<&str>,
+        display_name: Option<String>,
         clipboard_kind: ClipboardKind,
     ) -> Result<Self, crate::Error> {
-        let context = Context::new(display_name, clipboard_kind)?;
-
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
-        let context = Arc::new(context);
+        let max_retry_count = 5;
+        let retry_interval = Duration::from_secs(3);
+
+        tracing::info!("Try to connect X11 server");
+        let mut context = Context::new(display_name, clipboard_kind)?;
+
         let thread = thread::spawn({
-            let context = context.clone();
             let is_running = is_running.clone();
             move || {
+                let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
+                let mut events = mio::Events::with_capacity(1024);
+
+                poll.registry()
+                    .register(
+                        &mut mio::unix::SourceFd(&context.as_raw_fd()),
+                        CONTEXT_TOKEN,
+                        mio::Interest::READABLE,
+                    )
+                    .context(error::RegisterIoResourceSnafu)?;
+
                 while is_running.load(Ordering::Relaxed) {
-                    if let Err(err) = context.prepare_for_monitoring_event() {
-                        notifier.close();
-                        return Err(err);
+                    tracing::trace!("Wait for readiness events");
+
+                    if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
+                        tracing::error!(
+                            "Error occurred while polling for readiness event, error: {err}"
+                        );
                     }
 
-                    let new_event = match context.wait_for_event() {
-                        Ok(event) => event,
-                        Err(err) => {
-                            notifier.close();
-                            return Err(err);
+                    for event in &events {
+                        if event.token() == CONTEXT_TOKEN {
+                            match context.poll_for_event() {
+                                Ok(Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
+                                Ok(_) | Err(Error::NoEvent) => {}
+                                Err(err) => {
+                                    tracing::warn!(
+                                        "{err}, try to re-connect X11 server after {} \
+                                         millisecond(s)",
+                                        retry_interval.as_millis()
+                                    );
+                                    if let Err(err) = try_reconnect(
+                                        &poll,
+                                        &mut context,
+                                        max_retry_count,
+                                        retry_interval,
+                                    ) {
+                                        notifier.close();
+                                        return Err(err);
+                                    }
+                                }
+                            };
                         }
-                    };
-
-                    match new_event {
-                        Event::XfixesSelectionNotify(_) => notifier.notify_all(),
-                        Event::ClientMessage(event) => {
-                            if context.is_close_event(&event) {
-                                tracing::info!(
-                                    "Close connection event received, X11 clipboard listener \
-                                     thread is closing"
-                                );
-                                break;
-                            }
-                        }
-                        _ => {}
                     }
                 }
 
@@ -74,7 +98,7 @@ impl Listener {
             }
         });
 
-        Ok(Self { context, is_running, thread: Some(thread), subscriber })
+        Ok(Self { is_running, thread: Some(thread), subscriber })
     }
 }
 
@@ -87,7 +111,43 @@ impl ClipboardSubscribe for Listener {
 impl Drop for Listener {
     fn drop(&mut self) {
         self.is_running.store(false, Ordering::Release);
-        drop(self.context.send_close_connection_event());
+
+        tracing::info!("Reap thread which listening to X11 server");
         drop(self.thread.take().map(thread::JoinHandle::join));
     }
+}
+
+#[inline]
+fn try_reconnect(
+    poll: &mio::Poll,
+    context: &mut Context,
+    max_retry_count: usize,
+    retry_interval: Duration,
+) -> Result<(), Error> {
+    poll.registry()
+        .deregister(&mut mio::unix::SourceFd(&context.as_raw_fd()))
+        .context(error::DeregisterIoResourceSnafu)?;
+
+    for _ in 0..max_retry_count {
+        std::thread::sleep(retry_interval);
+        if let Err(err) = context.reconnect() {
+            tracing::warn!(
+                "{err}, try to re-connect after {} millisecond(s)",
+                retry_interval.as_millis()
+            );
+        } else {
+            poll.registry()
+                .register(
+                    &mut mio::unix::SourceFd(&context.as_raw_fd()),
+                    CONTEXT_TOKEN,
+                    mio::Interest::READABLE,
+                )
+                .context(error::RegisterIoResourceSnafu)?;
+
+            tracing::info!("Re-connected to X11 server!");
+            return Ok(());
+        }
+    }
+    tracing::error!("Could not connect to X11 server");
+    Err(Error::RetryLimitReached { value: max_retry_count })
 }
