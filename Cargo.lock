@@ -120,7 +120,7 @@ dependencies = [
  "parking_lot",
  "thiserror",
  "winapi",
- "x11rb 0.12.0",
+ "x11rb",
 ]
 
 [[package]]
@@ -459,7 +459,7 @@ dependencies = [
  "snafu",
  "tracing",
  "tracing-subscriber",
- "x11rb 0.8.1",
+ "x11rb",
 ]
 
 [[package]]
@@ -1122,16 +1122,6 @@ dependencies = [
 
 [[package]]
 name = "gethostname"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1ebd34e35c46e00bb73e81363248d627782724609fe1b6396f553f68fe3862e"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
-name = "gethostname"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb65d4ba3173c56a500b555b532f72c42e8d1fe64962b518897f8959fae2c177"
@@ -1576,19 +1566,6 @@ dependencies = [
  "cc",
  "cfg-if",
  "libc",
-]
-
-[[package]]
-name = "nix"
-version = "0.20.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5e06129fb611568ef4e868c14b326274959aa70ff7776e9d55323531c374945"
-dependencies = [
- "bitflags 1.2.1",
- "cc",
- "cfg-if",
- "libc",
- "memoffset 0.6.5",
 ]
 
 [[package]]
@@ -3186,23 +3163,11 @@ dependencies = [
 
 [[package]]
 name = "x11rb"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ffb080b3f2f616242a4eb8e7d325035312127901025b0052bc3154a282d0f19"
-dependencies = [
- "gethostname 0.2.3",
- "nix 0.20.2",
- "winapi",
- "winapi-wsapoll",
-]
-
-[[package]]
-name = "x11rb"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1641b26d4dec61337c35a1b1aaf9e3cba8f46f0b43636c609ab0291a648040a"
 dependencies = [
- "gethostname 0.3.0",
+ "gethostname",
  "nix 0.26.4",
  "winapi",
  "winapi-wsapoll",
