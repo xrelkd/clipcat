@@ -37,7 +37,6 @@ pkgs.mkShell {
     nixpkgs-fmt
     nodePackages.prettier
     shfmt
-    sleek
     taplo
     treefmt
     # clang-tools contains clang-format
