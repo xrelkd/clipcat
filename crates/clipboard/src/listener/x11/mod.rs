@@ -12,7 +12,7 @@ use std::{
 };
 
 use snafu::ResultExt;
-use x11rb::protocol::Event;
+use x11rb::protocol::Event as X11Event;
 
 use self::context::Context;
 pub use self::error::Error;
@@ -70,7 +70,7 @@ impl Listener {
                     for event in &events {
                         if event.token() == CONTEXT_TOKEN {
                             match context.poll_for_event() {
-                                Ok(Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
+                                Ok(X11Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
                                 Ok(_) | Err(Error::NoEvent) => {}
                                 Err(err) => {
                                     tracing::warn!(
