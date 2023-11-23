@@ -72,7 +72,7 @@ jobs:
           bake-target: clipcat
 
       - name: Build container image
-        uses: docker/bake-action@v3
+        uses: docker/bake-action@v4
         with:
           pull: true
           push: true
