@@ -17,33 +17,33 @@ use crate::{
 };
 
 #[derive(Parser)]
-#[clap(name = clipcat::CTL_PROGRAM_NAME)]
+#[clap(name = clipcat::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specifies a configuration file")]
+    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "host", short = 'H', help = "Specifies a server host")]
+    #[clap(long = "host", short = 'H', help = "Specify a server host")]
     server_host: Option<std::net::IpAddr>,
 
-    #[clap(long = "port", short = 'p', help = "Specifies a server port")]
+    #[clap(long = "port", short = 'p', help = "Specify a server port")]
     server_port: Option<u16>,
 
-    #[clap(long = "log-level", help = "Specifies a log level")]
+    #[clap(long = "log-level", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
 }
 
 #[derive(Clone, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Prints version information")]
+    #[clap(about = "Print version information")]
     Version,
 
-    #[clap(about = "Outputs shell completion code for the specified shell (bash, zsh, fish)")]
+    #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
 
-    #[clap(about = "Outputs default configuration")]
+    #[clap(about = "Output default configuration")]
     DefaultConfig,
 
     #[clap(about = "Insert new clip into clipboard")]
@@ -52,8 +52,7 @@ pub enum Commands {
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
-                    \"secondary\")"
+            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
 
@@ -66,8 +65,7 @@ pub enum Commands {
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
-                    \"secondary\")"
+            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
 
@@ -75,14 +73,13 @@ pub enum Commands {
         file_path: Option<PathBuf>,
     },
 
-    #[clap(aliases = &["paste"], about = "Pastes content of current clipboard into file")]
+    #[clap(aliases = &["paste"], about = "Paste content of current clipboard into file")]
     Save {
         #[clap(
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
-                    \"secondary\")"
+            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
 
@@ -90,7 +87,7 @@ pub enum Commands {
         file_path: Option<PathBuf>,
     },
 
-    #[clap(about = "Prints clip with <id>")]
+    #[clap(about = "Print clip with <id>")]
     Get {
         #[clap(value_parser= parse_hex )]
         id: Option<u64>,
@@ -98,20 +95,20 @@ pub enum Commands {
 
     #[clap(
         aliases = &["ls"],
-        about = "Prints history of clipboard")]
+        about = "Print history of clipboard")]
     List {
         #[clap(long)]
         no_id: bool,
     },
 
-    #[clap(about = "Updates clip with <id>")]
+    #[clap(about = "Update clip with <id>")]
     Update {
         #[clap(value_parser= parse_hex )]
         id: u64,
         data: String,
     },
 
-    #[clap(about = "Edits clip with <id>")]
+    #[clap(about = "Edit clip with <id>")]
     Edit {
         #[clap(env = "EDITOR", long = "editor", short = 'e')]
         editor: String,
@@ -122,17 +119,16 @@ pub enum Commands {
 
     #[clap(
         aliases = &["rm", "delete", "del"],
-        about = "Removes clips with [ids]")]
+        about = "Remove clips with [ids]")]
     Remove { ids: Vec<String> },
 
-    #[clap(name = "promote", about = "Replaces content of clipboard with clip with <id>")]
+    #[clap(name = "promote", about = "Replace content of clipboard with clip with <id>")]
     Mark {
         #[clap(
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
-                    \"secondary\")"
+            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
 
@@ -142,13 +138,14 @@ pub enum Commands {
 
     #[clap(
         aliases = &["remove-all"],
-        about = "Removes all clips in clipboard"
+        about = "Remove all clips in clipboard"
     )]
     Clear,
 
     #[clap(
         aliases = &["count", "len"],
-        about = "Prints length of clipboard history")]
+        about = "Print length of clipboard history"
+    )]
     Length,
 
     #[clap(aliases = &["enable"], about = "Enable clipboard watcher")]
