@@ -44,7 +44,7 @@ jobs:
         run: nix profile install 'nixpkgs#clang-tools'
 
       - name: Run shfmt, shellcheck, checkbashisms
-        uses: luizm/action-sh-checker@v0.7.0
+        uses: luizm/action-sh-checker@v0.8.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
