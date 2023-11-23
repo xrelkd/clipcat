@@ -17,10 +17,10 @@ pub struct X11ClipboardBackend {
 
 impl X11ClipboardBackend {
     /// # Errors
-    pub fn new(display_name: Option<&str>) -> Result<Self> {
-        let default_clipboard = Clipboard::new(display_name, ClipboardKind::Clipboard)
+    pub fn new(display_name: Option<String>) -> Result<Self> {
+        let default_clipboard = Clipboard::new(display_name.clone(), ClipboardKind::Clipboard)
             .context(error::InitializeClipboardSnafu)?;
-        let primary_clipboard = Clipboard::new(display_name, ClipboardKind::Primary)
+        let primary_clipboard = Clipboard::new(display_name.clone(), ClipboardKind::Primary)
             .context(error::InitializeClipboardSnafu)?;
         let secondary_clipboard = Clipboard::new(display_name, ClipboardKind::Secondary)
             .context(error::InitializeClipboardSnafu)?;
