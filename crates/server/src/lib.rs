@@ -1,4 +1,4 @@
-pub mod clipboard_driver;
+pub mod backend;
 pub mod config;
 mod error;
 mod grpc;
@@ -27,8 +27,7 @@ use self::{history::HistoryManager, manager::ClipboardManager, watcher::Clipboar
 pub async fn serve_with_shutdown(
     Config { grpc_listen_address, max_history, history_file_path, watcher: watcher_opts }: Config,
 ) -> Result<()> {
-    let clipboard_driver =
-        clipboard_driver::new_shared().context(error::CreateClipboardDriverSnafu)?;
+    let clipboard_backend = backend::new_shared().context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
@@ -41,7 +40,7 @@ pub async fn serve_with_shutdown(
 
         tracing::info!("Initialize ClipboardManager with capacity {max_history}");
         let mut clipboard_manager =
-            ClipboardManager::with_capacity(clipboard_driver.clone(), max_history);
+            ClipboardManager::with_capacity(clipboard_backend.clone(), max_history);
 
         tracing::info!("Import {clip_count} clip(s) into ClipboardManager");
         clipboard_manager.import(&history_clips);
@@ -50,7 +49,7 @@ pub async fn serve_with_shutdown(
     };
 
     let clipboard_watcher = {
-        let watcher = ClipboardWatcher::new(clipboard_driver.clone(), watcher_opts.into())
+        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts.into())
             .context(error::CreateClipboardWatcherSnafu)?;
         Arc::new(Mutex::new(watcher))
     };

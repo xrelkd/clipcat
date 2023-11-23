@@ -6,18 +6,18 @@ use futures::FutureExt;
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::clipboard_driver::{
-    error, ClearFuture, ClipboardDriver, Error, LoadFuture, StoreFuture, Subscriber,
+use crate::backend::{
+    error, ClearFuture, ClipboardBackend, Error, LoadFuture, StoreFuture, Subscriber,
 };
 
 #[derive(Clone)]
-pub struct X11ClipboardDriver {
+pub struct X11ClipboardBackend {
     default_clipboard: Arc<Clipboard>,
     primary_clipboard: Arc<Clipboard>,
     secondary_clipboard: Arc<Clipboard>,
 }
 
-impl X11ClipboardDriver {
+impl X11ClipboardBackend {
     /// # Errors
     pub fn new(display_name: Option<&str>) -> Result<Self, Error> {
         let default_clipboard = Clipboard::new(display_name, ClipboardKind::Clipboard)
@@ -43,7 +43,7 @@ impl X11ClipboardDriver {
     }
 }
 
-impl ClipboardDriver for X11ClipboardDriver {
+impl ClipboardBackend for X11ClipboardBackend {
     #[inline]
     fn load(&self, kind: ClipboardKind) -> LoadFuture {
         let clipboard = self.select_clipboard(kind);

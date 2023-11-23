@@ -4,19 +4,19 @@ use futures::FutureExt;
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::clipboard_driver::{
-    error, ClearFuture, ClipboardDriver, ClipboardKind, Error, LoadFuture, StoreFuture, Subscriber,
+use crate::backend::{
+    error, ClearFuture, ClipboardBackend, ClipboardKind, Error, LoadFuture, StoreFuture, Subscriber,
 };
 
 #[derive(Clone, Default, Debug)]
-pub struct MockClipboardDriver(MockClipboard);
+pub struct MockClipboardBackend(MockClipboard);
 
-impl MockClipboardDriver {
+impl MockClipboardBackend {
     #[must_use]
     pub fn new() -> Self { Self::default() }
 }
 
-impl ClipboardDriver for MockClipboardDriver {
+impl ClipboardBackend for MockClipboardBackend {
     #[inline]
     fn load(&self, _kind: ClipboardKind) -> LoadFuture {
         let clipboard = self.0.clone();
