@@ -26,7 +26,7 @@ impl Context {
         let (connection, window) = new_connection(display_name.as_deref())?;
         let atom_cache = AtomCache::new(&connection)?;
         let ctx = Self { display_name, connection, window, atom_cache, clipboard_kind };
-        ctx.prepare_for_monitoring_event()?;
+        ctx.prepare_for_listening_event()?;
         Ok(ctx)
     }
 
@@ -35,7 +35,7 @@ impl Context {
         self.atom_cache = AtomCache::new(&connection)?;
         self.connection = connection;
         self.window = window;
-        self.prepare_for_monitoring_event()
+        self.prepare_for_listening_event()
     }
 
     #[inline]
@@ -58,7 +58,7 @@ impl Context {
         Ok(())
     }
 
-    fn prepare_for_monitoring_event(&self) -> Result<(), Error> {
+    fn prepare_for_listening_event(&self) -> Result<(), Error> {
         const EXT_NAME: &str = "XFIXES";
         let xfixes = self
             .connection
@@ -76,16 +76,6 @@ impl Context {
                 self.connection
                     .xfixes_query_version(5, 0)
                     .context(error::QueryXfixesVersionSnafu)?,
-            );
-
-            drop(
-                self.connection
-                    .xfixes_select_selection_input(
-                        self.window,
-                        self.clipboard_kind(),
-                        xproto::EventMask::NO_EVENT,
-                    )
-                    .context(error::SelectXfixesSelectionInputSnafu)?,
             );
 
             drop(
