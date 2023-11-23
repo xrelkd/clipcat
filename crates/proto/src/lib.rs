@@ -26,6 +26,8 @@ mod proto {
 
 use std::str::FromStr;
 
+use time::OffsetDateTime;
+
 pub use self::proto::{
     manager_client::ManagerClient,
     manager_server::{Manager, ManagerServer},
@@ -65,14 +67,8 @@ impl From<clipcat::ClipEntry> for ClipboardData {
         let data = entry.encoded().unwrap_or_default();
         let id = entry.id();
         let kind = entry.kind();
-        let timestamp = u64::try_from(
-            entry
-                .timestamp()
-                .duration_since(std::time::UNIX_EPOCH)
-                .expect("duration since")
-                .as_millis(),
-        )
-        .expect("`u64` should be enough for store timestamp");
+        let timestamp = u64::try_from(entry.timestamp().unix_timestamp())
+            .expect("`u64` should be enough for store timestamp");
 
         Self { id, data, kind: kind.into(), mime, timestamp }
     }
@@ -80,13 +76,12 @@ impl From<clipcat::ClipEntry> for ClipboardData {
 
 impl From<ClipboardData> for clipcat::ClipEntry {
     fn from(ClipboardData { id: _, data, mime, kind, timestamp }: ClipboardData) -> Self {
-        let timestamp = std::time::UNIX_EPOCH
-            .checked_add(std::time::Duration::from_millis(timestamp))
-            .unwrap_or_else(std::time::SystemTime::now);
+        let timestamp = i64::try_from(timestamp)
+            .map_or(None, |ts| OffsetDateTime::from_unix_timestamp(ts).ok());
 
         let kind = clipcat::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
-        Self::new(&data, &mime, kind, Some(timestamp)).unwrap_or_default()
+        Self::new(&data, &mime, kind, timestamp).unwrap_or_default()
     }
 }
 

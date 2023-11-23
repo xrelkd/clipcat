@@ -15,12 +15,12 @@ keywords.workspace   = true
 serde = { version = "1", features = ["derive"] }
 
 bytes       = "1"
-chrono      = "0.4"
 directories = "5"
 image       = "0.24"
 lazy_static = "1"
 mime        = "0.3"
 snafu       = "0.7"
+time        = { version = "0.3", features = ["formatting", "macros"] }
 
 [lints]
 workspace = true

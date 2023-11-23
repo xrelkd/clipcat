@@ -2,6 +2,7 @@ use std::time::SystemTime;
 
 use clipcat::{utils, ClipEntry, ClipboardKind};
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FileContents {
@@ -42,7 +43,8 @@ pub struct ClipboardValue {
     )]
     pub mime: mime::Mime,
 
-    pub timestamp: SystemTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub timestamp: OffsetDateTime,
 }
 
 impl From<ClipboardValue> for ClipEntry {
