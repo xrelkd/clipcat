@@ -104,10 +104,6 @@ impl ClipEntry {
 
     #[inline]
     #[must_use]
-    pub const fn is_text(&self) -> bool { matches!(self.content, ClipboardContent::Plaintext(_)) }
-
-    #[inline]
-    #[must_use]
     pub const fn is_utf8_string(&self) -> bool {
         matches!(self.content, ClipboardContent::Plaintext(_))
     }
