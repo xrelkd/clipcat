@@ -8,21 +8,29 @@ use bytes::Bytes;
 use clipcat::ClipboardContent;
 
 use crate::{
-    listener::Listener, ClipboardKind, ClipboardLoad, ClipboardStore, ClipboardSubscribe, Error,
-    Subscriber,
+    listener::{WaylandListener, X11Listener},
+    ClipboardKind, ClipboardLoad, ClipboardStore, ClipboardSubscribe, Error, Subscriber,
 };
 
 #[derive(Clone)]
 pub struct Clipboard {
-    listener: Arc<Listener>,
+    listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,
     clipboard_kind: arboard::LinuxClipboardKind,
     clear_on_drop: Arc<AtomicBool>,
 }
 
 impl Clipboard {
     /// # Errors
-    pub fn new(display_name: Option<String>, clipboard_kind: ClipboardKind) -> Result<Self, Error> {
-        let listener = Arc::new(Listener::new(display_name, clipboard_kind)?);
+    pub fn new(
+        x11_display_name: Option<String>,
+        clipboard_kind: ClipboardKind,
+    ) -> Result<Self, Error> {
+        let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
+            if std::env::var_os("WAYLAND_DISPLAY").is_some() {
+                Arc::new(WaylandListener::new(clipboard_kind)?)
+            } else {
+                Arc::new(X11Listener::new(x11_display_name, clipboard_kind)?)
+            };
         let clear_on_drop = Arc::new(AtomicBool::from(false));
         let clipboard_kind = match clipboard_kind {
             ClipboardKind::Clipboard => arboard::LinuxClipboardKind::Clipboard,

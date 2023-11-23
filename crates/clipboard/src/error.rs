@@ -9,6 +9,9 @@ pub enum Error {
     #[snafu(display("{error}"))]
     X11Listener { error: crate::listener::x11::Error },
 
+    #[snafu(display("{error}"))]
+    WaylandListener { error: crate::listener::wayland::Error },
+
     #[snafu(display("Clipboard is empty"))]
     Empty,
 
@@ -25,4 +28,8 @@ impl From<arboard::Error> for Error {
 
 impl From<crate::listener::x11::Error> for Error {
     fn from(error: crate::listener::x11::Error) -> Self { Self::X11Listener { error } }
+}
+
+impl From<crate::listener::wayland::Error> for Error {
+    fn from(error: crate::listener::wayland::Error) -> Self { Self::WaylandListener { error } }
 }

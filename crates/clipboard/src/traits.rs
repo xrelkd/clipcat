@@ -22,7 +22,7 @@ pub trait Wait {
     fn wait(&self) -> Result<ClipboardKind, Error>;
 }
 
-pub trait Subscribe {
+pub trait Subscribe: Send + Sync {
     type Subscriber: Wait + Send;
 
     /// # Errors

@@ -17,22 +17,22 @@ pub struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,
 
-    #[clap(long = "no-daemon", help = "Does not run as daemon")]
+    #[clap(long = "no-daemon", help = "Do not run as daemon")]
     no_daemon: bool,
 
-    #[clap(long = "replace", short = 'r', help = "Tries to replace existing daemon")]
+    #[clap(long = "replace", short = 'r', help = "Try to replace existing daemon")]
     replace: bool,
 
-    #[clap(long = "config", short = 'c', help = "Specifies a configuration file")]
+    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "history-file", help = "Specifies a history file")]
+    #[clap(long = "history-file", help = "Specify a history file")]
     history_file_path: Option<PathBuf>,
 
-    #[clap(long = "grpc-host", help = "Specifies gRPC host address")]
+    #[clap(long = "grpc-host", help = "Specify gRPC host address")]
     grpc_host: Option<IpAddr>,
 
-    #[clap(long = "grpc-port", help = "Specifies gRPC port number")]
+    #[clap(long = "grpc-port", help = "Specify gRPC port number")]
     grpc_port: Option<u16>,
 }
 
@@ -43,13 +43,13 @@ impl Default for Cli {
 
 #[derive(Clone, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Prints version information")]
+    #[clap(about = "Print version information")]
     Version,
 
-    #[clap(about = "Outputs shell completion code for the specified shell (bash, zsh, fish)")]
+    #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
 
-    #[clap(about = "Outputs default configuration")]
+    #[clap(about = "Output default configuration")]
     DefaultConfig,
 }
 

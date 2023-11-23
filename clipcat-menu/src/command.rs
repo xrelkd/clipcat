@@ -17,37 +17,37 @@ use crate::{
 const LINE_LENGTH: usize = 100;
 
 #[derive(Debug, Parser)]
-#[clap(name = clipcat::MENU_PROGRAM_NAME)]
+#[clap(name = clipcat::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specifies a configuration file")]
+    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[clap(long, short = 'f', help = "Specifies a finder")]
+    #[clap(long, short = 'f', help = "Specify a finder")]
     finder: Option<FinderType>,
 
-    #[clap(long, short = 'm', help = "Specifies the menu length of finder")]
+    #[clap(long, short = 'm', help = "Specify the menu length of finder")]
     menu_length: Option<usize>,
 
-    #[clap(long, short = 'l', help = "Specifies the length of a line showing on finder")]
+    #[clap(long, short = 'l', help = "Specify the length of a line showing on finder")]
     line_length: Option<usize>,
 }
 
 #[allow(variant_size_differences)]
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Prints version information")]
+    #[clap(about = "Print version information")]
     Version,
 
-    #[clap(about = "Outputs shell completion code for the specified shell (bash, zsh, fish)")]
+    #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
 
-    #[clap(about = "Outputs default configuration")]
+    #[clap(about = "Output default configuration")]
     DefaultConfig,
 
-    #[clap(about = "Prints available text finders")]
+    #[clap(about = "Print available text finders")]
     ListFinder,
 
     #[clap(about = "Insert selected clip into clipboard")]
@@ -56,20 +56,19 @@ pub enum Commands {
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specifies which clipboard to insert (\"clipboard\", \"primary\", \
-                    \"secondary\")"
+            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
     },
 
     #[clap(
         aliases = &["rm", "delete", "del"],
-        about = "Removes selected clip")]
+        about = "Remove selected clip")]
     Remove,
 
     #[clap(about = "Edit selected clip")]
     Edit {
-        #[clap(env = "EDITOR", long = "editor", short = 'e', help = "Specifies a external editor")]
+        #[clap(env = "EDITOR", long = "editor", short = 'e', help = "Specify a external editor")]
         editor: String,
     },
 }
