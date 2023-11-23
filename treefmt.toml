@@ -33,16 +33,6 @@ includes = ["*.toml"]
 command  = "nixpkgs-fmt"
 includes = ["*.nix"]
 
-[formatter.sql]
-command = "sleek"
-options = [
-  "--uppercase",
-  "--indent-spaces=4",
-  "--lines-between-queries=2",
-  "--trailing-newline",
-]
-includes = ["*.sql"]
-
 [formatter.shell]
 command = "sh"
 options = ["-eucx", """

@@ -10,7 +10,6 @@ pkgs.runCommandNoCC "check-format"
     nixpkgs-fmt
     nodePackages.prettier
     shfmt
-    sleek
     taplo
     treefmt
   ];
@@ -27,10 +26,6 @@ pkgs.runCommandNoCC "check-format"
       hcl \
       toml \
     -C ${./..}
-
-  echo "Checking SQL format with \`sleek\`"
-  fd --glob '**/*.{sql}' ${./..} | xargs sleek --check --uppercase --indent-spaces=4 --lines-between-queries=2 --trailing-newline
-  echo
 
   # it worked!
   touch $out
