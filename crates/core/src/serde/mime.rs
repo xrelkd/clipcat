@@ -3,15 +3,15 @@ use std::str::FromStr;
 use serde::{Deserialize, Deserializer, Serializer};
 
 /// # Errors
-pub fn serialize_mime<S>(mime: &mime::Mime, s: S) -> Result<S::Ok, S::Error>
+pub fn serialize<S>(mime: &mime::Mime, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    s.serialize_str(mime.essence_str())
+    s.serialize_str(mime.to_string().as_str())
 }
 
 /// # Errors
-pub fn deserialize_mime<'de, D>(deserializer: D) -> Result<mime::Mime, D::Error>
+pub fn deserialize<'de, D>(deserializer: D) -> Result<mime::Mime, D::Error>
 where
     D: Deserializer<'de>,
 {
