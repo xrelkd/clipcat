@@ -3,7 +3,10 @@ mod kind;
 pub mod serde;
 mod watcher_state;
 
-use std::path::PathBuf;
+use std::{
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 
 use bytes::Bytes;
 use directories::ProjectDirs;
@@ -29,10 +32,10 @@ pub const MENU_CONFIG_NAME: &str = "clipcat-menu.toml";
 pub const NOTIFY_PROGRAM_NAME: &str = "clipcat-notify";
 
 pub const DEFAULT_GRPC_PORT: u16 = 45045;
-pub const DEFAULT_GRPC_HOST: &str = "127.0.0.1";
+pub const DEFAULT_GRPC_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub const DEFAULT_WEBUI_PORT: u16 = 45046;
-pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
+pub const DEFAULT_WEBUI_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub const DEFAULT_MENU_PROMPT: &str = "Clipcat";
 

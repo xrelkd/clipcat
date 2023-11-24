@@ -61,14 +61,22 @@ impl WatcherConfig {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct GrpcConfig {
+    #[serde(default = "GrpcConfig::default_host")]
     pub host: IpAddr,
 
+    #[serde(default = "GrpcConfig::default_port")]
     pub port: u16,
 }
 
 impl GrpcConfig {
     #[inline]
     pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
+
+    #[inline]
+    pub const fn default_host() -> IpAddr { clipcat::DEFAULT_GRPC_HOST }
+
+    #[inline]
+    pub const fn default_port() -> u16 { clipcat::DEFAULT_GRPC_PORT }
 }
 
 impl Default for Config {
@@ -98,10 +106,7 @@ impl Default for WatcherConfig {
 
 impl Default for GrpcConfig {
     fn default() -> Self {
-        Self {
-            host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
-            port: clipcat::DEFAULT_GRPC_PORT,
-        }
+        Self { host: clipcat::DEFAULT_GRPC_HOST, port: clipcat::DEFAULT_GRPC_PORT }
     }
 }
 

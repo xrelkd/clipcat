@@ -22,7 +22,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server_host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
+            server_host: clipcat::DEFAULT_GRPC_HOST,
             server_port: clipcat::DEFAULT_GRPC_PORT,
             log_level: Self::default_log_level(),
         }
