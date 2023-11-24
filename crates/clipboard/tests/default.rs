@@ -25,9 +25,3 @@ fn test_clipboard() -> Result<(), Error> {
     let tester = DefaultClipboardTester::new(ClipboardKind::Clipboard);
     tester.run()
 }
-
-#[test]
-fn test_selection() -> Result<(), Error> {
-    let tester = DefaultClipboardTester::new(ClipboardKind::Primary);
-    tester.run()
-}

@@ -12,6 +12,8 @@ pkgs.mkShell {
   name = "dev-shell";
 
   nativeBuildInputs = with pkgs; [
+    xvfb-run
+
     cargo-ext.cargo-build-all
     cargo-ext.cargo-clippy-all
     cargo-ext.cargo-doc-all

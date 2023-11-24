@@ -79,48 +79,47 @@ jobs:
         run: |
           nix develop --command cargo clippy-all
 
-  # FIXME: enable `Test`
-  # test:
-  #   name: Test
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - clippy
-  #
-  #   env:
-  #     NEXTEST_RETRIES: 5
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       mode:
-  #         - release
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Install Nix
-  #       uses: cachix/install-nix-action@v23
-  #
-  #     - name: Pre Cache
-  #       run: |
-  #         rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
-  #
-  #     - name: Cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry/index/
-  #           ~/.cargo/registry/cache/
-  #           ~/.cargo/git/db/
-  #         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-  #
-  #     - name: Show cargo-nextest version
-  #       run: |
-  #         nix develop --command cargo nextest --version
-  #
-  #     - name: Test with cargo-test
-  #       uses: coactions/setup-xvfb@v1
-  #       with:
-  #         run: |
-  #           nix develop --command cargo test-all -j1 ${{ matrix.mode == 'release' && '--release' || '' }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs:
+      - clippy
+
+    env:
+      NEXTEST_RETRIES: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        mode:
+          - release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v23
+
+      - name: Pre Cache
+        run: |
+          rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Show cargo-nextest version
+        run: |
+          nix develop --command cargo nextest --version
+
+      - name: Test with cargo-nextest
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: |
+            nix develop --command cargo nextest-all ${{ matrix.mode == 'release' && '--release' || '' }}
 
   doc:
     name: Doc
