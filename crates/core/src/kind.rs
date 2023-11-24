@@ -11,6 +11,8 @@ pub enum ClipboardKind {
 }
 
 impl ClipboardKind {
+    pub const MAX_LENGTH: usize = 3;
+
     #[must_use]
     pub const fn as_str(&self) -> &str {
         match self {
@@ -34,6 +36,16 @@ impl FromStr for ClipboardKind {
     }
 }
 
+impl From<ClipboardKind> for i32 {
+    fn from(kind: ClipboardKind) -> Self {
+        match kind {
+            ClipboardKind::Clipboard => 0,
+            ClipboardKind::Primary => 1,
+            ClipboardKind::Secondary => 2,
+        }
+    }
+}
+
 impl From<i32> for ClipboardKind {
     fn from(v: i32) -> Self {
         match v {
@@ -44,12 +56,22 @@ impl From<i32> for ClipboardKind {
     }
 }
 
-impl From<ClipboardKind> for i32 {
+impl From<ClipboardKind> for usize {
     fn from(kind: ClipboardKind) -> Self {
         match kind {
             ClipboardKind::Clipboard => 0,
             ClipboardKind::Primary => 1,
             ClipboardKind::Secondary => 2,
+        }
+    }
+}
+
+impl From<usize> for ClipboardKind {
+    fn from(v: usize) -> Self {
+        match v {
+            0 => Self::Clipboard,
+            1 => Self::Primary,
+            _ => Self::Secondary,
         }
     }
 }
