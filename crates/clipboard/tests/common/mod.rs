@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use clipcat::ClipboardContent;
 use clipcat_clipboard::{
@@ -18,15 +18,18 @@ pub trait ClipboardTester {
     fn new_clipboard(&self) -> Self::Clipboard;
 
     fn run(&self) -> Result<(), Error> {
+        println!("Clear test");
         self.test_clean()?;
 
+        println!("Store and load test");
         for i in 0..20 {
             let data_size = 1 << i;
-            println!("test with data size: {data_size}");
+            println!("Test with data size: {data_size}.");
             self.test_store_and_load(data_size)?;
-            println!("passed, test with data size: {data_size}");
+            println!("Test with data size: {data_size}. Passed");
         }
 
+        println!("Subscribe test");
         self.test_subscribe()?;
         Ok(())
     }
@@ -75,7 +78,7 @@ pub trait ClipboardTester {
             let subscriber = clipboard.subscribe()?;
             let clipboard = clipboard.clone();
             move || -> Result<String, Error> {
-                loop {
+                for _ in 0..20 {
                     let _unused = subscriber.wait();
                     match clipboard.load_string() {
                         Ok(data) => return Ok(data),
@@ -83,6 +86,7 @@ pub trait ClipboardTester {
                         Err(err) => return Err(err),
                     }
                 }
+                Err(Error::Empty)
             }
         });
 
@@ -90,7 +94,7 @@ pub trait ClipboardTester {
             let subscriber = clipboard.subscribe()?;
             let clipboard = clipboard.clone();
             move || -> Result<String, Error> {
-                loop {
+                for _ in 0..20 {
                     let _unused = subscriber.wait();
                     match clipboard.load_string() {
                         Ok(data) => return Ok(data),
@@ -98,6 +102,7 @@ pub trait ClipboardTester {
                         Err(err) => return Err(err),
                     }
                 }
+                Err(Error::Empty)
             }
         });
 
@@ -109,9 +114,9 @@ pub trait ClipboardTester {
             }
         });
 
-        std::thread::sleep(Duration::from_millis(100));
-        let input = format!("{:?}", Instant::now());
-        clipboard.store_string(&input)?;
+        std::thread::sleep(Duration::from_millis(10));
+        let input = "test string for testing subscriber";
+        clipboard.store_string(input)?;
 
         let output1 = observer1.join().unwrap()?;
         let output2 = observer2.join().unwrap()?;
@@ -122,7 +127,7 @@ pub trait ClipboardTester {
         assert_eq!(input, output2);
         assert_eq!(input.len(), output2.len());
 
-        println!("drop clipboard");
+        println!("Drop clipboard");
         drop(clipboard);
         observer3.join().unwrap()?;
 
