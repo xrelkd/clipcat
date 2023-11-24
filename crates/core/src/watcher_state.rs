@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Serialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ClipboardWatcherState {
     Enabled = 0,
     Disabled = 1,

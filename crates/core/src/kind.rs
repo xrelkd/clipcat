@@ -2,7 +2,7 @@ use std::{fmt, str::FromStr};
 
 use snafu::Snafu;
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ClipboardKind {
     #[default]
     Clipboard,

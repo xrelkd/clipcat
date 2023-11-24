@@ -8,7 +8,7 @@ use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 
 #[serde_as]
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
     pub server_host: IpAddr,
 
