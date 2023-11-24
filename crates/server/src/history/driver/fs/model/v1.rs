@@ -1,5 +1,3 @@
-use std::time::SystemTime;
-
 use clipcat::{utils, ClipEntry, ClipboardKind};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -8,7 +6,7 @@ use time::OffsetDateTime;
 pub struct FileContents {
     version: u64,
 
-    last_update: SystemTime,
+    last_update: OffsetDateTime,
 
     data: Vec<ClipboardValue>,
 }
@@ -18,7 +16,7 @@ impl FileContents {
     pub fn new(data: Vec<ClipEntry>) -> Self {
         Self {
             version: 1,
-            last_update: SystemTime::now(),
+            last_update: OffsetDateTime::now_utc(),
             data: data
                 .into_iter()
                 .filter_map(|e| if e.is_empty() { None } else { Some(ClipboardValue::from(e)) })
@@ -43,7 +41,6 @@ pub struct ClipboardValue {
     )]
     pub mime: mime::Mime,
 
-    #[serde(with = "time::serde::rfc3339")]
     pub timestamp: OffsetDateTime,
 }
 
