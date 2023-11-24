@@ -50,10 +50,19 @@ pub enum ClipboardContent {
 }
 
 impl ClipboardContent {
+    #[inline]
     pub fn is_empty(&self) -> bool {
         match self {
             Self::Plaintext(s) => s.is_empty(),
             Self::Image { bytes, .. } => bytes.is_empty(),
+        }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Plaintext(s) => s.len(),
+            Self::Image { bytes, .. } => bytes.len(),
         }
     }
 }
