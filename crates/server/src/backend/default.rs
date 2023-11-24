@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt, sync::Arc};
+use std::{fmt, sync::Arc};
 
 use async_trait::async_trait;
 use clipcat::{ClipboardContent, ClipboardKind};
@@ -10,7 +10,7 @@ use crate::backend::{error, ClipboardBackend, Error, Result, Subscriber};
 
 #[derive(Clone)]
 pub struct DefaultClipboardBackend {
-    clipboards: HashMap<ClipboardKind, Arc<Clipboard>>,
+    clipboards: Vec<Arc<Clipboard>>,
 }
 
 impl DefaultClipboardBackend {
@@ -20,20 +20,23 @@ impl DefaultClipboardBackend {
         S: fmt::Display,
     {
         let x11_display_name = x11_display_name.map(|name| name.to_string());
-        let default_clipboard = Clipboard::new(x11_display_name.clone(), ClipboardKind::Clipboard)
-            .context(error::InitializeClipboardSnafu)?;
-        let mut clipboards =
-            HashMap::from([(ClipboardKind::Clipboard, Arc::new(default_clipboard))]);
 
-        for kind in [ClipboardKind::Primary, ClipboardKind::Secondary] {
-            Clipboard::new(x11_display_name.clone(), ClipboardKind::Primary).map_or_else(
-                |_| {
+        let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
+
+        for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
+            match Clipboard::new(x11_display_name.clone(), kind)
+                .context(error::InitializeClipboardSnafu)
+            {
+                Ok(clipboard) => {
+                    clipboards.push(Arc::new(clipboard));
+                }
+                Err(err) => {
+                    if kind == ClipboardKind::Clipboard {
+                        return Err(err);
+                    }
                     tracing::info!("Clipboard kind {kind} is not supported");
-                },
-                |clipboard| {
-                    drop(clipboards.insert(kind, Arc::new(clipboard)));
-                },
-            );
+                }
+            }
         }
 
         Ok(Self { clipboards })
@@ -41,7 +44,10 @@ impl DefaultClipboardBackend {
 
     #[inline]
     fn select_clipboard(&self, kind: ClipboardKind) -> Result<Arc<Clipboard>> {
-        self.clipboards.get(&kind).map(Arc::clone).ok_or(Error::UnsupportedClipboardKind { kind })
+        self.clipboards
+            .get(usize::from(kind))
+            .map(Arc::clone)
+            .ok_or(Error::UnsupportedClipboardKind { kind })
     }
 }
 
@@ -81,7 +87,7 @@ impl ClipboardBackend for DefaultClipboardBackend {
     fn subscribe(&self) -> Result<Subscriber> {
         let subscribers = self
             .clipboards
-            .values()
+            .iter()
             .map(|clipboard| clipboard.subscribe().context(error::SubscribeClipboardSnafu))
             .collect::<Result<Vec<_>>>()?;
         Ok(Subscriber::from(subscribers))
@@ -89,6 +95,6 @@ impl ClipboardBackend for DefaultClipboardBackend {
 
     #[inline]
     fn supported_clipboard_kinds(&self) -> Vec<ClipboardKind> {
-        self.clipboards.keys().copied().collect()
+        (0..self.clipboards.len()).map(ClipboardKind::from).collect()
     }
 }
