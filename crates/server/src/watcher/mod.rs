@@ -71,6 +71,9 @@ impl ClipboardWatcher {
                     for &kind in &enabled_kinds {
                         match backend.load(kind).await {
                             Ok(data) => {
+                                if data.is_empty() {
+                                    continue;
+                                }
                                 drop(current_data.insert(kind, data.clone()));
                                 if let Err(_err) =
                                     event_sender.send(ClipEntry::from_clipboard_content(data, kind))
