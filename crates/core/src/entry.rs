@@ -7,7 +7,7 @@ use std::{
 
 use image::ImageEncoder as _;
 use snafu::{ResultExt, Snafu};
-use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
 use crate::{ClipboardContent, ClipboardKind};
 
@@ -130,8 +130,12 @@ impl Entry {
             ClipboardContent::Image { width: _, height: _, bytes } => {
                 let content_type = mime::IMAGE_PNG;
                 let size = bytes.len();
-                let timestamp = self.timestamp.format(&Rfc3339).unwrap_or_default();
-                format!("content-type: {content_type}, size: {size}, timestamp: {timestamp}")
+                let timestamp = self
+                    .timestamp
+                    .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
+                    .format(&Rfc3339)
+                    .unwrap_or_default();
+                format!("[Content type: {content_type}, size: {size}, timestamp: {timestamp}]")
             }
         };
 
