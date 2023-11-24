@@ -13,7 +13,7 @@ use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
 pub use self::error::Error;
-use crate::backend::{ClipboardBackend, Error as DriverError};
+use crate::backend::{ClipboardBackend, Error as BackendError};
 
 pub struct ClipboardWatcher {
     is_watching: Arc<AtomicBool>,
@@ -80,11 +80,12 @@ impl ClipboardWatcher {
                                 }
                             }
                             Err(
-                                DriverError::EmptyClipboard
-                                | DriverError::MatchMime { .. }
-                                | DriverError::UnknownContentType,
+                                BackendError::EmptyClipboard
+                                | BackendError::MatchMime { .. }
+                                | BackendError::UnknownContentType
+                                | BackendError::UnsupportedClipboardKind { .. },
                             ) => continue,
-                            Err(error) => return Err(Error::Driver { error }),
+                            Err(error) => return Err(Error::Backend { error }),
                         }
                     }
                 }
@@ -100,16 +101,16 @@ impl ClipboardWatcher {
                                 _ => continue,
                             },
                             Err(
-                                DriverError::EmptyClipboard
-                                | DriverError::MatchMime { .. }
-                                | DriverError::UnknownContentType,
+                                BackendError::EmptyClipboard
+                                | BackendError::MatchMime { .. }
+                                | BackendError::UnknownContentType,
                             ) => continue,
                             Err(error) => {
                                 tracing::error!(
                                     "Failed to load clipboard, ClipboardWatcher is closing, \
                                      error: {error}",
                                 );
-                                return Err(Error::Driver { error });
+                                return Err(Error::Backend { error });
                             }
                         };
 
