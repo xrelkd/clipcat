@@ -126,16 +126,22 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     tracing::info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
 
     tracing::info!("Initializing Tokio runtime");
-    Runtime::new()
-        .context(error::InitializeTokioRuntimeSnafu)?
-        .block_on(clipcat_server::serve_with_shutdown(config))?;
+
+    let exit_status = match Runtime::new().context(error::InitializeTokioRuntimeSnafu) {
+        Ok(runtime) => {
+            runtime.block_on(clipcat_server::serve_with_shutdown(config)).map_err(Error::from)
+        }
+        Err(err) => Err(err),
+    };
 
     if daemonize {
-        pid_file.remove()?;
+        if let Err(err) = pid_file.remove() {
+            tracing::error!("{err}");
+        }
     }
 
     tracing::info!("{} is shutdown", clipcat::DAEMON_PROGRAM_NAME);
-    Ok(())
+    exit_status
 }
 
 fn init_tracing(log_level: tracing::Level) {

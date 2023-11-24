@@ -44,7 +44,7 @@ pub enum Error {
     #[snafu(display("Could not read PID file, filename: {}, error: {source}", filename.display()))]
     ReadPidFile { filename: PathBuf, source: std::io::Error },
 
-    #[snafu(display("Could not remove PID file, filename: {}, error: {source}", pid_file.display()))]
+    #[snafu(display("Failed to remove PID file, filename: {}, error: {source}", pid_file.display()))]
     RemovePidFile { pid_file: PathBuf, source: std::io::Error },
 
     #[snafu(display("Parse process id, value: {value}, error: {source}"))]
