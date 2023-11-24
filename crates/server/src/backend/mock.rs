@@ -6,7 +6,7 @@ use tokio::task;
 
 use crate::backend::{error, ClipboardBackend, ClipboardKind, Error, Result, Subscriber};
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct MockClipboardBackend(MockClipboard);
 
 impl MockClipboardBackend {
@@ -52,7 +52,10 @@ impl ClipboardBackend for MockClipboardBackend {
     fn subscribe(&self) -> Result<Subscriber> {
         self.0
             .subscribe()
-            .map(|sub| Subscriber::from(vec![sub]))
+            .map(|sub| Subscriber::from([sub]))
             .context(error::SubscribeClipboardSnafu)
     }
+
+    #[inline]
+    fn supported_clipboard_kinds(&self) -> Vec<ClipboardKind> { vec![ClipboardKind::Clipboard] }
 }
