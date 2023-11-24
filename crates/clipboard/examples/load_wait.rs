@@ -6,7 +6,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 fn main() -> Result<(), Error> {
     init_tracing();
 
-    let clipboard = Clipboard::new(None, ClipboardKind::Clipboard)?;
+    let clipboard = Clipboard::new(ClipboardKind::Clipboard)?;
     println!("Waiting for new clipboard event...");
     println!("You can to copy some text from other window...");
     for _ in 0..10 {

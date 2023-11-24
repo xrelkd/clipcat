@@ -23,6 +23,8 @@ use crate::{
 };
 
 const CONTEXT_TOKEN: mio::Token = mio::Token(0);
+const MAX_RETRY_COUNT: usize = 10 * 24 * 60 * 60;
+const RETRY_INTERVAL: Duration = Duration::from_secs(3);
 
 #[derive(Debug)]
 pub struct Listener {
@@ -38,11 +40,10 @@ impl Listener {
     ) -> Result<Self, crate::Error> {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
-        let max_retry_count = 5;
-        let retry_interval = Duration::from_secs(3);
 
-        tracing::info!("Try to connect X11 server");
+        tracing::info!("Connect X11 server");
         let mut context = Context::new(display_name, clipboard_kind)?;
+        tracing::info!("X11 server connected");
 
         let thread = thread::spawn({
             let is_running = is_running.clone();
@@ -76,13 +77,13 @@ impl Listener {
                                     tracing::warn!(
                                         "{err}, try to re-connect X11 server after {} \
                                          millisecond(s)",
-                                        retry_interval.as_millis()
+                                        RETRY_INTERVAL.as_millis()
                                     );
                                     if let Err(err) = try_reconnect(
                                         &poll,
                                         &mut context,
-                                        max_retry_count,
-                                        retry_interval,
+                                        MAX_RETRY_COUNT,
+                                        RETRY_INTERVAL,
                                     ) {
                                         notifier.close();
                                         return Err(err);

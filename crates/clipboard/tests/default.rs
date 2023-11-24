@@ -18,7 +18,7 @@ impl ClipboardTester for DefaultClipboardTester {
     type Clipboard = Clipboard;
 
     fn new_clipboard(&self) -> Result<Self::Clipboard, Error> {
-        let clipboard = Clipboard::new(None, self.kind)?;
+        let clipboard = Clipboard::new(self.kind)?;
         Ok(clipboard)
     }
 }
