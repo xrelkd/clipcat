@@ -8,14 +8,14 @@ on:
       - ci/*
       - feat/*
       - feature/*
+      - fix/*
       - hotfix/*
       - release/*
 
   pull_request:
     paths:
-      - "*/src/**"
+      - "**/src/**"
       - ".github/**"
-      - "src/**"
       - Cargo.lock
       - Cargo.toml
       - deny.toml
