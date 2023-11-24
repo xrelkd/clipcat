@@ -61,7 +61,7 @@ pub async fn serve_with_shutdown(
     };
 
     let clipboard_watcher = {
-        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts.into())
+        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts)
             .context(error::CreateClipboardWatcherSnafu)?;
         Arc::new(Mutex::new(watcher))
     };
