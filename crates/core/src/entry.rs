@@ -177,6 +177,10 @@ impl Entry {
 
     #[inline]
     #[must_use]
+    pub fn len(&self) -> usize { self.content.len() }
+
+    #[inline]
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         match &self.content {
             ClipboardContent::Plaintext(text) => text.as_bytes(),
