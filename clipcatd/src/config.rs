@@ -34,9 +34,29 @@ pub struct Config {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
+    #[serde(default)]
     pub load_current: bool,
+
+    #[serde(default)]
     pub enable_clipboard: bool,
+
+    #[serde(default)]
     pub enable_primary: bool,
+
+    #[serde(default = "WatcherConfig::default_filter_min_size")]
+    pub filter_min_size: usize,
+}
+
+impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
+    fn from(
+        WatcherConfig { load_current, enable_clipboard, enable_primary, filter_min_size }: WatcherConfig,
+    ) -> Self {
+        Self { load_current, enable_clipboard, enable_primary, filter_min_size }
+    }
+}
+
+impl WatcherConfig {
+    pub const fn default_filter_min_size() -> usize { 1 }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -67,15 +87,12 @@ impl Default for Config {
 
 impl Default for WatcherConfig {
     fn default() -> Self {
-        Self { load_current: true, enable_clipboard: true, enable_primary: true }
-    }
-}
-
-impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
-    fn from(
-        WatcherConfig { load_current, enable_clipboard, enable_primary }: WatcherConfig,
-    ) -> Self {
-        Self { load_current, enable_clipboard, enable_primary }
+        Self {
+            load_current: true,
+            enable_clipboard: true,
+            enable_primary: true,
+            filter_min_size: 1,
+        }
     }
 }
 
@@ -146,11 +163,7 @@ impl Config {
 impl From<Config> for clipcat_server::Config {
     fn from(Config { grpc, max_history, history_file_path, watcher, .. }: Config) -> Self {
         let grpc_listen_address = grpc.socket_address();
-        let watcher = clipcat_server::config::WatcherConfig {
-            load_current: watcher.load_current,
-            enable_clipboard: watcher.enable_clipboard,
-            enable_primary: watcher.enable_primary,
-        };
+        let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
         Self { grpc_listen_address, max_history, history_file_path, watcher }
     }
 }
