@@ -1,4 +1,4 @@
-use clipcat_clipboard::{Clipboard, ClipboardKind, Error};
+use clipcat_clipboard::{Clipboard, ClipboardKind, Error, X11ListenerError};
 
 mod common;
 
@@ -17,11 +17,30 @@ impl DefaultClipboardTester {
 impl ClipboardTester for DefaultClipboardTester {
     type Clipboard = Clipboard;
 
-    fn new_clipboard(&self) -> Self::Clipboard { Clipboard::new(None, self.kind).unwrap() }
+    fn new_clipboard(&self) -> Result<Self::Clipboard, Error> {
+        let clipboard = Clipboard::new(None, self.kind)?;
+        Ok(clipboard)
+    }
 }
 
 #[test]
-fn test_clipboard() -> Result<(), Error> {
-    let tester = DefaultClipboardTester::new(ClipboardKind::Clipboard);
-    tester.run()
+fn test_x11_clipboard() -> Result<(), Error> {
+    match DefaultClipboardTester::new(ClipboardKind::Clipboard).run() {
+        Err(Error::X11Listener { error: X11ListenerError::Connect { .. } }) => {
+            eprintln!("Could not connect to X11 server, skip the further test cases");
+            Ok(())
+        }
+        result => result,
+    }
+}
+
+#[test]
+fn test_x11_primary() -> Result<(), Error> {
+    match DefaultClipboardTester::new(ClipboardKind::Primary).run() {
+        Err(Error::X11Listener { error: X11ListenerError::Connect { .. } }) => {
+            eprintln!("Could not connect to X11 server, skip the further test cases");
+            Ok(())
+        }
+        result => result,
+    }
 }
