@@ -5,13 +5,13 @@
 , llvmPackages
 , protobuf
 , pkg-config
+, xvfb-run
+, cargo-nextest
 }:
 
 rustPlatform.buildRustPackage {
   pname = name;
   inherit version;
-
-  doCheck = false;
 
   src = lib.cleanSource ./..;
 
@@ -27,6 +27,27 @@ rustPlatform.buildRustPackage {
 
     protobuf
   ];
+
+  nativeCheckInputs = [
+    cargo-nextest
+
+    xvfb-run
+  ];
+
+  checkPhase = ''
+    cat >test-runner <<EOF
+    #!/bin/sh
+    export NEXTEST_RETRIES=5
+
+    cargo --version
+    rustc --version
+    cargo nextest --version
+    cargo nextest run --workspace --no-fail-fast --no-capture
+    EOF
+
+    chmod +x test-runner
+    xvfb-run --auto-servernum ./test-runner
+  '';
 
   PROTOC = "${protobuf}/bin/protoc";
   PROTOC_INCLUDE = "${protobuf}/include";
