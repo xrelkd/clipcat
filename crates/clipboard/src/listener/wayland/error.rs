@@ -1,8 +1,9 @@
+use clipcat::ClipboardKind;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
 pub enum Error {
-    #[snafu(display("Primary selection is not supported"))]
-    PrimarySelectionNotSupported,
+    #[snafu(display("Clipboard kind `{kind}` not supported"))]
+    ClipboardKindNotSupported { kind: ClipboardKind },
 }

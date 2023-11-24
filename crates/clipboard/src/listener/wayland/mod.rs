@@ -30,18 +30,18 @@ impl Listener {
         let is_running = Arc::new(AtomicBool::new(true));
 
         let polling_interval = Duration::from_millis(250);
-        let clipboard_kind = match clipboard_kind {
+        let clipboard_type = match clipboard_kind {
             ClipboardKind::Clipboard => wl_clipboard_rs::paste::ClipboardType::Regular,
             _ => wl_clipboard_rs::paste::ClipboardType::Primary,
         };
 
-        if clipboard_kind == wl_clipboard_rs::paste::ClipboardType::Primary {
+        if clipboard_type == wl_clipboard_rs::paste::ClipboardType::Primary {
             if let Ok(supported) = wl_clipboard_rs::utils::is_primary_selection_supported() {
                 if !supported {
-                    return Err(Error::PrimarySelectionNotSupported)?;
+                    return Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
                 }
             } else {
-                return Err(Error::PrimarySelectionNotSupported)?;
+                return Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
             }
         }
 
@@ -52,7 +52,7 @@ impl Listener {
                     tracing::trace!("Wait for readiness events");
 
                     let result = wl_clipboard_rs::paste::get_contents(
-                        clipboard_kind,
+                        clipboard_type,
                         Seat::Unspecified,
                         MimeType::Text,
                     );
@@ -63,7 +63,14 @@ impl Listener {
                             | WaylandError::ClipboardEmpty
                             | WaylandError::NoMimeType,
                         ) => {
-                            // The clipboard is empty, sleep for a while
+                            tracing::trace!("The clipboard is empty, sleep for a while");
+                            thread::sleep(polling_interval);
+                        }
+                        Err(WaylandError::MissingProtocol { name, version }) => {
+                            tracing::error!(
+                                "A required Wayland protocol (name: {name}, version: {version}) \
+                                 is not supported by the compositor"
+                            );
                             thread::sleep(polling_interval);
                         }
                         Err(err) => {
@@ -71,6 +78,7 @@ impl Listener {
                                 "Error occurs while listening to clipboard of Wayland, error: \
                                  {err}"
                             );
+                            thread::sleep(polling_interval);
                         }
                     }
                 }
