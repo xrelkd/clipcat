@@ -10,6 +10,7 @@ pub use clipcat::ClipboardKind;
 pub use self::{
     default::Clipboard,
     error::Error,
+    listener::{WaylandListenerError, X11ListenerError},
     mock::Clipboard as MockClipboard,
     pubsub::Subscriber,
     traits::{

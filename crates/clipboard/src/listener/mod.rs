@@ -1,4 +1,7 @@
 pub mod wayland;
 pub mod x11;
 
-pub use self::{wayland::Listener as WaylandListener, x11::Listener as X11Listener};
+pub use self::{
+    wayland::{Error as WaylandListenerError, Listener as WaylandListener},
+    x11::{Error as X11ListenerError, Listener as X11Listener},
+};
