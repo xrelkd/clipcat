@@ -52,6 +52,10 @@ pub enum ClipboardContent {
     Image { width: usize, height: usize, bytes: Bytes },
 }
 
+impl Default for ClipboardContent {
+    fn default() -> Self { Self::Plaintext(String::new()) }
+}
+
 impl ClipboardContent {
     #[inline]
     pub fn is_empty(&self) -> bool {
