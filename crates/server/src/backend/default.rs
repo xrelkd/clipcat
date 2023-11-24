@@ -1,4 +1,4 @@
-use std::{fmt, sync::Arc};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use clipcat::{ClipboardContent, ClipboardKind};
@@ -15,21 +15,12 @@ pub struct DefaultClipboardBackend {
 
 impl DefaultClipboardBackend {
     /// # Errors
-    pub fn new<S>(x11_display_name: Option<S>) -> Result<Self>
-    where
-        S: fmt::Display,
-    {
-        let x11_display_name = x11_display_name.map(|name| name.to_string());
-
+    pub fn new() -> Result<Self> {
         let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
 
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
-            match Clipboard::new(x11_display_name.clone(), kind)
-                .context(error::InitializeClipboardSnafu)
-            {
-                Ok(clipboard) => {
-                    clipboards.push(Arc::new(clipboard));
-                }
+            match Clipboard::new(kind).context(error::InitializeClipboardSnafu) {
+                Ok(clipboard) => clipboards.push(Arc::new(clipboard)),
                 Err(err) => {
                     if kind == ClipboardKind::Clipboard {
                         return Err(err);

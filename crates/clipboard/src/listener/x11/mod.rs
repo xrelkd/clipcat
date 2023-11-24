@@ -41,8 +41,9 @@ impl Listener {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
-        tracing::info!("Try to connect X11 server");
+        tracing::info!("Connect X11 server");
         let mut context = Context::new(display_name, clipboard_kind)?;
+        tracing::info!("X11 server connected");
 
         let thread = thread::spawn({
             let is_running = is_running.clone();

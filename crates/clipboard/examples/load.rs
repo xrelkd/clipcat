@@ -3,7 +3,7 @@ use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardLoad, Error};
 use snafu::ErrorCompat;
 
 fn main() -> Result<(), Error> {
-    let clipboard = Clipboard::new(None, ClipboardKind::Clipboard)?;
+    let clipboard = Clipboard::new(ClipboardKind::Clipboard)?;
     match clipboard.load() {
         Ok(ClipboardContent::Plaintext(text)) => {
             println!("size: {}", text.len());

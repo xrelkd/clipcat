@@ -21,16 +21,21 @@ pub struct Clipboard {
 
 impl Clipboard {
     /// # Errors
-    pub fn new(
-        x11_display_name: Option<String>,
-        clipboard_kind: ClipboardKind,
-    ) -> Result<Self, Error> {
+    pub fn new(clipboard_kind: ClipboardKind) -> Result<Self, Error> {
         let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
-            if std::env::var_os("WAYLAND_DISPLAY").is_some() {
+            if let Ok(display_name) = std::env::var("WAYLAND_DISPLAY") {
+                tracing::info!("Build Wayland listener with display `{display_name}`");
                 Arc::new(WaylandListener::new(clipboard_kind)?)
             } else {
-                Arc::new(X11Listener::new(x11_display_name, clipboard_kind)?)
+                match std::env::var("DISPLAY") {
+                    Ok(display_name) => {
+                        tracing::info!("Build X11 listener with display `{display_name}`");
+                        Arc::new(X11Listener::new(Some(display_name), clipboard_kind)?)
+                    }
+                    Err(_) => Arc::new(X11Listener::new(None, clipboard_kind)?),
+                }
             };
+
         let clear_on_drop = Arc::new(AtomicBool::from(false));
         let clipboard_kind = match clipboard_kind {
             ClipboardKind::Clipboard => arboard::LinuxClipboardKind::Clipboard,

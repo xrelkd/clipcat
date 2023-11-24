@@ -13,13 +13,11 @@ use self::error::Result;
 pub use self::{default::DefaultClipboardBackend, error::Error, mock::MockClipboardBackend};
 
 /// # Errors
-pub fn new() -> Result<Box<dyn ClipboardBackend>> {
-    Ok(Box::new(DefaultClipboardBackend::new(Option::<&str>::None)?))
-}
+pub fn new() -> Result<Box<dyn ClipboardBackend>> { Ok(Box::new(DefaultClipboardBackend::new()?)) }
 
 /// # Errors
 pub fn new_shared() -> Result<Arc<dyn ClipboardBackend>> {
-    Ok(Arc::new(DefaultClipboardBackend::new(Option::<&str>::None)?))
+    Ok(Arc::new(DefaultClipboardBackend::new()?))
 }
 
 #[derive(Debug)]
