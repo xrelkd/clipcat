@@ -484,6 +484,7 @@ dependencies = [
  "clipcat-external-editor",
  "http 1.0.0",
  "serde",
+ "serde_with",
  "skim",
  "snafu",
  "tokio",

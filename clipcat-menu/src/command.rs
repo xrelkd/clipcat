@@ -20,7 +20,7 @@ const LINE_LENGTH: usize = 100;
 #[clap(name = clipcat::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
-    subcommand: Option<Commands>,
+    commands: Option<Commands>,
 
     #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
@@ -33,6 +33,9 @@ pub struct Cli {
 
     #[clap(long, short = 'l', help = "Specify the length of a line showing on finder")]
     line_length: Option<usize>,
+
+    #[clap(long = "log-level", help = "Specify a log level")]
+    log_level: Option<tracing::Level>,
 }
 
 #[allow(variant_size_differences)]
@@ -77,7 +80,9 @@ impl Cli {
     pub fn new() -> Self { Self::parse() }
 
     pub fn run(self) -> Result<(), Error> {
-        match self.subcommand {
+        let Self { commands, config_file, finder, menu_length, line_length, log_level } = self;
+
+        match commands {
             Some(Commands::Version) => {
                 std::io::stdout()
                     .write_all(Self::command().render_long_version().as_bytes())
@@ -109,40 +114,41 @@ impl Cli {
             _ => {}
         }
 
-        init_tracing();
+        let mut config = Config::load_or_default(config_file.unwrap_or_else(Config::default_path));
+        if let Some(log_level) = log_level {
+            config.log_level = log_level;
+        }
 
-        let mut config =
-            Config::load_or_default(self.config_file.unwrap_or_else(Config::default_path));
+        init_tracing(config.log_level);
 
         let finder = {
-            if let Some(finder) = self.finder {
+            if let Some(finder) = finder {
                 config.finder = finder;
             }
 
             let mut finder = FinderRunner::from_config(&config);
-            if let Some(line_length) = self.line_length {
+            if let Some(line_length) = line_length {
                 finder.set_line_length(line_length);
             }
 
-            if let Some(menu_length) = self.menu_length {
+            if let Some(menu_length) = menu_length {
                 finder.set_menu_length(menu_length);
             }
             finder
         };
 
-        let subcommand = self.subcommand;
         let fut = async move {
-            let Config { server_host, server_port, .. } = config;
-
             let client = {
                 let grpc_endpoint: http::Uri =
-                    format!("http://{server_host}:{server_port}").parse().expect("valid uri");
+                    format!("http://{server_addr}", server_addr = config.server_socket_address())
+                        .parse()
+                        .expect("valid uri");
                 Client::new(clipcat_client::Config { grpc_endpoint }).await?
             };
 
             let clips = client.list().await?;
 
-            match subcommand {
+            match commands {
                 Some(Commands::Insert { kind }) => {
                     insert_clip(&clips, finder, &client, kind).await?;
                 }
@@ -209,9 +215,9 @@ async fn insert_clip(
     Ok(())
 }
 
-fn init_tracing() {
+fn init_tracing(log_level: tracing::Level) {
     // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(tracing::Level::INFO);
+    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
 
     // format
     let fmt_layer =
