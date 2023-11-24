@@ -17,13 +17,13 @@ use self::{
 pub use self::{error::FinderError, finder_stream::FinderStream};
 use crate::config::Config;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum SelectionMode {
     Single,
     Multiple,
 }
 
-#[derive(Copy, Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub enum FinderType {
     #[default]
     #[serde(rename = "builtin")]

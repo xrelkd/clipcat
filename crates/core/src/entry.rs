@@ -48,7 +48,7 @@ impl Entry {
                         bytes: image.into_raw().into(),
                     }
                 })
-                .context(ConverseImageSnafu {})?
+                .context(ConvertImageSnafu {})?
         } else {
             return Err(Error::FormatNotAvailable);
         };
@@ -241,10 +241,9 @@ fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, E
     }
 
     let mut png_bytes = Vec::new();
-    let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-    encoder
-        .write_image(bytes.as_ref(), width, height, image::ColorType::Rgba8)
-        .context(ConverseImageSnafu {})?;
+    image::codecs::png::PngEncoder::new(&mut png_bytes)
+        .write_image(bytes, width, height, image::ColorType::Rgba8)
+        .context(ConvertImageSnafu {})?;
 
     Ok(png_bytes)
 }
@@ -258,6 +257,6 @@ pub enum Error {
     #[snafu(display("The image is empty"))]
     EmptyImage,
 
-    #[snafu(display("Error occurs while conversing image, error: {source}"))]
-    ConverseImage { source: image::ImageError },
+    #[snafu(display("Error occurs while converting image, error: {source}"))]
+    ConvertImage { source: image::ImageError },
 }

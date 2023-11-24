@@ -1,6 +1,6 @@
 mod entry;
 mod kind;
-pub mod utils;
+pub mod serde;
 mod watcher_state;
 
 use std::path::PathBuf;
