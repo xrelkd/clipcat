@@ -1,4 +1,5 @@
 mod error;
+mod options;
 
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -9,35 +10,13 @@ use clipcat::{ClipEntry, ClipboardContent, ClipboardKind, ClipboardWatcherState}
 use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
-pub use self::error::Error;
+pub use self::{error::Error, options::Options as ClipboardWatcherOptions};
 use crate::backend::{ClipboardBackend, Error as BackendError};
 
 pub struct ClipboardWatcher {
     is_watching: Arc<AtomicBool>,
     clip_sender: broadcast::Sender<ClipEntry>,
     _join_handle: task::JoinHandle<Result<(), Error>>,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct ClipboardWatcherOptions {
-    pub load_current: bool,
-
-    pub enable_clipboard: bool,
-
-    pub enable_primary: bool,
-
-    pub filter_min_size: usize,
-}
-
-impl Default for ClipboardWatcherOptions {
-    fn default() -> Self {
-        Self {
-            load_current: true,
-            enable_clipboard: true,
-            enable_primary: true,
-            filter_min_size: 1,
-        }
-    }
 }
 
 impl ClipboardWatcher {
