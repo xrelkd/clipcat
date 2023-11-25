@@ -7,6 +7,7 @@
 , pkg-config
 , xvfb-run
 , cargo-nextest
+, installShellFiles
 }:
 
 rustPlatform.buildRustPackage {
@@ -19,6 +20,11 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
+  PROTOC = "${protobuf}/bin/protoc";
+  PROTOC_INCLUDE = "${protobuf}/include";
+
+  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+
   nativeBuildInputs = [
     llvmPackages.clang
     llvmPackages.libclang
@@ -26,6 +32,8 @@ rustPlatform.buildRustPackage {
     pkg-config
 
     protobuf
+
+    installShellFiles
   ];
 
   nativeCheckInputs = [
@@ -49,8 +57,21 @@ rustPlatform.buildRustPackage {
     xvfb-run --auto-servernum ./test-runner
   '';
 
-  PROTOC = "${protobuf}/bin/protoc";
-  PROTOC_INCLUDE = "${protobuf}/include";
+  postInstall = ''
+    for cmd in clipcatd clipcatctl clipcat-menu clipcat-notify; do
+      installShellCompletion --cmd $cmd \
+        --bash <($out/bin/$cmd completions bash) \
+        --fish <($out/bin/$cmd completion fish) \
+        --zsh  <($out/bin/$cmd completion zsh)
+    done
+  '';
 
-  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+  meta = with lib; {
+    description = "Clipboard Manager written in Rust Programming Language";
+    homepage = "https://github.com/xrelkd/clipcat";
+    license = licenses.gpl3Only;
+    platforms = platforms.linux;
+    maintainers = with maintainers; [ xrelkd ];
+    mainProgram = "clipcatd";
+  };
 }
