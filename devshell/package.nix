@@ -38,7 +38,7 @@ rustPlatform.buildRustPackage {
     cargo --version
     rustc --version
     cargo nextest --version
-    cargo nextest run --workspace --no-fail-fast --no-capture
+    cargo nextest run --release --workspace --no-fail-fast --no-capture
     EOF
 
     chmod +x test-runner
