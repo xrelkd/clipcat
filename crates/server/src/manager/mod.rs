@@ -2,7 +2,7 @@ mod error;
 
 use std::{collections::HashMap, sync::Arc};
 
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use snafu::ResultExt;
 use time::OffsetDateTime;
 
@@ -46,7 +46,12 @@ impl ClipboardManager {
     }
 
     #[inline]
-    pub fn list(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
+    pub fn export(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
+
+    #[inline]
+    pub fn list(&self, preview_length: usize) -> Vec<ClipEntryMetadata> {
+        self.iter().map(|entry| entry.metadata(Some(preview_length))).collect()
+    }
 
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &ClipEntry> { self.clips.values() }
@@ -236,7 +241,7 @@ mod tests {
         assert_eq!(mgr.get_current_clip(ClipboardKind::Primary), clips.last());
         assert_eq!(mgr.len(), n);
 
-        let dumped = mgr.list().into_iter().collect::<HashSet<_>>();
+        let dumped = mgr.export().into_iter().collect::<HashSet<_>>();
         let clips = clips.into_iter().collect::<HashSet<_>>();
 
         assert_eq!(dumped, clips);
@@ -257,7 +262,7 @@ mod tests {
         assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
         assert_eq!(mgr.len(), n);
 
-        let dumped: HashSet<_> = mgr.list().into_iter().collect();
+        let dumped: HashSet<_> = mgr.export().into_iter().collect();
         let clips: HashSet<_> = clips.into_iter().collect();
 
         assert_eq!(dumped, clips);

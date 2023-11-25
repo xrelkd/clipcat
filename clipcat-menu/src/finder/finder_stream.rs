@@ -1,16 +1,14 @@
-use clipcat::ClipEntry;
+use clipcat::ClipEntryMetadata;
 
 pub const ENTRY_SEPARATOR: &str = "\n";
 pub const INDEX_SEPARATOR: char = ':';
 
 pub trait FinderStream: Send + Sync {
-    fn generate_input(&self, clips: &[ClipEntry]) -> String {
+    fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
         clips
             .iter()
             .enumerate()
-            .map(|(i, data)| {
-                format!("{i}{INDEX_SEPARATOR} {}", data.printable_data(self.line_length()))
-            })
+            .map(|(i, metadata)| format!("{i}{INDEX_SEPARATOR} {}", metadata.preview))
             .collect::<Vec<_>>()
             .join(ENTRY_SEPARATOR)
     }
@@ -55,14 +53,14 @@ mod tests {
         let v = d.generate_input(&clips);
         assert_eq!(v, "");
 
-        let clips = vec![ClipEntry::from_string("abcde", MODE)];
+        let clips = vec![ClipEntry::from_string("abcde", MODE).metadata(None)];
         let v = d.generate_input(&clips);
         assert_eq!(v, "0: abcde");
 
         let clips = vec![
-            ClipEntry::from_string("abcde", MODE),
-            ClipEntry::from_string("АбВГД", MODE),
-            ClipEntry::from_string("あいうえお", MODE),
+            ClipEntry::from_string("abcde", MODE).metadata(None),
+            ClipEntry::from_string("АбВГД", MODE).metadata(None),
+            ClipEntry::from_string("あいうえお", MODE).metadata(None),
         ];
 
         let v = d.generate_input(&clips);

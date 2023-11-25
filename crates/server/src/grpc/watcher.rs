@@ -19,7 +19,7 @@ impl WatcherService {
 impl proto::Watcher for WatcherService {
     async fn enable_watcher(
         &self,
-        _request: Request<proto::EnableWatcherRequest>,
+        _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
         let state = {
             let mut watcher = self.watcher.lock().await;
@@ -32,7 +32,7 @@ impl proto::Watcher for WatcherService {
 
     async fn disable_watcher(
         &self,
-        _request: Request<proto::DisableWatcherRequest>,
+        _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
         let state = {
             let mut watcher = self.watcher.lock().await;
@@ -45,7 +45,7 @@ impl proto::Watcher for WatcherService {
 
     async fn toggle_watcher(
         &self,
-        _request: Request<proto::ToggleWatcherRequest>,
+        _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
         let state = {
             let mut watcher = self.watcher.lock().await;
@@ -58,7 +58,7 @@ impl proto::Watcher for WatcherService {
 
     async fn get_watcher_state(
         &self,
-        _request: Request<proto::GetWatcherStateRequest>,
+        _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
         let state = {
             let watcher = self.watcher.lock().await;

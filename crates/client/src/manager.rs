@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use clipcat_proto as proto;
 use tonic::Request;
 
@@ -48,7 +48,7 @@ pub trait Manager {
 
     async fn length(&self) -> Result<usize, GetLengthError>;
 
-    async fn list(&self) -> Result<Vec<ClipEntry>, ListClipError>;
+    async fn list(&self, preview_length: usize) -> Result<Vec<ClipEntryMetadata>, ListClipError>;
 
     async fn remove(&self, id: u64) -> Result<bool, RemoveClipError>;
 
@@ -129,22 +129,24 @@ impl Manager for Client {
 
     async fn length(&self) -> Result<usize, GetLengthError> {
         let proto::LengthResponse { length } = proto::ManagerClient::new(self.channel.clone())
-            .length(Request::new(proto::LengthRequest {}))
+            .length(Request::new(()))
             .await
             .map_err(|source| GetLengthError::Status { source })?
             .into_inner();
         Ok(usize::try_from(length).unwrap_or(0))
     }
 
-    async fn list(&self) -> Result<Vec<ClipEntry>, ListClipError> {
+    async fn list(&self, preview_length: usize) -> Result<Vec<ClipEntryMetadata>, ListClipError> {
         let mut list: Vec<_> = proto::ManagerClient::new(self.channel.clone())
-            .list(Request::new(proto::ListRequest {}))
+            .list(Request::new(proto::ListRequest {
+                preview_length: u64::try_from(preview_length).unwrap_or(30),
+            }))
             .await
             .map_err(|source| ListClipError::Status { source })?
             .into_inner()
-            .data
+            .metadata
             .into_iter()
-            .map(ClipEntry::from)
+            .map(ClipEntryMetadata::from)
             .collect();
         list.sort_unstable();
         Ok(list)
@@ -170,7 +172,7 @@ impl Manager for Client {
 
     async fn clear(&self) -> Result<(), ClearClipError> {
         proto::ManagerClient::new(self.channel.clone())
-            .clear(Request::new(proto::ClearRequest {}))
+            .clear(Request::new(()))
             .await
             .map(|_| ())
             .map_err(|source| ClearClipError::Status { source })

@@ -444,6 +444,7 @@ dependencies = [
  "clipcat-proto",
  "http 1.0.0",
  "mime",
+ "prost-types",
  "snafu",
  "tonic",
 ]
@@ -514,6 +515,8 @@ dependencies = [
  "clipcat",
  "mime",
  "prost",
+ "prost-build",
+ "prost-types",
  "time",
  "tonic",
  "tonic-build",

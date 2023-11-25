@@ -1,6 +1,9 @@
 syntax = "proto3";
 
-package manager;
+package clipcat;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 service Manager {
   rpc List(ListRequest) returns (ListResponse);
@@ -10,14 +13,14 @@ service Manager {
 
   rpc Remove(RemoveRequest) returns (RemoveResponse);
   rpc BatchRemove(BatchRemoveRequest) returns (BatchRemoveResponse);
-  rpc Clear(ClearRequest) returns (ClearResponse);
+  rpc Clear(google.protobuf.Empty) returns (google.protobuf.Empty);
 
   rpc Insert(InsertRequest) returns (InsertResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
 
   rpc Mark(MarkRequest) returns (MarkResponse);
 
-  rpc Length(LengthRequest) returns (LengthResponse);
+  rpc Length(google.protobuf.Empty) returns (LengthResponse);
 }
 
 enum ClipboardKind {
@@ -26,12 +29,20 @@ enum ClipboardKind {
   Secondary = 2;
 }
 
-message ClipboardData {
+message ClipEntryMetadata {
+  uint64 id = 1;
+  string mime = 2;
+  ClipboardKind kind = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string preview = 5;
+}
+
+message ClipEntry {
   uint64 id = 1;
   bytes data = 2;
   string mime = 3;
   ClipboardKind kind = 4;
-  uint64 timestamp = 5;
+  google.protobuf.Timestamp timestamp = 5;
 }
 
 message InsertRequest {
@@ -42,13 +53,13 @@ message InsertRequest {
 message InsertResponse { uint64 id = 1; }
 
 message GetRequest { uint64 id = 1; }
-message GetResponse { ClipboardData data = 1; }
+message GetResponse { ClipEntry data = 1; }
 
 message GetCurrentClipRequest { ClipboardKind kind = 1; }
-message GetCurrentClipResponse { ClipboardData data = 1; }
+message GetCurrentClipResponse { ClipEntry data = 1; }
 
-message ListRequest {}
-message ListResponse { repeated ClipboardData data = 1; }
+message ListRequest { uint64 preview_length = 1; }
+message ListResponse { repeated ClipEntryMetadata metadata = 1; }
 
 message UpdateRequest {
   uint64 id = 1;
@@ -66,7 +77,6 @@ message MarkRequest {
 }
 message MarkResponse { bool ok = 1; }
 
-message LengthRequest {}
 message LengthResponse { uint64 length = 1; }
 
 message RemoveRequest { uint64 id = 1; }
@@ -74,6 +84,3 @@ message RemoveResponse { bool ok = 1; }
 
 message BatchRemoveRequest { repeated uint64 ids = 1; }
 message BatchRemoveResponse { repeated uint64 ids = 1; }
-
-message ClearRequest {}
-message ClearResponse {}

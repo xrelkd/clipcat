@@ -5,7 +5,7 @@ mod finder_stream;
 
 use std::{fmt, str::FromStr};
 
-use clipcat::ClipEntry;
+use clipcat::ClipEntryMetadata;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 use tokio::io::AsyncWriteExt;
@@ -106,8 +106,8 @@ impl FinderRunner {
 
     pub async fn single_select(
         self,
-        clips: &[ClipEntry],
-    ) -> Result<Option<(usize, ClipEntry)>, FinderError> {
+        clips: &[ClipEntryMetadata],
+    ) -> Result<Option<(usize, ClipEntryMetadata)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Single).await?;
         if let Some(&selected_index) = selected_indices.first() {
             let selected_data = &clips[selected_index];
@@ -119,15 +119,15 @@ impl FinderRunner {
 
     pub async fn multiple_select(
         self,
-        clips: &[ClipEntry],
-    ) -> Result<Vec<(usize, ClipEntry)>, FinderError> {
+        clips: &[ClipEntryMetadata],
+    ) -> Result<Vec<(usize, ClipEntryMetadata)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Multiple).await?;
         Ok(selected_indices.into_iter().map(|index| (index, clips[index].clone())).collect())
     }
 
     pub async fn select(
         self,
-        clips: &[ClipEntry],
+        clips: &[ClipEntryMetadata],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         if self.external.is_some() {
@@ -139,7 +139,7 @@ impl FinderRunner {
 
     async fn select_externally(
         self,
-        clips: &[ClipEntry],
+        clips: &[ClipEntryMetadata],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         if let Some(external) = self.external {
