@@ -1,3 +1,4 @@
+mod utils;
 mod proto {
     // SAFETY: allow: prost
     #![allow(
@@ -20,8 +21,7 @@ mod proto {
         clippy::wildcard_imports
     )]
 
-    tonic::include_proto!("manager");
-    tonic::include_proto!("watcher");
+    tonic::include_proto!("clipcat");
 }
 
 use std::str::FromStr;
@@ -33,12 +33,10 @@ pub use self::proto::{
     manager_server::{Manager, ManagerServer},
     watcher_client::WatcherClient,
     watcher_server::{Watcher, WatcherServer},
-    BatchRemoveRequest, BatchRemoveResponse, ClearRequest, ClearResponse, ClipboardData,
-    ClipboardKind, DisableWatcherRequest, EnableWatcherRequest, GetCurrentClipRequest,
-    GetCurrentClipResponse, GetRequest, GetResponse, GetWatcherStateRequest, InsertRequest,
-    InsertResponse, LengthRequest, LengthResponse, ListRequest, ListResponse, MarkRequest,
-    MarkResponse, RemoveRequest, RemoveResponse, ToggleWatcherRequest, UpdateRequest,
-    UpdateResponse, WatcherState, WatcherStateReply,
+    BatchRemoveRequest, BatchRemoveResponse, ClipEntry, ClipEntryMetadata, ClipboardKind,
+    GetCurrentClipRequest, GetCurrentClipResponse, GetRequest, GetResponse, InsertRequest,
+    InsertResponse, LengthResponse, ListRequest, ListResponse, MarkRequest, MarkResponse,
+    RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse, WatcherState, WatcherStateReply,
 };
 
 impl From<ClipboardKind> for clipcat::ClipboardKind {
@@ -61,27 +59,45 @@ impl From<clipcat::ClipboardKind> for ClipboardKind {
     }
 }
 
-impl From<clipcat::ClipEntry> for ClipboardData {
+impl From<clipcat::ClipEntry> for ClipEntry {
     fn from(entry: clipcat::ClipEntry) -> Self {
         let mime = entry.mime().essence_str().to_owned();
         let data = entry.encoded().unwrap_or_default();
         let id = entry.id();
         let kind = entry.kind();
-        let timestamp = u64::try_from(entry.timestamp().unix_timestamp())
-            .expect("`u64` should be enough for store timestamp");
+        let timestamp = utils::datetime_to_timestamp(&entry.timestamp());
 
-        Self { id, data, kind: kind.into(), mime, timestamp }
+        Self { id, data, kind: kind.into(), mime, timestamp: Some(timestamp) }
     }
 }
 
-impl From<ClipboardData> for clipcat::ClipEntry {
-    fn from(ClipboardData { id: _, data, mime, kind, timestamp }: ClipboardData) -> Self {
-        let timestamp = i64::try_from(timestamp)
-            .map_or(None, |ts| OffsetDateTime::from_unix_timestamp(ts).ok());
-
+impl From<ClipEntry> for clipcat::ClipEntry {
+    fn from(ClipEntry { id: _, data, mime, kind, timestamp }: ClipEntry) -> Self {
+        let timestamp = timestamp.and_then(|ts| utils::timestamp_to_datetime(&ts).ok());
         let kind = clipcat::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
         Self::new(&data, &mime, kind, timestamp).unwrap_or_default()
+    }
+}
+
+impl From<clipcat::ClipEntryMetadata> for ClipEntryMetadata {
+    fn from(metadata: clipcat::ClipEntryMetadata) -> Self {
+        let clipcat::ClipEntryMetadata { id, kind: clipboard_kind, timestamp, mime, preview } =
+            metadata;
+        let mime = mime.essence_str().to_owned();
+        let timestamp = utils::datetime_to_timestamp(&timestamp);
+        Self { id, preview, kind: clipboard_kind.into(), mime, timestamp: Some(timestamp) }
+    }
+}
+
+impl From<ClipEntryMetadata> for clipcat::ClipEntryMetadata {
+    fn from(ClipEntryMetadata { id, mime, kind, timestamp, preview }: ClipEntryMetadata) -> Self {
+        let timestamp = timestamp
+            .and_then(|ts| utils::timestamp_to_datetime(&ts).ok())
+            .unwrap_or_else(OffsetDateTime::now_utc);
+        let clipboard_kind = clipcat::ClipboardKind::from(kind);
+        let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
+        Self { id, kind: clipboard_kind, timestamp, mime, preview }
     }
 }
 
