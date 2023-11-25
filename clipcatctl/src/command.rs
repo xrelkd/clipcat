@@ -1,7 +1,7 @@
 use std::{io::Write, num::ParseIntError, path::PathBuf, str::FromStr};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipboardKind, ClipboardWatcherState};
+use clipcat::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
 use clipcat_client::{Client, Manager as _, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -16,11 +16,13 @@ use crate::{
     error::{self, Error},
 };
 
+const PREVIEW_LENGTH: usize = 100;
+
 #[derive(Parser)]
 #[clap(name = clipcat::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
-    subcommand: Option<Commands>,
+    commands: Option<Commands>,
 
     #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
@@ -188,7 +190,7 @@ impl Cli {
 
     #[allow(clippy::too_many_lines)]
     pub fn run(self) -> Result<i32, Error> {
-        match self.subcommand {
+        match self.commands {
             Some(Commands::Version) => {
                 std::io::stdout()
                     .write_all(Self::command().render_long_version().as_bytes())
@@ -223,7 +225,7 @@ impl Cli {
                 Client::new(clipcat_client::Config { grpc_endpoint }).await?
             };
 
-            match self.subcommand {
+            match self.commands {
                 None => {
                     print_list(&client, false).await?;
                 }
@@ -232,17 +234,18 @@ impl Cli {
                 }
                 Some(Commands::Get { id }) => {
                     let data = if let Some(id) = id {
-                        client.get(id).await?
+                        client.get(id).await?.printable_data(None)
                     } else {
                         client
-                            .list()
+                            .list(PREVIEW_LENGTH)
                             .await?
                             .into_iter()
-                            .find(|entry| entry.kind() == ClipboardKind::Clipboard)
+                            .find(|metadata| metadata.kind == ClipboardKind::Clipboard)
+                            .map(|metadata| metadata.preview)
                             .unwrap_or_default()
                     };
 
-                    println!("{}", data.printable_data(None));
+                    println!("{data}");
                 }
                 Some(Commands::Insert { kind, data }) => {
                     let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
@@ -340,15 +343,13 @@ impl Cli {
 fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
 
 async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
-    const LINE_LENGTH: Option<usize> = Some(100);
-
-    let list = client.list().await?;
-    for data in list {
-        let content = data.printable_data(LINE_LENGTH);
+    let metadata_list = client.list(PREVIEW_LENGTH).await?;
+    for metadata in metadata_list {
+        let ClipEntryMetadata { id, preview, .. } = metadata;
         if no_id {
-            println!("{content}");
+            println!("{preview}");
         } else {
-            println!("{:016x}: {content}", data.id());
+            println!("{id:016x}: {preview}");
         }
     }
     Ok(())
