@@ -14,7 +14,7 @@ pub use self::{error::Error, options::Options as ClipboardWatcherOptions};
 use crate::backend::{ClipboardBackend, Error as BackendError};
 
 pub struct ClipboardWatcher {
-    is_watching: Arc<AtomicBool>,
+    is_running: Arc<AtomicBool>,
     clip_sender: broadcast::Sender<ClipEntry>,
     _join_handle: task::JoinHandle<Result<(), Error>>,
 }
@@ -46,11 +46,11 @@ impl ClipboardWatcher {
         };
 
         let (clip_sender, _event_receiver) = broadcast::channel(16);
-        let is_watching = Arc::new(AtomicBool::new(true));
+        let is_running = Arc::new(AtomicBool::new(true));
 
         let join_handle = task::spawn({
             let clip_sender = clip_sender.clone();
-            let is_watching = is_watching.clone();
+            let is_watching = is_running.clone();
 
             let mut subscriber = backend.subscribe()?;
             async move {
@@ -84,15 +84,17 @@ impl ClipboardWatcher {
                                     | BackendError::UnknownContentType
                                     | BackendError::UnsupportedClipboardKind { .. },
                                 ) => continue,
-                                Err(error) => return Err(Error::Backend { error }),
+                                Err(error) => {
+                                    tracing::error!("Failed to load clipboard, error: {error}");
+                                }
                             }
                         }
                     }
                 }
 
-                loop {
+                while is_watching.load(Ordering::Relaxed) {
                     let kind = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
-                    if enabled_kinds[usize::from(kind)] && is_watching.load(Ordering::Relaxed) {
+                    if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
                         match backend.load(kind).await {
                             Ok(new_content)
                                 if new_content.len() > filter_min_size
@@ -112,19 +114,18 @@ impl ClipboardWatcher {
                                 | BackendError::UnknownContentType,
                             ) => continue,
                             Err(error) => {
-                                tracing::error!(
-                                    "Failed to load clipboard, ClipboardWatcher is closing, \
-                                     error: {error}",
-                                );
-                                return Err(Error::Backend { error });
+                                tracing::error!("Failed to load clipboard, error: {error}");
                             }
                         }
                     }
                 }
+
+                tracing::info!("ClipboardWatcher is stopped");
+                Ok(())
             }
         });
 
-        Ok(Self { is_watching, clip_sender, _join_handle: join_handle })
+        Ok(Self { is_running, clip_sender, _join_handle: join_handle })
     }
 
     #[inline]
@@ -132,13 +133,13 @@ impl ClipboardWatcher {
 
     #[inline]
     pub fn enable(&mut self) {
-        self.is_watching.store(true, Ordering::Release);
+        self.is_running.store(true, Ordering::Release);
         tracing::info!("ClipboardWatcher is watching for clipboard event");
     }
 
     #[inline]
     pub fn disable(&mut self) {
-        self.is_watching.store(false, Ordering::Release);
+        self.is_running.store(false, Ordering::Release);
         tracing::info!("ClipboardWatcher is not watching for clipboard event");
     }
 
@@ -152,7 +153,7 @@ impl ClipboardWatcher {
     }
 
     #[inline]
-    pub fn is_watching(&self) -> bool { self.is_watching.load(Ordering::Acquire) }
+    pub fn is_watching(&self) -> bool { self.is_running.load(Ordering::Acquire) }
 
     #[inline]
     pub fn state(&self) -> ClipboardWatcherState {
