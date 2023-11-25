@@ -19,11 +19,8 @@ impl MockClipboardTester {
 impl ClipboardTester for MockClipboardTester {
     type Clipboard = MockClipboard;
 
-    fn new_clipboard(&self) -> Self::Clipboard { MockClipboard::new() }
+    fn new_clipboard(&self) -> Result<Self::Clipboard, Error> { Ok(MockClipboard::new()) }
 }
 
 #[test]
-fn test_mock() -> Result<(), Error> {
-    let tester = MockClipboardTester::new();
-    tester.run()
-}
+fn test_mock() -> Result<(), Error> { MockClipboardTester::new().run() }

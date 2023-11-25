@@ -4,7 +4,7 @@ use snafu::Snafu;
 #[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display("{error}"))]
-    Driver { error: crate::backend::Error },
+    Backend { error: crate::backend::Error },
 
     #[snafu(display("Could not send clipboard event"))]
     SendClipEntry,
@@ -14,5 +14,5 @@ pub enum Error {
 }
 
 impl From<crate::backend::Error> for Error {
-    fn from(error: crate::backend::Error) -> Self { Self::Driver { error } }
+    fn from(error: crate::backend::Error) -> Self { Self::Backend { error } }
 }

@@ -33,10 +33,22 @@ pub async fn serve_with_shutdown(
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
         let history_manager = HistoryManager::new(&history_file_path);
 
-        tracing::info!("Load history from {path}", path = history_manager.path().display());
-        let history_clips = history_manager.load().await.context(error::LoadHistoryManagerSnafu)?;
+        tracing::info!("Load history from `{path}`", path = history_manager.path().display());
+        let history_clips = history_manager
+            .load()
+            .await
+            .map_err(|err| {
+                tracing::error!(
+                    "Could not load history, data might be corrupted, please remove `{path}`, \
+                     error: {err}",
+                    path = history_manager.path().display()
+                );
+            })
+            .unwrap_or_default();
         let clip_count = history_clips.len();
-        tracing::info!("{clip_count} clip(s) loaded");
+        if clip_count > 0 {
+            tracing::info!("{clip_count} clip(s) loaded");
+        }
 
         tracing::info!("Initialize ClipboardManager with capacity {max_history}");
         let mut clipboard_manager =
@@ -49,7 +61,7 @@ pub async fn serve_with_shutdown(
     };
 
     let clipboard_watcher = {
-        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts.into())
+        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts)
             .context(error::CreateClipboardWatcherSnafu)?;
         Arc::new(Mutex::new(watcher))
     };

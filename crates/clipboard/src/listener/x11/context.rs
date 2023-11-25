@@ -71,25 +71,25 @@ impl Context {
             return Err(error::Error::XfixesNotPresent);
         }
 
-        {
-            drop(
-                self.connection
-                    .xfixes_query_version(5, 0)
-                    .context(error::QueryXfixesVersionSnafu)?,
-            );
+        drop(self.connection.set_selection_owner(
+            self.window,
+            self.atom_cache.clipboard_manager,
+            x11rb::CURRENT_TIME,
+        ));
 
-            drop(
-                self.connection
-                    .xfixes_select_selection_input(
-                        self.window,
-                        self.clipboard_kind(),
-                        xfixes::SelectionEventMask::SET_SELECTION_OWNER
-                            | xfixes::SelectionEventMask::SELECTION_WINDOW_DESTROY
-                            | xfixes::SelectionEventMask::SELECTION_CLIENT_CLOSE,
-                    )
-                    .context(error::SelectXfixesSelectionInputSnafu)?,
-            );
-        }
+        drop(self.connection.xfixes_query_version(5, 0).context(error::QueryXfixesVersionSnafu)?);
+
+        drop(
+            self.connection
+                .xfixes_select_selection_input(
+                    self.window,
+                    self.clipboard_kind(),
+                    xfixes::SelectionEventMask::SET_SELECTION_OWNER
+                        | xfixes::SelectionEventMask::SELECTION_WINDOW_DESTROY
+                        | xfixes::SelectionEventMask::SELECTION_CLIENT_CLOSE,
+                )
+                .context(error::SelectXfixesSelectionInputSnafu)?,
+        );
 
         self.flush()?;
         Ok(())
@@ -102,6 +102,7 @@ impl AsRawFd for Context {
 
 #[derive(Debug)]
 struct AtomCache {
+    clipboard_manager: xproto::Atom,
     clipboard_selection: xproto::Atom,
     primary_selection: xproto::Atom,
     secondary_selection: xproto::Atom,
@@ -110,6 +111,7 @@ struct AtomCache {
 impl AtomCache {
     fn new(conn: &impl Connection) -> Result<Self, Error> {
         Ok(Self {
+            clipboard_manager: get_intern_atom(conn, "CLIPBOARD_MANAGER")?,
             clipboard_selection: get_intern_atom(conn, "CLIPBOARD")?,
             primary_selection: xproto::AtomEnum::PRIMARY.into(),
             secondary_selection: xproto::AtomEnum::SECONDARY.into(),

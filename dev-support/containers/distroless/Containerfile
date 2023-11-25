@@ -10,12 +10,9 @@ COPY --from=sccache /usr/bin/sccache /usr/bin/sccache
 RUN <<EOF
 #!/usr/bin/env bash
 
-apt-get update
-apt-get install -y wget unzip
-
-wget -O /tmp/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v23.2/protoc-23.2-linux-x86_64.zip
-unzip -o -d /usr/ /tmp/protoc.zip
-rm -fv /tmp/protoc.zip
+apt update
+apt install -y \
+    protobuf-compiler
 
 protoc --version
 

@@ -64,19 +64,24 @@ impl Driver for FileSystemDriver {
     async fn clear(&mut self) -> Result<(), Error> { self.write(Vec::new()).await }
 
     async fn put(&mut self, data: &ClipEntry) -> Result<(), Error> {
-        let mut saved = self.load().await?;
+        let mut saved = match self.load().await {
+            Ok(saved) => saved,
+            Err(Error::DeseriailizeFileContents { .. }) => Vec::new(),
+            Err(err) => return Err(err),
+        };
         saved.push(data.clone());
         self.write(saved).await
     }
 
     async fn shrink_to(&mut self, min_capacity: usize) -> Result<(), Error> {
-        let mut saved = self.load().await?;
+        let mut saved = match self.load().await {
+            Ok(saved) => saved,
+            Err(Error::DeseriailizeFileContents { .. }) => Vec::new(),
+            Err(err) => return Err(err),
+        };
 
-        let to_shrink = saved.len().saturating_sub(min_capacity);
-        for _ in 0..to_shrink {
-            drop(saved.remove(0));
-        }
-
+        saved.sort_unstable();
+        saved.truncate(min_capacity);
         self.write(saved).await
     }
 }

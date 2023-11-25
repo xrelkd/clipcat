@@ -1,15 +1,18 @@
 mod entry;
 mod kind;
-pub mod utils;
+pub mod serde;
 mod watcher_state;
 
-use std::path::PathBuf;
+use std::{
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 
 use bytes::Bytes;
 use directories::ProjectDirs;
 
 pub use self::{
-    entry::{ClipEntry, Error as ClipEntryError},
+    entry::{Entry as ClipEntry, Error as ClipEntryError},
     kind::ClipboardKind,
     watcher_state::ClipboardWatcherState,
 };
@@ -29,10 +32,10 @@ pub const MENU_CONFIG_NAME: &str = "clipcat-menu.toml";
 pub const NOTIFY_PROGRAM_NAME: &str = "clipcat-notify";
 
 pub const DEFAULT_GRPC_PORT: u16 = 45045;
-pub const DEFAULT_GRPC_HOST: &str = "127.0.0.1";
+pub const DEFAULT_GRPC_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub const DEFAULT_WEBUI_PORT: u16 = 45046;
-pub const DEFAULT_WEBUI_HOST: &str = "127.0.0.1";
+pub const DEFAULT_WEBUI_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub const DEFAULT_MENU_PROMPT: &str = "Clipcat";
 
@@ -49,11 +52,24 @@ pub enum ClipboardContent {
     Image { width: usize, height: usize, bytes: Bytes },
 }
 
+impl Default for ClipboardContent {
+    fn default() -> Self { Self::Plaintext(String::new()) }
+}
+
 impl ClipboardContent {
+    #[inline]
     pub fn is_empty(&self) -> bool {
         match self {
             Self::Plaintext(s) => s.is_empty(),
             Self::Image { bytes, .. } => bytes.is_empty(),
+        }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Plaintext(s) => s.len(),
+            Self::Image { bytes, .. } => bytes.len(),
         }
     }
 }

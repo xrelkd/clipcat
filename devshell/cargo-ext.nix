@@ -47,7 +47,7 @@ in
 
     cargo --version
     rustc --version
-    cargo test ${UNIT_TEST_ARGUMENTS} --no-fail-fast "$@" -- \
+    xvfb-run --auto-servernum cargo test ${UNIT_TEST_ARGUMENTS} --no-fail-fast "$@" -- \
       --nocapture \
       --test
   '';
@@ -56,10 +56,11 @@ in
     if [ $# -gt 0 ] && [ "$1" = "nextest-all" ]; then
       shift
     fi
+    export NEXTEST_RETRIES=5
 
     cargo --version
     rustc --version
     cargo nextest --version
-    cargo nextest run --workspace --no-fail-fast --no-capture "$@"
+    xvfb-run --auto-servernum cargo nextest run --workspace --no-fail-fast --no-capture "$@"
   '';
 }

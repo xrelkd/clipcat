@@ -1,18 +1,26 @@
 use std::{
-    net::IpAddr,
+    net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
 };
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 
 use crate::finder::FinderType;
 
+#[serde_as]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
+    #[serde(default = "Config::default_server_host")]
     pub server_host: IpAddr,
 
+    #[serde(default = "Config::default_server_port")]
     pub server_port: u16,
+
+    #[serde(default = "Config::default_log_level")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub log_level: tracing::Level,
 
     #[serde(default)]
     pub finder: FinderType,
@@ -25,6 +33,66 @@ pub struct Config {
 
     #[serde(default)]
     pub custom_finder: Option<CustomFinder>,
+}
+
+impl Config {
+    #[inline]
+    pub const fn server_socket_address(&self) -> SocketAddr {
+        SocketAddr::new(self.server_host, self.server_port)
+    }
+
+    #[inline]
+    pub const fn default_server_host() -> IpAddr { clipcat::DEFAULT_GRPC_HOST }
+
+    #[inline]
+    pub const fn default_server_port() -> u16 { clipcat::DEFAULT_GRPC_PORT }
+
+    #[inline]
+    pub fn default_path() -> PathBuf {
+        [clipcat::PROJECT_CONFIG_DIR.to_path_buf(), PathBuf::from(clipcat::MENU_CONFIG_NAME)]
+            .into_iter()
+            .collect()
+    }
+
+    #[inline]
+    pub const fn default_log_level() -> tracing::Level { tracing::Level::INFO }
+
+    #[inline]
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
+        let data = std::fs::read_to_string(&path)
+            .context(OpenConfigSnafu { filename: path.as_ref().to_path_buf() })?;
+
+        toml::from_str(&data).context(ParseConfigSnafu { filename: path.as_ref().to_path_buf() })
+    }
+
+    #[inline]
+    pub fn load_or_default<P: AsRef<Path>>(path: P) -> Self {
+        match Self::load(&path) {
+            Ok(config) => config,
+            Err(err) => {
+                tracing::warn!(
+                    "Failed to read config file ({:?}), error: {:?}",
+                    &path.as_ref(),
+                    err
+                );
+                Self::default()
+            }
+        }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            server_host: clipcat::DEFAULT_GRPC_HOST,
+            server_port: clipcat::DEFAULT_GRPC_PORT,
+            log_level: Self::default_log_level(),
+            finder: FinderType::Rofi,
+            rofi: Some(Rofi::default()),
+            dmenu: Some(Dmenu::default()),
+            custom_finder: Some(CustomFinder::default()),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -58,19 +126,6 @@ pub struct CustomFinder {
     pub args: Vec<String>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            server_host: clipcat::DEFAULT_GRPC_HOST.parse().expect("Parse default gRPC host"),
-            server_port: clipcat::DEFAULT_GRPC_PORT,
-            finder: FinderType::Rofi,
-            rofi: Some(Rofi::default()),
-            dmenu: Some(Dmenu::default()),
-            custom_finder: Some(CustomFinder::default()),
-        }
-    }
-}
-
 impl Default for Rofi {
     fn default() -> Self {
         Self {
@@ -93,38 +148,6 @@ impl Default for Dmenu {
 
 impl Default for CustomFinder {
     fn default() -> Self { Self { program: "fzf".to_string(), args: Vec::new() } }
-}
-
-impl Config {
-    #[inline]
-    pub fn default_path() -> PathBuf {
-        [clipcat::PROJECT_CONFIG_DIR.to_path_buf(), PathBuf::from(clipcat::MENU_CONFIG_NAME)]
-            .into_iter()
-            .collect()
-    }
-
-    #[inline]
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
-        let data = std::fs::read_to_string(&path)
-            .context(OpenConfigSnafu { filename: path.as_ref().to_path_buf() })?;
-
-        toml::from_str(&data).context(ParseConfigSnafu { filename: path.as_ref().to_path_buf() })
-    }
-
-    #[inline]
-    pub fn load_or_default<P: AsRef<Path>>(path: P) -> Self {
-        match Self::load(&path) {
-            Ok(config) => config,
-            Err(err) => {
-                tracing::warn!(
-                    "Failed to read config file ({:?}), error: {:?}",
-                    &path.as_ref(),
-                    err
-                );
-                Self::default()
-            }
-        }
-    }
 }
 
 fn default_menu_prompt() -> String { clipcat::DEFAULT_MENU_PROMPT.to_string() }

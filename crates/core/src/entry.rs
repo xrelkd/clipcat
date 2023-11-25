@@ -7,13 +7,12 @@ use std::{
 
 use image::ImageEncoder as _;
 use snafu::{ResultExt, Snafu};
-use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
 use crate::{ClipboardContent, ClipboardKind};
 
-#[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Debug, Eq)]
-pub struct ClipEntry {
+pub struct Entry {
     id: u64,
 
     content: ClipboardContent,
@@ -23,7 +22,7 @@ pub struct ClipEntry {
     timestamp: OffsetDateTime,
 }
 
-impl ClipEntry {
+impl Entry {
     /// # Errors
     #[inline]
     pub fn new(
@@ -49,7 +48,7 @@ impl ClipEntry {
                         bytes: image.into_raw().into(),
                     }
                 })
-                .context(ConverseImageSnafu {})?
+                .context(ConvertImageSnafu {})?
         } else {
             return Err(Error::FormatNotAvailable);
         };
@@ -131,8 +130,12 @@ impl ClipEntry {
             ClipboardContent::Image { width: _, height: _, bytes } => {
                 let content_type = mime::IMAGE_PNG;
                 let size = bytes.len();
-                let timestamp = self.timestamp.format(&Rfc3339).unwrap_or_default();
-                format!("content-type: {content_type}, size: {size}, timestamp: {timestamp}")
+                let timestamp = self
+                    .timestamp
+                    .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
+                    .format(&Rfc3339)
+                    .unwrap_or_default();
+                format!("[Content type: {content_type}, size: {size}, timestamp: {timestamp}]")
             }
         };
 
@@ -174,6 +177,10 @@ impl ClipEntry {
 
     #[inline]
     #[must_use]
+    pub fn len(&self) -> usize { self.content.len() }
+
+    #[inline]
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         match &self.content {
             ClipboardContent::Plaintext(text) => text.as_bytes(),
@@ -202,7 +209,7 @@ impl ClipEntry {
     }
 }
 
-impl Default for ClipEntry {
+impl Default for Entry {
     fn default() -> Self {
         Self {
             id: 0,
@@ -213,15 +220,15 @@ impl Default for ClipEntry {
     }
 }
 
-impl PartialEq for ClipEntry {
+impl PartialEq for Entry {
     fn eq(&self, other: &Self) -> bool { self.content == other.content }
 }
 
-impl PartialOrd for ClipEntry {
+impl PartialOrd for Entry {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
-impl Ord for ClipEntry {
+impl Ord for Entry {
     fn cmp(&self, other: &Self) -> Ordering {
         match other.timestamp.cmp(&self.timestamp) {
             Ordering::Equal => self.clipboard_kind.cmp(&other.clipboard_kind),
@@ -230,7 +237,7 @@ impl Ord for ClipEntry {
     }
 }
 
-impl Hash for ClipEntry {
+impl Hash for Entry {
     fn hash<H: Hasher>(&self, state: &mut H) { self.content.hash(state); }
 }
 
@@ -242,10 +249,9 @@ fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, E
     }
 
     let mut png_bytes = Vec::new();
-    let encoder = image::codecs::png::PngEncoder::new(&mut png_bytes);
-    encoder
-        .write_image(bytes.as_ref(), width, height, image::ColorType::Rgba8)
-        .context(ConverseImageSnafu {})?;
+    image::codecs::png::PngEncoder::new(&mut png_bytes)
+        .write_image(bytes, width, height, image::ColorType::Rgba8)
+        .context(ConvertImageSnafu {})?;
 
     Ok(png_bytes)
 }
@@ -259,6 +265,6 @@ pub enum Error {
     #[snafu(display("The image is empty"))]
     EmptyImage,
 
-    #[snafu(display("Error occurs while conversing image, error: {source}"))]
-    ConverseImage { source: image::ImageError },
+    #[snafu(display("Error occurs while converting image, error: {source}"))]
+    ConvertImage { source: image::ImageError },
 }

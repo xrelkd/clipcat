@@ -1,8 +1,87 @@
-# Clipcat
+<h1 align="center">Clipcat</h1>
 
-[![CI](https://github.com/xrelkd/clipcat/workflows/Build/badge.svg)](https://github.com/xrelkd/clipcat/actions)
+<p align="center">
+    A clipboard manager written in
+    <a href="https://www.rust-lang.org/" target="_blank">Rust Programming Language</a>.
+</p>
 
-`Clipcat` is a clipboard manager written in [Rust Programming Language](https://www.rust-lang.org/).
+<p align="center">
+    <a href="https://github.com/xrelkd/clipcat/releases"><img src="https://img.shields.io/github/v/release/xrelkd/clipcat.svg"></a>
+    <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARust"><img src="https://github.com/xrelkd/clipcat/workflows/Rust/badge.svg"></a>
+    <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARelease"><img src="https://github.com/xrelkd/clipcat/workflows/Release/badge.svg"></a>
+    <a href="https://github.com/xrelkd/clipcat/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
+</p>
+
+**[Installation](#installation) | [Usage](#usage) | [Integration](#integration)**
+
+<details>
+<summary>Table of contents</summary>
+
+- [Features](#features)
+- [Installation](#installation)
+
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+
+  - [Usage](#usage)
+  - [Configuration](#configuration)
+
+- [Integration](#integration)
+
+  - [Integrating with Zsh](#integrating-with-zsh)
+  - [Integrating with i3 Window Manager](#integrating-with-i3)
+
+- [License](#license)
+
+</details>
+
+## Features
+
+- [x] Copy/Paste plaintext
+- [x] Copy/Paste image
+- [x] Persistent contents of clipboard
+- [x] Support `X11`
+- [x] Support `Wayland` (experimentally)
+- [x] Support `gRPC`
+
+## Installation
+
+<details>
+<summary>Install with package manager</summary>
+
+| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                             |
+| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                    |
+
+</details>
+
+<details>
+  <summary>Build from source</summary>
+
+`clipcat` requires the following tools and packages to build:
+
+- `git`
+- `rustc`
+- `cargo`
+- `pkg-config`
+- `protobuf`
+- `clang`
+- `libclang`
+
+With the above tools and packages already installed, you can simply run:
+
+```bash
+$ git clone https://github.com/xrelkd/clipcat.git
+$ cd clipcat
+
+$ cargo install --path clipcatd
+$ cargo install --path clipcatctl
+$ cargo install --path clipcat-menu
+```
+
+</details>
 
 ## Architecture
 
@@ -12,18 +91,29 @@ Clipcat uses the Client-Server architecture. There are two role types in this ar
 
 A `clipcat` server (as known as daemon) is running as the background process and does the following routines:
 
-- Watching the changes of `X11 clipboard`.
-- Caching the content of `X11 clipboard`.
-- Inserting content into `X11 clipboard`.
+- Watching the changes of `clipboard`.
+- Caching the content of `clipboard`.
+- Inserting content into `clipboard`.
 - Serving as a `gRPC` server and waiting for remote procedure call from clients.
+
+Currently, `clipcat` supports the following `windowing system`s:
+
+- `X11`
+  Leveraging the following `crate`s:
+  - [x11rb](https://github.com/psychon/x11rb)
+  - [arboard](https://github.com/1Password/arboard)
+- `Wayland` (experimentally)
+  Leveraging the following `crate`s:
+  - [wl-clipboard-rs](https://github.com/YaLTeR/wl-clipboard-rs)
+  - [arboard](https://github.com/1Password/arboard)
 
 ### Clipcat Client
 
 A `clipcat` client sends requests to the server for the following operations:
 
-- List: list the cached clips from server.
-- Insert: replace the current content of `X11 clipboard` with a clip.
-- Remove: remove the cached clips from server.
+- `List`: list the cached clips from server.
+- `Insert`: replace the current content of `clipboard` with a clip.
+- `Remove`: remove the cached clips from server.
 
 ### List of Implementations
 
@@ -33,21 +123,11 @@ A `clipcat` client sends requests to the server for the following operations:
 | `clipcatctl`   | `Client`  | The `clipcat` client which provides a command line interface                           |
 | `clipcat-menu` | `Client`  | The `clipcat` client which calls built-in finder or external finder for selecting clip |
 
-## Quick Start
-
-### Installation
-
-| Linux Distribution                  | Package Manager                     | Package                                                                                             | Command                       |
-| ----------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/xrelkd/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                              | `yay -S clipcat`              |
-
-### Usage
+## Usage
 
 0. Setup configurations for `clipcat`.
 
-```console
+```bash
 $ mkdir -p                       $XDG_CONFIG_HOME/clipcat
 $ clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
 $ clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
@@ -56,7 +136,7 @@ $ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 
 1. Start `clipcatd` for watching clipboard events.
 
-```console
+```bash
 $ clipcatd
 ```
 
@@ -75,7 +155,7 @@ $ clipcatd
 | --------------------- | --------------------------------------- |
 | `clipcat-menu insert` | Insert a cached clip into X11 clipboard |
 | `clipcat-menu remove` | Remove cached clips from server         |
-| `clipcat-menu edit`   | Edit a cached clip with `\$EDITOR`      |
+| `clipcat-menu edit`   | Edit a cached clip with `$EDITOR`       |
 
 **Note**: Supported finders for `clipcat-menu`:
 
@@ -85,7 +165,7 @@ $ clipcatd
 - [rofi](https://github.com/davatorium/rofi)
 - [dmenu](https://tools.suckless.org/dmenu/)
 
-### Configuration
+## Configuration
 
 | Program        | Default Configuration File Path              |
 | -------------- | -------------------------------------------- |
@@ -93,7 +173,8 @@ $ clipcatd
 | `clipcatctl`   | `$XDG_CONFIG_HOME/clipcat/clipcatctl.toml`   |
 | `clipcat-menu` | `$XDG_CONFIG_HOME/clipcat/clipcat-menu.toml` |
 
-#### Configuration for `clipcatd`
+<details>
+<summary>Configuration for <b>clipcatd</b></summary>
 
 ```toml
 daemonize = true          # run as a traditional UNIX daemon
@@ -104,13 +185,17 @@ log_level = 'INFO'        # log level
 load_current = true       # load current clipboard content at startup
 enable_clipboard = true   # watch X11 clipboard
 enable_primary = true     # watch X11 primary clipboard
+filter_min_size = 1       # ignores copy actions with a size <= `filter_min_size`, in bytes
 
 [grpc]
 host = '127.0.0.1'        # host address for gRPC
 port = 45045              # port number for gRPC
 ```
 
-#### Configuration for `clipcatctl`
+</details>
+
+<details>
+<summary>Configuration for <b>clipcatctl</b></summary>
 
 ```toml
 server_host = '127.0.0.1' # host address of clipcat gRPC server
@@ -118,31 +203,40 @@ server_port = 45045       # port number of clipcat gRPC server
 log_level = 'INFO'        # log level
 ```
 
-#### Configuration for `clipcat-menu`
+</details>
+
+<details>
+<summary>Configuration for <b>clipcat-menu</b></summary>
 
 ```toml
 server_host = '127.0.0.1' # host address of clipcat gRPC server
 server_port = 45045       # port number of clipcat gRPC server
 finder = 'rofi'           # the default finder to invoke when no "--finder=<finder>" option provided
+log_level = 'INFO'        # log level
 
 [rofi]                    # options for "rofi"
 line_length = 100         # length of line
 menu_length = 30          # length of menu
+menu_prompt = "Clipcat"   # prompt of menu
 
 [dmenu]                   # options for "dmenu"
 line_length = 100         # length of line
 menu_length = 30          # length of menu
+menu_prompt = "Clipcat"   # prompt of menu
 
 [custom_finder]           # customize your finder
 program = 'fzf'           # external program name
 args = []                 # arguments for calling external program
 ```
 
+</details>
+
 ## Integration
 
-### Integrating with [Zsh](https://www.zsh.org/)
+<details>
+<summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
 
-For `zsh` user, it will be useful to integrate `clipcat` with `zsh`.
+For a `zsh` user, it will be useful to integrate `clipcat` with `zsh`.
 
 Add the following command in your `zsh` configuration file (`~/.zshrc`):
 
@@ -156,9 +250,12 @@ if type clipcat-menu >/dev/null 2>&1; then
 fi
 ```
 
-### Integrating with [i3 Window Manager](https://i3wm.org/)
+</details>
 
-For `i3` window manager user, it will be useful to integrate `clipcat` with `i3`.
+<details>
+<summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
+
+For a `i3` window manager user, it will be useful to integrate `clipcat` with `i3`.
 
 Add the following options in your `i3` configuration file (`$XDG_CONFIG_HOME/i3/config`):
 
@@ -174,26 +271,7 @@ bindsym $mod+o exec $launcher-clipboard-remove
 
 **Note**: You can use `rofi` or `dmenu` as the default finder.
 
-## Compiling from Source
-
-`clipcat` requires the following tools and packages to build:
-
-- `git`
-- `rustc`
-- `cargo`
-- `pkgconfig`
-- `protobuf`
-- `clang`
-- `libclang`
-- `libxcb`
-
-With the above tools and packages already installed, you can simply run:
-
-```console
-$ git clone https://github.com/xrelkd/clipcat.git
-$ cd clipcat
-$ cargo build --release --features=all
-```
+</details>
 
 ## License
 

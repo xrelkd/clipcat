@@ -1,3 +1,4 @@
+use clipcat::ClipboardKind;
 use snafu::Snafu;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -10,6 +11,9 @@ pub enum Error {
 
     #[snafu(display("Could not parse clipboard kind, value: {value}"))]
     ParseClipboardKind { value: String },
+
+    #[snafu(display("The clipboard kind is not supported, kind: {kind}"))]
+    UnsupportedClipboardKind { kind: ClipboardKind },
 
     #[snafu(display("Clipboard is empty"))]
     EmptyClipboard,
