@@ -422,7 +422,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "bytes",
  "directories",
@@ -436,7 +436,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "async-trait",
  "clipcat",
@@ -449,7 +449,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "arboard",
  "bytes",
@@ -466,7 +466,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clipcat",
  "snafu",
@@ -475,7 +475,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -508,7 +508,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clipcat",
  "mime",
@@ -520,7 +520,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "async-trait",
  "bincode",
@@ -540,7 +540,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -561,7 +561,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
