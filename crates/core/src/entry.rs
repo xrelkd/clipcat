@@ -129,7 +129,7 @@ impl Entry {
             ClipboardContent::Plaintext(text) => text.clone(),
             ClipboardContent::Image { width: _, height: _, bytes } => {
                 let content_type = mime::IMAGE_PNG;
-                let size = bytes.len();
+                let size = humansize::format_size(bytes.len(), humansize::BINARY);
                 let timestamp = self
                     .timestamp
                     .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
