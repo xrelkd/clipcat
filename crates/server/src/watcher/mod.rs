@@ -92,7 +92,7 @@ impl ClipboardWatcher {
                     }
                 }
 
-                while is_watching.load(Ordering::Relaxed) {
+                loop {
                     let kind = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
                         match backend.load(kind).await {
@@ -119,9 +119,6 @@ impl ClipboardWatcher {
                         }
                     }
                 }
-
-                tracing::info!("ClipboardWatcher is stopped");
-                Ok(())
             }
         });
 
