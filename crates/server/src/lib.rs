@@ -57,7 +57,7 @@ pub async fn serve_with_shutdown(
         tracing::info!("Import {clip_count} clip(s) into ClipboardManager");
         clipboard_manager.import(&history_clips);
 
-        (Arc::new(Mutex::new(clipboard_manager)), Arc::new(Mutex::new(history_manager)))
+        (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
 
     let clipboard_watcher = {
@@ -126,7 +126,7 @@ fn create_grpc_server_future(
 fn create_clipboard_worker_future(
     clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
-    history_manager: Arc<Mutex<HistoryManager>>,
+    history_manager: HistoryManager,
     handle: Handle<Error>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |shutdown_signal| {
@@ -155,7 +155,7 @@ fn create_clipboard_worker_future(
 async fn serve_worker(
     clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
-    history_manager: Arc<Mutex<HistoryManager>>,
+    mut history_manager: HistoryManager,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,
 ) -> Result<()> {
@@ -179,7 +179,7 @@ async fn serve_worker(
                     printable = clip.printable_data(Some(30))
                 );
                 let _unused = clipboard_manager.lock().await.insert(clip.clone());
-                let _unused = history_manager.lock().await.put(&clip).await;
+                let _unused = history_manager.put(&clip).await;
             }
             Err(RecvError::Closed) => {
                 tracing::info!("ClipboardWatcher is closing, no further event will be received");
@@ -199,10 +199,8 @@ async fn serve_worker(
     };
 
     {
-        let mut manager = history_manager.lock().await;
-
         tracing::info!("Save history and shrink to capacity {history_capacity}");
-        if let Err(err) = manager.save_and_shrink_to(&clips, history_capacity).await {
+        if let Err(err) = history_manager.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
     }
