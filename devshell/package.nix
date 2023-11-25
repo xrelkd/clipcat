@@ -49,8 +49,8 @@ rustPlatform.buildRustPackage {
     for cmd in clipcatd clipcatctl clipcat-menu clipcat-notify; do
       installShellCompletion --cmd $cmd \
         --bash <($out/bin/$cmd completions bash) \
-        --fish <($out/bin/$cmd completion fish) \
-        --zsh  <($out/bin/$cmd completion zsh)
+        --fish <($out/bin/$cmd completions fish) \
+        --zsh  <($out/bin/$cmd completions zsh)
     done
   '';
 
