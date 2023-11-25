@@ -2,9 +2,7 @@
 , version
 , lib
 , rustPlatform
-, llvmPackages
 , protobuf
-, pkg-config
 , xvfb-run
 , cargo-nextest
 , installShellFiles
@@ -20,17 +18,7 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
-  PROTOC = "${protobuf}/bin/protoc";
-  PROTOC_INCLUDE = "${protobuf}/include";
-
-  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
-
   nativeBuildInputs = [
-    llvmPackages.clang
-    llvmPackages.libclang
-
-    pkg-config
-
     protobuf
 
     installShellFiles

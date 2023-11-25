@@ -62,13 +62,9 @@
 
 `clipcat` requires the following tools and packages to build:
 
-- `git`
 - `rustc`
 - `cargo`
-- `pkg-config`
-- `protobuf`
-- `clang`
-- `libclang`
+- `protobuf-compiler`
 
 With the above tools and packages already installed, you can simply run:
 
