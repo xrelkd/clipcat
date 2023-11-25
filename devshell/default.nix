@@ -20,16 +20,9 @@ pkgs.mkShell {
     cargo-ext.cargo-nextest-all
     cargo-ext.cargo-test-all
     cargo-nextest
-    cargo-udeps
-    cargo-watch
     rustToolchain
 
     tokei
-
-    llvmPackages_16.clang
-    llvmPackages_16.libclang
-
-    pkg-config
 
     protobuf
 
@@ -46,11 +39,6 @@ pkgs.mkShell {
 
     shellcheck
   ];
-
-  PROTOC = "${pkgs.protobuf}/bin/protoc";
-  PROTOC_INCLUDE = "${pkgs.protobuf}/include";
-
-  LIBCLANG_PATH = "${pkgs.llvmPackages_16.libclang.lib}/lib";
 
   shellHook = ''
     export NIX_PATH="nixpkgs=${pkgs.path}"
