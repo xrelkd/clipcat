@@ -130,12 +130,12 @@ fn try_reconnect(
         .context(error::DeregisterIoResourceSnafu)?;
 
     for _ in 0..max_retry_count {
-        std::thread::sleep(retry_interval);
         if let Err(err) = context.reconnect() {
             tracing::warn!(
                 "{err}, try to re-connect after {} millisecond(s)",
                 retry_interval.as_millis()
             );
+            std::thread::sleep(retry_interval);
         } else {
             poll.registry()
                 .register(
