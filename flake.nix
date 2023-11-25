@@ -61,22 +61,7 @@
           ];
 
           src = craneLib.cleanCargoSource (craneLib.path ./.);
-          commonArgs = {
-            inherit src;
-
-            # nativeBuildInputs = with pkgs; [
-            #   llvmPackages_15.clang
-            #   llvmPackages_15.libclang
-            #
-            #   pkg-config
-            #   openssl
-            # ];
-
-            # PROTOC = "${pkgs.protobuf}/bin/protoc";
-            # PROTOC_INCLUDE = "${pkgs.protobuf}/include";
-            #
-            # LIBCLANG_PATH = "${pkgs.llvmPackages_15.libclang.lib}/lib";
-          };
+          commonArgs = { inherit src; };
           cargoArtifacts = craneLib.buildDepsOnly commonArgs;
         in
         {
