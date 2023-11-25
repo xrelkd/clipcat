@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  all:
+    name: Release
+
+    strategy:
+      matrix:
+        target:
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - x86_64-unknown-linux-musl
+          # TODO: support macOS in the future?
+          # - x86_64-apple-darwin
+
+        include:
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            target_rustflags: "--codegen linker=aarch64-linux-gnu-gcc"
+
+          - target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            target_rustflags: "--codegen linker=arm-linux-gnueabihf-gcc"
+
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            target_rustflags: ""
+
+          # TODO: support macOS in the future?
+          # - target: x86_64-apple-darwin
+          #   os: macos-latest
+          #   target_rustflags: ""
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt install -y protobuf-compiler
+
+      - name: Install Rust Toolchain Components
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          target: ${{ matrix.target }}
+          toolchain: stable
+
+      - name: Install AArch64 Toolchain
+        if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu
+
+      - name: Install ARM7 Toolchain
+        if: ${{ matrix.target == 'armv7-unknown-linux-musleabihf' }}
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-arm-linux-gnueabihf
+
+      - name: Create Package
+        id: package
+        env:
+          TARGET: ${{ matrix.target }}
+          REF: ${{ github.ref }}
+          OS: ${{ matrix.os }}
+          TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
+        run: ./dev-support/bin/create-package
+        shell: bash
+
+      - name: Publish Archive
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        with:
+          draft: false
+          files: ${{ steps.package.outputs.archive }}
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
