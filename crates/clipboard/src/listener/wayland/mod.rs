@@ -9,13 +9,17 @@ use std::{
     time::Duration,
 };
 
-use wl_clipboard_rs::paste::{Error as WaylandError, MimeType, Seat};
+use wl_clipboard_rs::paste::{
+    get_contents as wl_clipboard_get_contents, Error as WaylandError, MimeType, Seat,
+};
 
 pub use self::error::Error;
 use crate::{
     pubsub::{self, Subscriber},
     ClipboardKind, ClipboardSubscribe,
 };
+
+const POLLING_INTERVAL: Duration = Duration::from_millis(250);
 
 #[derive(Debug)]
 pub struct Listener {
@@ -29,7 +33,6 @@ impl Listener {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
-        let polling_interval = Duration::from_millis(250);
         let clipboard_type = match clipboard_kind {
             ClipboardKind::Clipboard => wl_clipboard_rs::paste::ClipboardType::Regular,
             _ => wl_clipboard_rs::paste::ClipboardType::Primary,
@@ -51,36 +54,37 @@ impl Listener {
                 while is_running.load(Ordering::Relaxed) {
                     tracing::trace!("Wait for readiness events");
 
-                    let result = wl_clipboard_rs::paste::get_contents(
+                    match wl_clipboard_get_contents(
                         clipboard_type,
                         Seat::Unspecified,
-                        MimeType::Text,
-                    );
-                    match result {
-                        Ok((_pipe, _mime_type)) => notifier.notify_all(),
+                        MimeType::Any,
+                    ) {
+                        Ok((_pipe, _mime_type)) => {
+                            notifier.notify_all();
+                            continue;
+                        }
                         Err(
                             WaylandError::NoSeats
                             | WaylandError::ClipboardEmpty
                             | WaylandError::NoMimeType,
                         ) => {
                             tracing::trace!("The clipboard is empty, sleep for a while");
-                            thread::sleep(polling_interval);
                         }
                         Err(WaylandError::MissingProtocol { name, version }) => {
                             tracing::error!(
                                 "A required Wayland protocol (name: {name}, version: {version}) \
                                  is not supported by the compositor"
                             );
-                            thread::sleep(polling_interval);
                         }
                         Err(err) => {
                             tracing::warn!(
                                 "Error occurs while listening to clipboard of Wayland, error: \
                                  {err}"
                             );
-                            thread::sleep(polling_interval);
                         }
                     }
+                    // sleep for a while there is no content or error occurred
+                    thread::sleep(POLLING_INTERVAL);
                 }
 
                 notifier.close();
