@@ -159,27 +159,27 @@ async fn serve_worker(
     handle: Handle<Error>,
     shutdown_signal: Shutdown,
 ) -> Result<()> {
-    let mut event_recv = {
+    let mut shutdown_signal = shutdown_signal.into_stream();
+    let mut clip_recv = {
         let watcher = clipboard_watcher.lock().await;
         watcher.subscribe()
     };
-    let mut shutdown_signal = shutdown_signal.into_stream();
 
     loop {
-        let event = tokio::select! {
-            event = event_recv.recv().fuse() => event,
+        let maybe_clip = tokio::select! {
+            clip = clip_recv.recv().fuse() => clip,
             _ = shutdown_signal.next() => break,
         };
 
-        match event {
-            Ok(data) => {
+        match maybe_clip {
+            Ok(clip) => {
                 tracing::info!(
-                    "On new event: {kind} [{printable}]",
-                    kind = data.kind(),
-                    printable = data.printable_data(Some(20))
+                    "New clip: {kind} [{printable}]",
+                    kind = clip.kind(),
+                    printable = clip.printable_data(Some(30))
                 );
-                let _ = clipboard_manager.lock().await.insert(data.clone());
-                let _unused = history_manager.lock().await.put(&data).await;
+                let _unused = clipboard_manager.lock().await.insert(clip.clone());
+                let _unused = history_manager.lock().await.put(&clip).await;
             }
             Err(RecvError::Closed) => {
                 tracing::info!("ClipboardWatcher is closing, no further event will be received");
@@ -194,15 +194,15 @@ async fn serve_worker(
     }
 
     let (clips, history_capacity) = {
-        let cm = clipboard_manager.lock().await;
-        (cm.list(), cm.capacity())
+        let manager = clipboard_manager.lock().await;
+        (manager.list(), manager.capacity())
     };
 
     {
-        let mut hm = history_manager.lock().await;
+        let mut manager = history_manager.lock().await;
 
         tracing::info!("Save history and shrink to capacity {history_capacity}");
-        if let Err(err) = hm.save_and_shrink_to(&clips, history_capacity).await {
+        if let Err(err) = manager.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
     }
