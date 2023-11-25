@@ -58,15 +58,12 @@ impl proto::Manager for ManagerService {
         Ok(Response::new(proto::BatchRemoveResponse { ids }))
     }
 
-    async fn clear(
-        &self,
-        _request: Request<proto::ClearRequest>,
-    ) -> Result<Response<proto::ClearResponse>, Status> {
+    async fn clear(&self, _request: Request<()>) -> Result<Response<()>, Status> {
         {
             let mut manager = self.manager.lock().await;
             manager.clear();
         }
-        Ok(Response::new(proto::ClearResponse {}))
+        Ok(Response::new(()))
     }
 
     async fn get(
@@ -95,13 +92,18 @@ impl proto::Manager for ManagerService {
 
     async fn list(
         &self,
-        _request: Request<proto::ListRequest>,
+        request: Request<proto::ListRequest>,
     ) -> Result<Response<proto::ListResponse>, Status> {
-        let data = {
+        let proto::ListRequest { preview_length } = request.into_inner();
+        let metadata = {
             let manager = self.manager.lock().await;
-            manager.list().into_iter().map(proto::ClipboardData::from).collect()
+            manager
+                .list(usize::try_from(preview_length).unwrap_or(30))
+                .into_iter()
+                .map(proto::ClipEntryMetadata::from)
+                .collect()
         };
-        Ok(Response::new(proto::ListResponse { data }))
+        Ok(Response::new(proto::ListResponse { metadata }))
     }
 
     async fn update(
@@ -131,7 +133,7 @@ impl proto::Manager for ManagerService {
 
     async fn length(
         &self,
-        _request: Request<proto::LengthRequest>,
+        _request: Request<()>,
     ) -> Result<Response<proto::LengthResponse>, Status> {
         let length = {
             let manager = self.manager.lock().await;

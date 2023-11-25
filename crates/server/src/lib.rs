@@ -195,7 +195,7 @@ async fn serve_worker(
 
     let (clips, history_capacity) = {
         let manager = clipboard_manager.lock().await;
-        (manager.list(), manager.capacity())
+        (manager.export(), manager.capacity())
     };
 
     {
