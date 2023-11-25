@@ -13,8 +13,9 @@ on:
 
   pull_request:
     paths:
-      - "*/src/**"
+      - "**/src/**"
       - ".github/**"
+      - "devshell/**"
       - "src/**"
       - Cargo.lock
       - Cargo.toml
