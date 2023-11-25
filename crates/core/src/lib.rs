@@ -12,7 +12,7 @@ use bytes::Bytes;
 use directories::ProjectDirs;
 
 pub use self::{
-    entry::{Entry as ClipEntry, Error as ClipEntryError},
+    entry::{Entry as ClipEntry, EntryMetadata as ClipEntryMetadata, Error as ClipEntryError},
     kind::ClipboardKind,
     watcher_state::ClipboardWatcherState,
 };
