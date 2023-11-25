@@ -29,6 +29,12 @@ impl From<clipcat_client::Error> for Error {
     fn from(source: clipcat_client::Error) -> Self { Self::Client { source } }
 }
 
+impl From<clipcat_client::error::GetClipError> for Error {
+    fn from(err: clipcat_client::error::GetClipError) -> Self {
+        Self::Operation { error: err.to_string() }
+    }
+}
+
 impl From<clipcat_client::error::UpdateClipError> for Error {
     fn from(err: clipcat_client::error::UpdateClipError) -> Self {
         Self::Operation { error: err.to_string() }

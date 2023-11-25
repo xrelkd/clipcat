@@ -1,7 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat::{ClipEntryMetadata, ClipboardKind};
 use clipcat_client::{Client, Manager};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -14,7 +14,7 @@ use crate::{
     finder::{FinderRunner, FinderType},
 };
 
-const LINE_LENGTH: usize = 100;
+const PREVIEW_LENGTH: usize = 80;
 
 #[derive(Debug, Parser)]
 #[clap(name = clipcat::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
@@ -146,7 +146,7 @@ impl Cli {
                 Client::new(clipcat_client::Config { grpc_endpoint }).await?
             };
 
-            let clips = client.list().await?;
+            let clips = client.list(PREVIEW_LENGTH).await?;
 
             match commands {
                 Some(Commands::Insert { kind }) => {
@@ -155,7 +155,7 @@ impl Cli {
                 None => insert_clip(&clips, finder, &client, ClipboardKind::Clipboard).await?,
                 Some(Commands::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
-                    let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id()).collect();
+                    let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
                         tracing::info!("Removing clip (id: {:016x})", id);
@@ -163,7 +163,8 @@ impl Cli {
                 }
                 Some(Commands::Edit { editor }) => {
                     let selection = finder.single_select(&clips).await?;
-                    if let Some((_index, clip)) = selection {
+                    if let Some((_index, metadata)) = selection {
+                        let clip = client.get(metadata.id).await?;
                         if clip.is_utf8_string() {
                             let editor = ExternalEditor::new(editor);
                             let new_data = editor
@@ -194,7 +195,7 @@ impl Cli {
 }
 
 async fn insert_clip(
-    clips: &[ClipEntry],
+    clips: &[ClipEntryMetadata],
     finder: FinderRunner,
     client: &Client,
     clipboard_kind: ClipboardKind,
@@ -204,10 +205,10 @@ async fn insert_clip(
         tracing::info!(
             "Inserting clip (index: {}, id: {:016x}, content: {:?})",
             index,
-            clip.id(),
-            clip.printable_data(Some(LINE_LENGTH)),
+            clip.id,
+            clip.preview,
         );
-        let _ok = client.mark(clip.id(), clipboard_kind).await?;
+        let _ok = client.mark(clip.id, clipboard_kind).await?;
     } else {
         tracing::info!("Nothing is selected");
     }

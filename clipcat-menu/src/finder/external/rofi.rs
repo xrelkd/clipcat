@@ -1,4 +1,4 @@
-use clipcat::ClipEntry;
+use clipcat::ClipEntryMetadata;
 
 use crate::{
     config,
@@ -50,12 +50,8 @@ impl ExternalProgram for Rofi {
 }
 
 impl FinderStream for Rofi {
-    fn generate_input(&self, clips: &[ClipEntry]) -> String {
-        clips
-            .iter()
-            .map(|data| data.printable_data(self.line_length()))
-            .collect::<Vec<_>>()
-            .join(ENTRY_SEPARATOR)
+    fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
+        clips.iter().map(|clip| clip.preview.clone()).collect::<Vec<_>>().join(ENTRY_SEPARATOR)
     }
 
     fn parse_output(&self, data: &[u8]) -> Vec<usize> {
