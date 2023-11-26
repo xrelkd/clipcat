@@ -3,14 +3,14 @@ use std::{fmt, str::FromStr};
 use snafu::Snafu;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum ClipboardKind {
+pub enum Kind {
     #[default]
     Clipboard,
     Primary,
     Secondary,
 }
 
-impl ClipboardKind {
+impl Kind {
     pub const MAX_LENGTH: usize = 3;
 
     #[inline]
@@ -30,30 +30,30 @@ impl ClipboardKind {
     }
 }
 
-impl FromStr for ClipboardKind {
-    type Err = ClipboardKindError;
+impl FromStr for Kind {
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "clipboard" => Ok(Self::Clipboard),
             "primary" => Ok(Self::Primary),
             "secondary" => Ok(Self::Secondary),
-            _ => Err(ClipboardKindError::Parse { value: s.to_string() }),
+            _ => Err(Error::Parse { value: s.to_string() }),
         }
     }
 }
 
-impl From<ClipboardKind> for i32 {
-    fn from(kind: ClipboardKind) -> Self {
+impl From<Kind> for i32 {
+    fn from(kind: Kind) -> Self {
         match kind {
-            ClipboardKind::Clipboard => 0,
-            ClipboardKind::Primary => 1,
-            ClipboardKind::Secondary => 2,
+            Kind::Clipboard => 0,
+            Kind::Primary => 1,
+            Kind::Secondary => 2,
         }
     }
 }
 
-impl From<i32> for ClipboardKind {
+impl From<i32> for Kind {
     fn from(v: i32) -> Self {
         match v {
             0 => Self::Clipboard,
@@ -63,17 +63,17 @@ impl From<i32> for ClipboardKind {
     }
 }
 
-impl From<ClipboardKind> for usize {
-    fn from(kind: ClipboardKind) -> Self {
+impl From<Kind> for usize {
+    fn from(kind: Kind) -> Self {
         match kind {
-            ClipboardKind::Clipboard => 0,
-            ClipboardKind::Primary => 1,
-            ClipboardKind::Secondary => 2,
+            Kind::Clipboard => 0,
+            Kind::Primary => 1,
+            Kind::Secondary => 2,
         }
     }
 }
 
-impl From<usize> for ClipboardKind {
+impl From<usize> for Kind {
     fn from(v: usize) -> Self {
         match v {
             0 => Self::Clipboard,
@@ -83,13 +83,13 @@ impl From<usize> for ClipboardKind {
     }
 }
 
-impl fmt::Display for ClipboardKind {
+impl fmt::Display for Kind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.as_str()) }
 }
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub))]
-pub enum ClipboardKindError {
+pub enum Error {
     #[snafu(display("Could not parse clipboard kind, value: {value}"))]
     Parse { value: String },
 }
