@@ -113,7 +113,6 @@ impl ClipboardManager {
         while self.clips.len() > self.capacity {
             if let Some((timestamp, id)) = self.timestamp_to_id.pop_first() {
                 tracing::trace!("Remove old clip (id: {id}, timestamp: {timestamp})");
-                println!("Remove old clip (id: {id}, timestamp: {timestamp})");
                 drop(self.clips.remove(&id));
             }
         }

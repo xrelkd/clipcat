@@ -203,6 +203,7 @@ async fn serve_worker(
         if let Err(err) = history_manager.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
+        tracing::info!("Clips are stored in `{path}`", path = history_manager.path().display());
     }
 
     Ok(())
