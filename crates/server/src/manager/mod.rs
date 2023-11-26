@@ -23,7 +23,7 @@ pub struct ClipboardManager {
     clips: HashMap<u64, ClipEntry>,
 
     // store current clip for each clipboard kind
-    current_clips: HashMap<ClipboardKind, u64>,
+    current_clips: [Option<u64>; ClipboardKind::MAX_LENGTH],
 
     // use BTreeMap to store timestamps for remove the oldest clip
     timestamp_to_id: BTreeMap<OffsetDateTime, u64>,
@@ -36,7 +36,7 @@ impl ClipboardManager {
             backend,
             capacity,
             clips: HashMap::new(),
-            current_clips: HashMap::new(),
+            current_clips: [None; ClipboardKind::MAX_LENGTH],
             timestamp_to_id: BTreeMap::new(),
         }
     }
@@ -82,7 +82,7 @@ impl ClipboardManager {
 
     #[inline]
     pub fn get_current_clip(&self, kind: ClipboardKind) -> Option<&ClipEntry> {
-        self.current_clips.get(&kind).and_then(|id| self.clips.get(id))
+        self.current_clips[usize::from(kind)].and_then(|id| self.clips.get(&id))
     }
 
     #[inline]
@@ -91,7 +91,7 @@ impl ClipboardManager {
     fn insert_inner(&mut self, entry: ClipEntry) -> u64 {
         let id = entry.id();
         let timestamp = entry.timestamp();
-        let _unused = self.current_clips.insert(entry.kind(), id);
+        self.current_clips[usize::from(entry.kind())] = Some(id);
         drop(self.clips.insert(id, entry));
         let _unused = self.timestamp_to_id.insert(timestamp, id);
         self.remove_oldest();
@@ -125,11 +125,9 @@ impl ClipboardManager {
 
     #[inline]
     fn remove_inner(&mut self, id: u64) -> Option<ClipEntry> {
-        for kind in &ClipboardKind::all_kinds() {
-            if let Some(&clip_id) = self.current_clips.get(kind) {
-                if clip_id == id {
-                    let _unused = self.current_clips.remove(kind);
-                }
+        for kind in ClipboardKind::all_kinds().map(usize::from) {
+            if Some(id) == self.current_clips[kind] {
+                self.current_clips[kind] = None;
             }
         }
 
@@ -144,7 +142,7 @@ impl ClipboardManager {
     #[inline]
     pub fn clear(&mut self) {
         self.timestamp_to_id.clear();
-        self.current_clips.clear();
+        self.current_clips = [None; ClipboardKind::MAX_LENGTH];
         self.clips.clear();
     }
 
