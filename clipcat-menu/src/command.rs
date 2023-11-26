@@ -1,7 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipEntryMetadata, ClipboardKind};
+use clipcat_base::{ClipEntryMetadata, ClipboardKind};
 use clipcat_client::{Client, Manager};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -17,7 +17,7 @@ use crate::{
 const PREVIEW_LENGTH: usize = 80;
 
 #[derive(Debug, Parser)]
-#[clap(name = clipcat::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
+#[clap(name = clipcat_base::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,

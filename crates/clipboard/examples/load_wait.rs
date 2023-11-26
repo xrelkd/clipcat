@@ -1,4 +1,4 @@
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardLoadWait, Error};
 use snafu::ErrorCompat;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

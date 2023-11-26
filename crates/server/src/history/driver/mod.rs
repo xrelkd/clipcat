@@ -1,7 +1,7 @@
 mod fs;
 
 use async_trait::async_trait;
-use clipcat::ClipEntry;
+use clipcat_base::ClipEntry;
 
 pub use self::fs::FileSystemDriver;
 use crate::history::Error;

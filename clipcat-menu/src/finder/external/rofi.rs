@@ -1,4 +1,4 @@
-use clipcat::ClipEntryMetadata;
+use clipcat_base::ClipEntryMetadata;
 
 use crate::{
     config,
@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_args() {
         let menu_length = 30;
-        let menu_prompt = clipcat::DEFAULT_MENU_PROMPT.to_owned();
+        let menu_prompt = clipcat_base::DEFAULT_MENU_PROMPT.to_owned();
         let config =
             config::Rofi { line_length: 40, menu_length, menu_prompt: menu_prompt.clone() };
         let rofi = Rofi::from(config);

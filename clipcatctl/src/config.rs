@@ -22,8 +22,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server_host: clipcat::DEFAULT_GRPC_HOST,
-            server_port: clipcat::DEFAULT_GRPC_PORT,
+            server_host: clipcat_base::DEFAULT_GRPC_HOST,
+            server_port: clipcat_base::DEFAULT_GRPC_PORT,
             log_level: Self::default_log_level(),
         }
     }
@@ -32,9 +32,12 @@ impl Default for Config {
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        [clipcat::PROJECT_CONFIG_DIR.to_path_buf(), PathBuf::from(clipcat::CTL_CONFIG_NAME)]
-            .into_iter()
-            .collect()
+        [
+            clipcat_base::PROJECT_CONFIG_DIR.to_path_buf(),
+            PathBuf::from(clipcat_base::CTL_CONFIG_NAME),
+        ]
+        .into_iter()
+        .collect()
     }
 
     #[inline]

@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardStore};
 use sigfinn::{ExitStatus, LifecycleManager};
 use snafu::ErrorCompat;

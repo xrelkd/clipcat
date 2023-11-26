@@ -421,7 +421,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "clipcat"
+name = "clipcat-base"
 version = "0.7.0"
 dependencies = [
  "bytes",
@@ -440,7 +440,7 @@ name = "clipcat-client"
 version = "0.7.0"
 dependencies = [
  "async-trait",
- "clipcat",
+ "clipcat-base",
  "clipcat-proto",
  "http 1.0.0",
  "mime",
@@ -455,7 +455,7 @@ version = "0.7.0"
 dependencies = [
  "arboard",
  "bytes",
- "clipcat",
+ "clipcat-base",
  "mio",
  "sigfinn",
  "snafu",
@@ -470,7 +470,7 @@ dependencies = [
 name = "clipcat-external-editor"
 version = "0.7.0"
 dependencies = [
- "clipcat",
+ "clipcat-base",
  "snafu",
  "tokio",
 ]
@@ -481,7 +481,7 @@ version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
@@ -502,7 +502,7 @@ version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-server",
  "snafu",
  "tokio",
@@ -512,7 +512,7 @@ dependencies = [
 name = "clipcat-proto"
 version = "0.7.0"
 dependencies = [
- "clipcat",
+ "clipcat-base",
  "mime",
  "prost",
  "prost-build",
@@ -528,7 +528,7 @@ version = "0.7.0"
 dependencies = [
  "async-trait",
  "bincode",
- "clipcat",
+ "clipcat-base",
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
@@ -548,7 +548,7 @@ version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
@@ -569,7 +569,7 @@ version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-server",
  "daemonize",
  "directories",

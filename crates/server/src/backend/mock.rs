@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MockClipboard};
 use snafu::ResultExt;
 use tokio::task;

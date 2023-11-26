@@ -19,7 +19,7 @@ tonic       = { version = "0.10", features = ["gzip"] }
 mime = "0.3"
 time = { version = "0.3", features = ["formatting", "macros"] }
 
-clipcat = { path = "../core" }
+clipcat-base = { path = "../base" }
 
 [build-dependencies]
 tonic-build = { version = "0.10", default-features = false, features = [

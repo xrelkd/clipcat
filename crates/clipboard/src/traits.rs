@@ -1,4 +1,4 @@
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 
 use crate::{ClipboardKind, Error};
 

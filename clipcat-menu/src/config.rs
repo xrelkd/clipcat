@@ -42,16 +42,19 @@ impl Config {
     }
 
     #[inline]
-    pub const fn default_server_host() -> IpAddr { clipcat::DEFAULT_GRPC_HOST }
+    pub const fn default_server_host() -> IpAddr { clipcat_base::DEFAULT_GRPC_HOST }
 
     #[inline]
-    pub const fn default_server_port() -> u16 { clipcat::DEFAULT_GRPC_PORT }
+    pub const fn default_server_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
 
     #[inline]
     pub fn default_path() -> PathBuf {
-        [clipcat::PROJECT_CONFIG_DIR.to_path_buf(), PathBuf::from(clipcat::MENU_CONFIG_NAME)]
-            .into_iter()
-            .collect()
+        [
+            clipcat_base::PROJECT_CONFIG_DIR.to_path_buf(),
+            PathBuf::from(clipcat_base::MENU_CONFIG_NAME),
+        ]
+        .into_iter()
+        .collect()
     }
 
     #[inline]
@@ -84,8 +87,8 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server_host: clipcat::DEFAULT_GRPC_HOST,
-            server_port: clipcat::DEFAULT_GRPC_PORT,
+            server_host: clipcat_base::DEFAULT_GRPC_HOST,
+            server_port: clipcat_base::DEFAULT_GRPC_PORT,
             log_level: Self::default_log_level(),
             finder: FinderType::Rofi,
             rofi: Some(Rofi::default()),
@@ -150,7 +153,7 @@ impl Default for CustomFinder {
     fn default() -> Self { Self { program: "fzf".to_string(), args: Vec::new() } }
 }
 
-fn default_menu_prompt() -> String { clipcat::DEFAULT_MENU_PROMPT.to_string() }
+fn default_menu_prompt() -> String { clipcat_base::DEFAULT_MENU_PROMPT.to_string() }
 
 const fn default_menu_length() -> usize { 30 }
 

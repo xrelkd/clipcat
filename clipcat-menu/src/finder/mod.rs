@@ -5,7 +5,7 @@ mod finder_stream;
 
 use std::{fmt, str::FromStr};
 
-use clipcat::ClipEntryMetadata;
+use clipcat_base::ClipEntryMetadata;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 use tokio::io::AsyncWriteExt;

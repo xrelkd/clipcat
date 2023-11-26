@@ -1,4 +1,4 @@
-use clipcat::ClipboardKind;
+use clipcat_base::ClipboardKind;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]

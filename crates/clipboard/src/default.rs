@@ -5,7 +5,7 @@ use std::sync::{
 
 use arboard::{ClearExtLinux, GetExtLinux, SetExtLinux};
 use bytes::Bytes;
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 
 use crate::{
     listener::{WaylandListener, X11Listener},

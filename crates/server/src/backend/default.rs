@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use clipcat::{ClipboardContent, ClipboardKind};
+use clipcat_base::{ClipboardContent, ClipboardKind};
 use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubscribe};
 use snafu::ResultExt;
 use tokio::task;

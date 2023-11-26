@@ -6,7 +6,7 @@ use std::sync::{
     Arc,
 };
 
-use clipcat::{ClipEntry, ClipboardContent, ClipboardKind, ClipboardWatcherState};
+use clipcat_base::{ClipEntry, ClipboardContent, ClipboardKind, ClipboardWatcherState};
 use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 

@@ -73,10 +73,10 @@ impl GrpcConfig {
     pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
 
     #[inline]
-    pub const fn default_host() -> IpAddr { clipcat::DEFAULT_GRPC_HOST }
+    pub const fn default_host() -> IpAddr { clipcat_base::DEFAULT_GRPC_HOST }
 
     #[inline]
-    pub const fn default_port() -> u16 { clipcat::DEFAULT_GRPC_PORT }
+    pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
 }
 
 impl Default for Config {
@@ -106,16 +106,19 @@ impl Default for WatcherConfig {
 
 impl Default for GrpcConfig {
     fn default() -> Self {
-        Self { host: clipcat::DEFAULT_GRPC_HOST, port: clipcat::DEFAULT_GRPC_PORT }
+        Self { host: clipcat_base::DEFAULT_GRPC_HOST, port: clipcat_base::DEFAULT_GRPC_PORT }
     }
 }
 
 impl Config {
     #[inline]
     pub fn default_path() -> PathBuf {
-        [clipcat::PROJECT_CONFIG_DIR.to_path_buf(), PathBuf::from(clipcat::DAEMON_CONFIG_NAME)]
-            .into_iter()
-            .collect()
+        [
+            clipcat_base::PROJECT_CONFIG_DIR.to_path_buf(),
+            PathBuf::from(clipcat_base::DAEMON_CONFIG_NAME),
+        ]
+        .into_iter()
+        .collect()
     }
 
     #[inline]
@@ -126,8 +129,8 @@ impl Config {
         let base_dirs = BaseDirs::new().expect("`BaseDirs::new` always success");
         [
             PathBuf::from(base_dirs.cache_dir()),
-            PathBuf::from(clipcat::PROJECT_NAME),
-            PathBuf::from(clipcat::DAEMON_HISTORY_FILE_NAME),
+            PathBuf::from(clipcat_base::PROJECT_NAME),
+            PathBuf::from(clipcat_base::DAEMON_HISTORY_FILE_NAME),
         ]
         .into_iter()
         .collect()
@@ -141,7 +144,7 @@ impl Config {
         let base_dirs = BaseDirs::new().expect("`BaseDirs::new` always success");
         [
             base_dirs.runtime_dir().map_or_else(std::env::temp_dir, PathBuf::from),
-            PathBuf::from(format!("{}.pid", clipcat::DAEMON_PROGRAM_NAME)),
+            PathBuf::from(format!("{}.pid", clipcat_base::DAEMON_PROGRAM_NAME)),
         ]
         .into_iter()
         .collect()
