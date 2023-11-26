@@ -70,9 +70,9 @@ impl ClipboardWatcher {
                                 Ok(data) => {
                                     if data.len() > filter_min_size {
                                         current_contents[usize::from(kind)] = data.clone();
-                                        if let Err(_err) = clip_sender
-                                            .send(ClipEntry::from_clipboard_content(data, kind))
-                                        {
+                                        if let Err(_err) = clip_sender.send(
+                                            ClipEntry::from_clipboard_content(data, kind, None),
+                                        ) {
                                             tracing::info!("ClipEntry receiver is closed.");
                                             return Err(Error::SendClipEntry);
                                         }
@@ -101,7 +101,8 @@ impl ClipboardWatcher {
                                     && current_contents[usize::from(kind)] != new_content =>
                             {
                                 current_contents[usize::from(kind)] = new_content.clone();
-                                let clip = ClipEntry::from_clipboard_content(new_content, kind);
+                                let clip =
+                                    ClipEntry::from_clipboard_content(new_content, kind, None);
                                 if let Err(_err) = clip_sender.send(clip) {
                                     tracing::info!("ClipEntry receiver is closed.");
                                     return Err(Error::SendClipEntry);
