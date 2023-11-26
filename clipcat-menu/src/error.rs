@@ -17,7 +17,7 @@ pub enum Error {
     #[snafu(display("{source}"))]
     Finder { source: FinderError },
 
-    #[snafu(display("Error occurs while interactive with server, error: {error}"))]
+    #[snafu(display("Error occurs while interacting with server, error: {error}"))]
     Operation { error: String },
 }
 
