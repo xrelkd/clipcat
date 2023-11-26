@@ -1,12 +1,14 @@
 syntax = "proto3";
 
-package watcher;
+package clipcat;
+
+import "google/protobuf/empty.proto";
 
 service Watcher {
-  rpc EnableWatcher(EnableWatcherRequest) returns (WatcherStateReply);
-  rpc DisableWatcher(DisableWatcherRequest) returns (WatcherStateReply);
-  rpc ToggleWatcher(ToggleWatcherRequest) returns (WatcherStateReply);
-  rpc GetWatcherState(GetWatcherStateRequest) returns (WatcherStateReply);
+  rpc EnableWatcher(google.protobuf.Empty) returns (WatcherStateReply);
+  rpc DisableWatcher(google.protobuf.Empty) returns (WatcherStateReply);
+  rpc ToggleWatcher(google.protobuf.Empty) returns (WatcherStateReply);
+  rpc GetWatcherState(google.protobuf.Empty) returns (WatcherStateReply);
 }
 
 enum WatcherState {
@@ -15,8 +17,3 @@ enum WatcherState {
 }
 
 message WatcherStateReply { WatcherState state = 1; }
-
-message EnableWatcherRequest {}
-message DisableWatcherRequest {}
-message ToggleWatcherRequest {}
-message GetWatcherStateRequest {}

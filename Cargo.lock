@@ -422,10 +422,11 @@ dependencies = [
 
 [[package]]
 name = "clipcat"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "bytes",
  "directories",
+ "humansize",
  "image",
  "lazy_static",
  "mime",
@@ -436,20 +437,21 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "async-trait",
  "clipcat",
  "clipcat-proto",
  "http 1.0.0",
  "mime",
+ "prost-types",
  "snafu",
  "tonic",
 ]
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "arboard",
  "bytes",
@@ -466,7 +468,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clipcat",
  "snafu",
@@ -475,7 +477,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -496,7 +498,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -508,11 +510,13 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clipcat",
  "mime",
  "prost",
+ "prost-build",
+ "prost-types",
  "time",
  "tonic",
  "tonic-build",
@@ -520,7 +524,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -540,7 +544,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -561,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "clap 4.4.8",
  "clap_complete",
@@ -1304,6 +1308,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
+name = "humansize"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6cb51c9a029ddc91b07a787f1d86b53ccfa49b0e86688c946ebe8d3555685dd7"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "humantime"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1475,6 +1488,12 @@ dependencies = [
  "cfg-if",
  "windows-sys",
 ]
+
+[[package]]
+name = "libm"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 
 [[package]]
 name = "libredox"

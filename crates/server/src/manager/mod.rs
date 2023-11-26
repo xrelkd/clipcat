@@ -1,8 +1,11 @@
 mod error;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
+};
 
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use snafu::ResultExt;
 use time::OffsetDateTime;
 
@@ -13,17 +16,32 @@ const DEFAULT_CAPACITY: usize = 40;
 
 pub struct ClipboardManager {
     backend: Arc<dyn ClipboardBackend>,
+
     capacity: usize,
+
+    // use id of ClipEntry as the key
     clips: HashMap<u64, ClipEntry>,
-    current_clips: HashMap<ClipboardKind, ClipEntry>,
+
+    // store current clip for each clipboard kind
+    current_clips: [Option<u64>; ClipboardKind::MAX_LENGTH],
+
+    // use BTreeMap to store timestamps for remove the oldest clip
+    timestamp_to_id: BTreeMap<OffsetDateTime, u64>,
 }
 
 impl ClipboardManager {
     pub fn with_capacity(backend: Arc<dyn ClipboardBackend>, capacity: usize) -> Self {
-        Self { backend, capacity, clips: HashMap::default(), current_clips: HashMap::default() }
+        let capacity = if capacity == 0 { DEFAULT_CAPACITY } else { capacity };
+        Self {
+            backend,
+            capacity,
+            clips: HashMap::new(),
+            current_clips: [None; ClipboardKind::MAX_LENGTH],
+            timestamp_to_id: BTreeMap::new(),
+        }
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     #[inline]
     pub fn new(backend: Arc<dyn ClipboardBackend>) -> Self {
         Self::with_capacity(backend, DEFAULT_CAPACITY)
@@ -32,21 +50,29 @@ impl ClipboardManager {
     #[inline]
     pub const fn capacity(&self) -> usize { self.capacity }
 
-    #[allow(dead_code)]
-    #[inline]
-    pub fn set_capacity(&mut self, capacity: usize) { self.capacity = capacity; }
-
     #[inline]
     pub fn import(&mut self, clips: &[ClipEntry]) { self.import_iter(clips.iter()); }
 
     #[inline]
     pub fn import_iter<'a>(&'a mut self, clips_iter: impl Iterator<Item = &'a ClipEntry>) {
-        self.clips = clips_iter.map(|clip| (clip.id(), clip.clone())).collect();
+        self.clips.clear();
+        self.timestamp_to_id.clear();
+        for clip in clips_iter {
+            let (id, timestamp) = (clip.id(), clip.timestamp());
+            let _ = self.timestamp_to_id.insert(timestamp, id);
+            drop(self.clips.insert(id, clip.clone()));
+        }
+
         self.remove_oldest();
     }
 
     #[inline]
-    pub fn list(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
+    pub fn export(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
+
+    #[inline]
+    pub fn list(&self, preview_length: usize) -> Vec<ClipEntryMetadata> {
+        self.iter().map(|entry| entry.metadata(Some(preview_length))).collect()
+    }
 
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &ClipEntry> { self.clips.values() }
@@ -55,8 +81,8 @@ impl ClipboardManager {
     pub fn get(&self, id: u64) -> Option<ClipEntry> { self.clips.get(&id).map(Clone::clone) }
 
     #[inline]
-    pub fn get_current_clip(&self, t: ClipboardKind) -> Option<&ClipEntry> {
-        self.current_clips.get(&t)
+    pub fn get_current_clip(&self, kind: ClipboardKind) -> Option<&ClipEntry> {
+        self.current_clips[usize::from(kind)].and_then(|id| self.clips.get(&id))
     }
 
     #[inline]
@@ -64,8 +90,10 @@ impl ClipboardManager {
 
     fn insert_inner(&mut self, entry: ClipEntry) -> u64 {
         let id = entry.id();
-        drop(self.current_clips.insert(entry.kind(), entry.clone()));
+        let timestamp = entry.timestamp();
+        self.current_clips[usize::from(entry.kind())] = Some(id);
         drop(self.clips.insert(id, entry));
+        let _unused = self.timestamp_to_id.insert(timestamp, id);
         self.remove_oldest();
         id
     }
@@ -77,41 +105,48 @@ impl ClipboardManager {
     pub fn is_empty(&self) -> bool { self.clips.is_empty() }
 
     fn remove_oldest(&mut self) {
-        while self.clips.len() > self.capacity {
-            let (_, oldest_id) =
-                self.clips.iter().fold((OffsetDateTime::now_utc(), 0), |oldest, (&id, clip)| {
-                    if clip.timestamp() < oldest.0 {
-                        (clip.timestamp(), id)
-                    } else {
-                        oldest
-                    }
-                });
-
-            let _ = self.remove(oldest_id);
+        if self.is_empty() {
+            return;
         }
+        debug_assert_eq!(self.clips.len(), self.timestamp_to_id.len());
+
+        while self.clips.len() > self.capacity {
+            if let Some((timestamp, id)) = self.timestamp_to_id.pop_first() {
+                tracing::trace!("Remove old clip (id: {id}, timestamp: {timestamp})");
+                drop(self.clips.remove(&id));
+            }
+        }
+        debug_assert_eq!(self.clips.len(), self.timestamp_to_id.len());
     }
 
     #[inline]
-    pub fn remove(&mut self, id: u64) -> bool {
-        for t in &[ClipboardKind::Clipboard, ClipboardKind::Primary] {
-            if let Some(clip) = self.current_clips.get(t) {
-                if clip.id() == id {
-                    drop(self.current_clips.remove(t));
-                }
+    pub fn remove(&mut self, id: u64) -> bool { self.remove_inner(id).is_some() }
+
+    #[inline]
+    fn remove_inner(&mut self, id: u64) -> Option<ClipEntry> {
+        for kind in ClipboardKind::all_kinds().map(usize::from) {
+            if Some(id) == self.current_clips[kind] {
+                self.current_clips[kind] = None;
             }
         }
 
-        self.clips.remove(&id).is_some()
+        if let Some(clip) = self.clips.remove(&id) {
+            let _id = self.timestamp_to_id.remove(&clip.timestamp());
+            Some(clip)
+        } else {
+            None
+        }
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.current_clips.clear();
+        self.timestamp_to_id.clear();
+        self.current_clips = [None; ClipboardKind::MAX_LENGTH];
         self.clips.clear();
     }
 
     pub fn replace(&mut self, old_id: u64, data: &[u8], mime: &mime::Mime) -> (bool, u64) {
-        let kind = self.clips.remove(&old_id).map_or(ClipboardKind::Primary, |v| v.kind());
+        let kind = self.remove_inner(old_id).map_or(ClipboardKind::Primary, |clip| clip.kind());
         ClipEntry::new(data, mime, kind, None).map_or((false, old_id), |entry| {
             let new_id = entry.id();
             let _ = self.insert_inner(entry);
@@ -168,35 +203,6 @@ mod tests {
     }
 
     #[test]
-    fn test_zero_capacity() {
-        let backend = Arc::new(MockClipboardBackend::new());
-        let mut mgr = ClipboardManager::with_capacity(backend, 0);
-        assert!(mgr.is_empty());
-        assert_eq!(mgr.len(), 0);
-        assert_eq!(mgr.capacity(), 0);
-
-        let n = 20;
-        let clips = create_clips(n);
-        for clip in clips {
-            let _ = mgr.insert(clip);
-        }
-
-        assert!(mgr.is_empty());
-        assert_eq!(mgr.len(), 0);
-        assert!(mgr.get_current_clip(ClipboardKind::Clipboard).is_none());
-        assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
-
-        let n = 20;
-        let clips = create_clips(n);
-        mgr.import(&clips);
-
-        assert!(mgr.is_empty());
-        assert_eq!(mgr.len(), 0);
-        assert!(mgr.get_current_clip(ClipboardKind::Clipboard).is_none());
-        assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
-    }
-
-    #[test]
     fn test_capacity() {
         let backend = Arc::new(MockClipboardBackend::new());
         let cap = 10;
@@ -213,12 +219,18 @@ mod tests {
         assert_eq!(mgr.len(), cap);
         assert_eq!(mgr.capacity(), cap);
 
-        let n = 20;
+        let n = 25;
         let clips = create_clips(n);
         mgr.import(&clips);
 
         assert_eq!(mgr.len(), cap);
         assert_eq!(mgr.capacity(), cap);
+
+        let mut exported = mgr.export();
+        exported.sort_unstable();
+        let mut clips = clips[(n - mgr.capacity())..].to_vec();
+        clips.sort_unstable();
+        assert_eq!(exported, clips);
     }
 
     #[allow(clippy::mutable_key_type)]
@@ -236,17 +248,16 @@ mod tests {
         assert_eq!(mgr.get_current_clip(ClipboardKind::Primary), clips.last());
         assert_eq!(mgr.len(), n);
 
-        let dumped = mgr.list().into_iter().collect::<HashSet<_>>();
+        let dumped = mgr.export().into_iter().collect::<HashSet<_>>();
         let clips = clips.into_iter().collect::<HashSet<_>>();
 
         assert_eq!(dumped, clips);
     }
 
     #[test]
-    #[allow(clippy::mutable_key_type)]
     fn test_import() {
         let n = 10;
-        let clips = create_clips(n);
+        let mut clips = create_clips(n);
         let backend = Arc::new(MockClipboardBackend::new());
         let mut mgr = ClipboardManager::with_capacity(backend, 20);
 
@@ -257,10 +268,11 @@ mod tests {
         assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
         assert_eq!(mgr.len(), n);
 
-        let dumped: HashSet<_> = mgr.list().into_iter().collect();
-        let clips: HashSet<_> = clips.into_iter().collect();
+        let mut exported = mgr.export();
+        clips.sort_unstable();
+        exported.sort_unstable();
 
-        assert_eq!(dumped, clips);
+        assert_eq!(exported, clips);
     }
 
     #[test]

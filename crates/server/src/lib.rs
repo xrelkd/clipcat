@@ -102,7 +102,7 @@ fn create_grpc_server_future(
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
-            tracing::info!("Listen Event Store gRPC endpoint on {listen_address}");
+            tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
             let result = tonic::transport::Server::builder()
                 .add_service(WatcherServer::new(grpc::WatcherService::new(clipboard_watcher)))
@@ -182,7 +182,7 @@ async fn serve_worker(
                 let _unused = history_manager.put(&clip).await;
             }
             Err(RecvError::Closed) => {
-                tracing::info!("ClipboardWatcher is closing, no further event will be received");
+                tracing::info!("ClipboardWatcher is closing, no further clip will be received");
 
                 tracing::info!("Internal shutdown signal is sent");
                 handle.shutdown();
@@ -195,7 +195,7 @@ async fn serve_worker(
 
     let (clips, history_capacity) = {
         let manager = clipboard_manager.lock().await;
-        (manager.list(), manager.capacity())
+        (manager.export(), manager.capacity())
     };
 
     {
@@ -203,6 +203,7 @@ async fn serve_worker(
         if let Err(err) = history_manager.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
+        tracing::info!("Clips are stored in `{path}`", path = history_manager.path().display());
     }
 
     Ok(())

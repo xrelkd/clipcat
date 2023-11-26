@@ -13,6 +13,7 @@ pub enum ClipboardKind {
 impl ClipboardKind {
     pub const MAX_LENGTH: usize = 3;
 
+    #[inline]
     #[must_use]
     pub const fn as_str(&self) -> &str {
         match self {
@@ -20,6 +21,12 @@ impl ClipboardKind {
             Self::Primary => "Primary",
             Self::Secondary => "Secondary",
         }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn all_kinds() -> [Self; Self::MAX_LENGTH] {
+        [Self::Clipboard, Self::Primary, Self::Secondary]
     }
 }
 

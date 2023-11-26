@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use clipcat::ClipEntry;
+use clipcat::ClipEntryMetadata;
 use skim::{
     prelude::{SkimItemReader, SkimOptionsBuilder},
     Skim,
@@ -19,7 +19,7 @@ impl BuiltinFinder {
 
     pub async fn select(
         &self,
-        clips: &[ClipEntry],
+        clips: &[ClipEntryMetadata],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
         let input = self.generate_input(clips);

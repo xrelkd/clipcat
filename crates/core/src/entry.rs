@@ -71,12 +71,13 @@ impl Entry {
     pub fn from_clipboard_content(
         content: ClipboardContent,
         clipboard_kind: ClipboardKind,
+        timestamp: Option<OffsetDateTime>,
     ) -> Self {
         Self {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
-            timestamp: OffsetDateTime::now_utc(),
+            timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
         }
     }
 
@@ -129,13 +130,13 @@ impl Entry {
             ClipboardContent::Plaintext(text) => text.clone(),
             ClipboardContent::Image { width: _, height: _, bytes } => {
                 let content_type = mime::IMAGE_PNG;
-                let size = bytes.len();
+                let size = humansize::format_size(bytes.len(), humansize::BINARY);
                 let timestamp = self
                     .timestamp
                     .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
                     .format(&Rfc3339)
                     .unwrap_or_default();
-                format!("[Content type: {content_type}, size: {size}, timestamp: {timestamp}]")
+                format!("[{content_type} {size} {timestamp}]")
             }
         };
 
@@ -207,6 +208,17 @@ impl Entry {
             ClipboardContent::Image { .. } => mime::IMAGE_PNG,
         }
     }
+
+    #[inline]
+    pub fn metadata(&self, preview_length: Option<usize>) -> EntryMetadata {
+        EntryMetadata {
+            id: self.id,
+            kind: self.clipboard_kind,
+            timestamp: self.timestamp,
+            mime: self.mime(),
+            preview: self.printable_data(preview_length),
+        }
+    }
 }
 
 impl Default for Entry {
@@ -239,6 +251,32 @@ impl Ord for Entry {
 
 impl Hash for Entry {
     fn hash<H: Hasher>(&self, state: &mut H) { self.content.hash(state); }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EntryMetadata {
+    pub id: u64,
+
+    pub kind: ClipboardKind,
+
+    pub timestamp: OffsetDateTime,
+
+    pub mime: mime::Mime,
+
+    pub preview: String,
+}
+
+impl PartialOrd for EntryMetadata {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for EntryMetadata {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match other.timestamp.cmp(&self.timestamp) {
+            Ordering::Equal => self.kind.cmp(&other.kind),
+            ord => ord,
+        }
+    }
 }
 
 fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, Error> {
