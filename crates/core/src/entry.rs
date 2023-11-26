@@ -71,12 +71,13 @@ impl Entry {
     pub fn from_clipboard_content(
         content: ClipboardContent,
         clipboard_kind: ClipboardKind,
+        timestamp: Option<OffsetDateTime>,
     ) -> Self {
         Self {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
-            timestamp: OffsetDateTime::now_utc(),
+            timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
         }
     }
 
