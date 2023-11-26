@@ -6,8 +6,8 @@ pub enum FinderError {
     #[snafu(display("Invalid finder: {finder}"))]
     InvalidFinder { finder: String },
 
-    #[snafu(display("Could not spawn external process, error: {source}"))]
-    SpawnExternalProcess { source: std::io::Error },
+    #[snafu(display("Could not spawn external program {program}, error: {source}"))]
+    SpawnExternalProgram { program: String, source: std::io::Error },
 
     #[snafu(display("Could not join spawned task, error: {source}"))]
     JoinTask { source: tokio::task::JoinError },

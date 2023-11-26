@@ -144,8 +144,9 @@ impl FinderRunner {
     ) -> Result<Vec<usize>, FinderError> {
         if let Some(external) = self.external {
             let input_data = external.generate_input(clips);
-            let mut child =
-                external.spawn_child(selection_mode).context(error::SpawnExternalProcessSnafu)?;
+            let mut child = external
+                .spawn_child(selection_mode)
+                .context(error::SpawnExternalProgramSnafu { program: external.program() })?;
             {
                 let stdin = child.stdin.as_mut().context(error::OpenStdinSnafu)?;
                 stdin.write_all(input_data.as_bytes()).await.context(error::WriteStdinSnafu)?;
