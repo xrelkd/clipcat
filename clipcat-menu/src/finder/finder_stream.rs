@@ -8,14 +8,14 @@ pub trait FinderStream: Send + Sync {
         clips
             .iter()
             .enumerate()
-            .map(|(i, metadata)| format!("{i}{INDEX_SEPARATOR} {}", metadata.preview))
+            .map(|(i, ClipEntryMetadata { preview, .. })| format!("{i}{INDEX_SEPARATOR} {preview}"))
             .collect::<Vec<_>>()
             .join(ENTRY_SEPARATOR)
     }
 
     fn parse_output(&self, data: &[u8]) -> Vec<usize> {
-        let line = String::from_utf8_lossy(data);
-        line.split(ENTRY_SEPARATOR)
+        String::from_utf8_lossy(data)
+            .split(ENTRY_SEPARATOR)
             .filter_map(|entry| {
                 entry
                     .split(INDEX_SEPARATOR)
@@ -47,20 +47,20 @@ mod tests {
 
     #[test]
     fn test_generate_input() {
-        const MODE: ClipboardKind = ClipboardKind::Clipboard;
+        const KIND: ClipboardKind = ClipboardKind::Clipboard;
         let d = Dummy;
         let clips = vec![];
         let v = d.generate_input(&clips);
         assert_eq!(v, "");
 
-        let clips = vec![ClipEntry::from_string("abcde", MODE).metadata(None)];
+        let clips = vec![ClipEntry::from_string("abcde", KIND).metadata(None)];
         let v = d.generate_input(&clips);
         assert_eq!(v, "0: abcde");
 
         let clips = vec![
-            ClipEntry::from_string("abcde", MODE).metadata(None),
-            ClipEntry::from_string("АбВГД", MODE).metadata(None),
-            ClipEntry::from_string("あいうえお", MODE).metadata(None),
+            ClipEntry::from_string("abcde", KIND).metadata(None),
+            ClipEntry::from_string("АбВГД", KIND).metadata(None),
+            ClipEntry::from_string("あいうえお", KIND).metadata(None),
         ];
 
         let v = d.generate_input(&clips);
