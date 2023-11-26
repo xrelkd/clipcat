@@ -19,18 +19,11 @@
 
 - [Features](#features)
 - [Installation](#installation)
-
 - [Architecture](#architecture)
-- [Quick Start](#quick-start)
-
-  - [Usage](#usage)
-  - [Configuration](#configuration)
-
+- [Usage](#usage)
+- [Configuration](#configuration)
 - [Integration](#integration)
-
-  - [Integrating with Zsh](#integrating-with-zsh)
-  - [Integrating with i3 Window Manager](#integrating-with-i3)
-
+- [Programs in this Repository](#programs-in-this-repository)
 - [License](#license)
 
 </details>
@@ -121,7 +114,7 @@ A `clipcat` client sends requests to the server for the following operations:
 
 ## Usage
 
-0. Setup configurations for `clipcat`.
+0. Setup configurations for `clipcat`. Read [configuration](#configuration) section for more details.
 
 ```bash
 $ mkdir -p                       $XDG_CONFIG_HOME/clipcat
@@ -136,7 +129,7 @@ $ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 $ clipcatd
 ```
 
-2. Copy arbitrary text from other X11 process with your mouse or keyboard.
+2. Copy arbitrary text/image from other process with your mouse or keyboard.
 
 3. You can run following commands with `clipcatctl` or `clipcat-menu`:
 
@@ -268,6 +261,19 @@ bindsym $mod+o exec $launcher-clipboard-remove
 **Note**: You can use `rofi` or `dmenu` as the default finder.
 
 </details>
+
+## Programs in this Repository
+
+| Program          | Description                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `clipcatd`       | The `clipcat` server (daemon).                                                          |
+| `clipcatctl`     | The `clipcat` client which provides a command line interface.                           |
+| `clipcat-menu`   | The `clipcat` client which calls built-in finder or external finder for selecting clip. |
+| `clipcat-notify` | A tool for watching clipboard event. <br>                                               |
+|                  | It watches the clipboard and exit on clipboard changed. <br>                            |
+|                  | It returns exit code 0 if success, 1 if error occurred. <br>                            |
+|                  | **Note**: it does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, <br>      |
+|                  | it is just a tool for watch clipboard.                                                  |
 
 ## License
 
