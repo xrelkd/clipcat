@@ -23,7 +23,7 @@ pub enum Error {
     #[snafu(display("Could not call gRPC client, error: {source}"))]
     Client { source: clipcat_client::Error },
 
-    #[snafu(display("Error occurs while interactive with server, error: {error}"))]
+    #[snafu(display("Error occurs while interacting with server, error: {error}"))]
     OperationError { error: String },
 
     #[snafu(display("{error}"))]
