@@ -1,13 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-#[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum ClipboardWatcherState {
+pub enum WatcherState {
     Enabled = 0,
     Disabled = 1,
 }
 
-impl From<i32> for ClipboardWatcherState {
+impl From<i32> for WatcherState {
     fn from(state: i32) -> Self {
         match state {
             0 => Self::Enabled,
@@ -16,6 +15,6 @@ impl From<i32> for ClipboardWatcherState {
     }
 }
 
-impl From<ClipboardWatcherState> for i32 {
-    fn from(state: ClipboardWatcherState) -> Self { state as Self }
+impl From<WatcherState> for i32 {
+    fn from(state: WatcherState) -> Self { state as Self }
 }

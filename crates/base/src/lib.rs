@@ -14,7 +14,7 @@ use directories::ProjectDirs;
 pub use self::{
     entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
     kind::Kind as ClipboardKind,
-    watcher_state::ClipboardWatcherState,
+    watcher_state::WatcherState as ClipboardWatcherState,
 };
 
 pub const PROJECT_NAME: &str = "clipcat";
