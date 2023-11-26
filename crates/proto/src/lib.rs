@@ -39,7 +39,7 @@ pub use self::proto::{
     RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse, WatcherState, WatcherStateReply,
 };
 
-impl From<ClipboardKind> for clipcat::ClipboardKind {
+impl From<ClipboardKind> for clipcat_base::ClipboardKind {
     fn from(t: ClipboardKind) -> Self {
         match t {
             ClipboardKind::Clipboard => Self::Clipboard,
@@ -49,18 +49,18 @@ impl From<ClipboardKind> for clipcat::ClipboardKind {
     }
 }
 
-impl From<clipcat::ClipboardKind> for ClipboardKind {
-    fn from(t: clipcat::ClipboardKind) -> Self {
+impl From<clipcat_base::ClipboardKind> for ClipboardKind {
+    fn from(t: clipcat_base::ClipboardKind) -> Self {
         match t {
-            clipcat::ClipboardKind::Clipboard => Self::Clipboard,
-            clipcat::ClipboardKind::Primary => Self::Primary,
-            clipcat::ClipboardKind::Secondary => Self::Secondary,
+            clipcat_base::ClipboardKind::Clipboard => Self::Clipboard,
+            clipcat_base::ClipboardKind::Primary => Self::Primary,
+            clipcat_base::ClipboardKind::Secondary => Self::Secondary,
         }
     }
 }
 
-impl From<clipcat::ClipEntry> for ClipEntry {
-    fn from(entry: clipcat::ClipEntry) -> Self {
+impl From<clipcat_base::ClipEntry> for ClipEntry {
+    fn from(entry: clipcat_base::ClipEntry) -> Self {
         let mime = entry.mime().essence_str().to_owned();
         let data = entry.encoded().unwrap_or_default();
         let id = entry.id();
@@ -71,18 +71,18 @@ impl From<clipcat::ClipEntry> for ClipEntry {
     }
 }
 
-impl From<ClipEntry> for clipcat::ClipEntry {
+impl From<ClipEntry> for clipcat_base::ClipEntry {
     fn from(ClipEntry { id: _, data, mime, kind, timestamp }: ClipEntry) -> Self {
         let timestamp = timestamp.and_then(|ts| utils::timestamp_to_datetime(&ts).ok());
-        let kind = clipcat::ClipboardKind::from(kind);
+        let kind = clipcat_base::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
         Self::new(&data, &mime, kind, timestamp).unwrap_or_default()
     }
 }
 
-impl From<clipcat::ClipEntryMetadata> for ClipEntryMetadata {
-    fn from(metadata: clipcat::ClipEntryMetadata) -> Self {
-        let clipcat::ClipEntryMetadata { id, kind: clipboard_kind, timestamp, mime, preview } =
+impl From<clipcat_base::ClipEntryMetadata> for ClipEntryMetadata {
+    fn from(metadata: clipcat_base::ClipEntryMetadata) -> Self {
+        let clipcat_base::ClipEntryMetadata { id, kind: clipboard_kind, timestamp, mime, preview } =
             metadata;
         let mime = mime.essence_str().to_owned();
         let timestamp = utils::datetime_to_timestamp(&timestamp);
@@ -90,18 +90,18 @@ impl From<clipcat::ClipEntryMetadata> for ClipEntryMetadata {
     }
 }
 
-impl From<ClipEntryMetadata> for clipcat::ClipEntryMetadata {
+impl From<ClipEntryMetadata> for clipcat_base::ClipEntryMetadata {
     fn from(ClipEntryMetadata { id, mime, kind, timestamp, preview }: ClipEntryMetadata) -> Self {
         let timestamp = timestamp
             .and_then(|ts| utils::timestamp_to_datetime(&ts).ok())
             .unwrap_or_else(OffsetDateTime::now_utc);
-        let clipboard_kind = clipcat::ClipboardKind::from(kind);
+        let clipboard_kind = clipcat_base::ClipboardKind::from(kind);
         let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
         Self { id, kind: clipboard_kind, timestamp, mime, preview }
     }
 }
 
-impl From<WatcherState> for clipcat::ClipboardWatcherState {
+impl From<WatcherState> for clipcat_base::ClipboardWatcherState {
     fn from(state: WatcherState) -> Self {
         match state {
             WatcherState::Enabled => Self::Enabled,
@@ -110,11 +110,11 @@ impl From<WatcherState> for clipcat::ClipboardWatcherState {
     }
 }
 
-impl From<clipcat::ClipboardWatcherState> for WatcherState {
-    fn from(val: clipcat::ClipboardWatcherState) -> Self {
+impl From<clipcat_base::ClipboardWatcherState> for WatcherState {
+    fn from(val: clipcat_base::ClipboardWatcherState) -> Self {
         match val {
-            clipcat::ClipboardWatcherState::Enabled => Self::Enabled,
-            clipcat::ClipboardWatcherState::Disabled => Self::Disabled,
+            clipcat_base::ClipboardWatcherState::Enabled => Self::Enabled,
+            clipcat_base::ClipboardWatcherState::Disabled => Self::Disabled,
         }
     }
 }

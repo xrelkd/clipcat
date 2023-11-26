@@ -3,14 +3,14 @@ mod error;
 use std::io::Write;
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::ClipboardKind;
+use clipcat_base::ClipboardKind;
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
 
 use self::error::Error;
 
 #[derive(Parser)]
-#[clap(name = clipcat::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
+#[clap(name = clipcat_base::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
 struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,

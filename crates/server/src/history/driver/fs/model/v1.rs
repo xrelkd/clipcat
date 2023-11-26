@@ -1,4 +1,4 @@
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat_base::{ClipEntry, ClipboardKind};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -35,7 +35,7 @@ impl From<FileContents> for Vec<ClipEntry> {
 pub struct ClipboardValue {
     pub timestamp: OffsetDateTime,
 
-    #[serde(with = "clipcat::serde::mime")]
+    #[serde(with = "clipcat_base::serde::mime")]
     pub mime: mime::Mime,
 
     pub data: Vec<u8>,

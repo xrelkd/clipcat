@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Parser)]
-#[command(name = clipcat::DAEMON_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(name = clipcat_base::DAEMON_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,
@@ -123,7 +123,11 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     init_tracing(config.log_level);
     let config = clipcat_server::Config::from(config);
 
-    tracing::info!("{} is initializing, pid: {}", clipcat::DAEMON_PROGRAM_NAME, std::process::id());
+    tracing::info!(
+        "{} is initializing, pid: {}",
+        clipcat_base::DAEMON_PROGRAM_NAME,
+        std::process::id()
+    );
 
     tracing::info!("Initializing Tokio runtime");
 
@@ -140,7 +144,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         }
     }
 
-    tracing::info!("{} is shutdown", clipcat::DAEMON_PROGRAM_NAME);
+    tracing::info!("{} is shutdown", clipcat_base::DAEMON_PROGRAM_NAME);
     exit_status
 }
 

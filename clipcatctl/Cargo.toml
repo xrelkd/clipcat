@@ -28,7 +28,7 @@ http          = "1"
 mime          = "0.3"
 snafu         = "0.7"
 
-clipcat                 = { path = "../crates/core" }
+clipcat-base            = { path = "../crates/base" }
 clipcat-client          = { path = "../crates/client" }
 clipcat-external-editor = { path = "../crates/external-editor" }
 

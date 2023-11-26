@@ -25,7 +25,7 @@ impl proto::Manager for ManagerService {
             let mime = mime::Mime::from_str(&mime).unwrap_or(mime::APPLICATION_OCTET_STREAM);
             let mut manager = self.manager.lock().await;
             let id = manager.insert(
-                clipcat::ClipEntry::new(&data, &mime, kind.into(), None).unwrap_or_default(),
+                clipcat_base::ClipEntry::new(&data, &mime, kind.into(), None).unwrap_or_default(),
             );
             let _unused = manager.mark(id, kind.into()).await;
             drop(manager);

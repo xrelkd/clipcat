@@ -27,7 +27,7 @@ pub enum Error {
     OperationError { error: String },
 
     #[snafu(display("{error}"))]
-    EncodeData { error: clipcat::ClipEntryError },
+    EncodeData { error: clipcat_base::ClipEntryError },
 }
 
 impl From<clipcat_external_editor::Error> for Error {
@@ -122,6 +122,6 @@ impl From<clipcat_client::error::GetWatcherStateError> for Error {
     }
 }
 
-impl From<clipcat::ClipEntryError> for Error {
-    fn from(error: clipcat::ClipEntryError) -> Self { Self::EncodeData { error } }
+impl From<clipcat_base::ClipEntryError> for Error {
+    fn from(error: clipcat_base::ClipEntryError) -> Self { Self::EncodeData { error } }
 }

@@ -6,7 +6,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use clipcat::ClipEntry;
+use clipcat_base::ClipEntry;
 use snafu::ResultExt;
 
 use crate::history::{driver::Driver, error, Error};

@@ -16,7 +16,7 @@ tokio = { version = "1", features = ["fs", "process", "rt-multi-thread"] }
 
 snafu = "0.7"
 
-clipcat = { path = "../core" }
+clipcat-base = { path = "../base" }
 
 [lints]
 workspace = true
