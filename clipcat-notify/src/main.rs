@@ -58,11 +58,13 @@ impl Cli {
                     return Err(Error::ListenNothing);
                 }
 
-                let backend = clipcat_server::backend::new()
-                    .context(error::InitializeClipboardBackendSnafu)?;
-                let mut subscriber = backend.subscribe().context(error::SubscribeClipboardSnafu)?;
                 Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
                     async move {
+                        let backend = clipcat_server::backend::new()
+                            .context(error::InitializeClipboardBackendSnafu)?;
+                        let mut subscriber =
+                            backend.subscribe().context(error::SubscribeClipboardSnafu)?;
+
                         while let Some(kind) = subscriber.next().await {
                             match kind {
                                 ClipboardKind::Clipboard if enable_clipboard => return Ok(()),
