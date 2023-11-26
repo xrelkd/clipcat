@@ -210,8 +210,8 @@ impl Entry {
     }
 
     #[inline]
-    pub fn metadata(&self, preview_length: Option<usize>) -> EntryMetadata {
-        EntryMetadata {
+    pub fn metadata(&self, preview_length: Option<usize>) -> Metadata {
+        Metadata {
             id: self.id,
             kind: self.clipboard_kind,
             timestamp: self.timestamp,
@@ -254,7 +254,7 @@ impl Hash for Entry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EntryMetadata {
+pub struct Metadata {
     pub id: u64,
 
     pub kind: ClipboardKind,
@@ -266,11 +266,11 @@ pub struct EntryMetadata {
     pub preview: String,
 }
 
-impl PartialOrd for EntryMetadata {
+impl PartialOrd for Metadata {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
-impl Ord for EntryMetadata {
+impl Ord for Metadata {
     fn cmp(&self, other: &Self) -> Ordering {
         match other.timestamp.cmp(&self.timestamp) {
             Ordering::Equal => self.kind.cmp(&other.kind),
