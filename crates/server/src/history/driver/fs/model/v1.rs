@@ -3,38 +3,15 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct FileContents {
-    version: u64,
+pub struct FileHeader {
+    pub schema: u64,
 
-    last_update: OffsetDateTime,
-
-    data: Vec<ClipboardValue>,
+    #[serde(with = "time::serde::iso8601")]
+    pub last_update: OffsetDateTime,
 }
 
-impl FileContents {
-    #[inline]
-    pub fn new(data: Vec<ClipEntry>) -> Self {
-        Self {
-            version: 1,
-            last_update: OffsetDateTime::now_utc(),
-            data: data
-                .into_iter()
-                .filter_map(
-                    |entry| if entry.is_empty() { None } else { Some(ClipboardValue::from(entry)) },
-                )
-                .collect(),
-        }
-    }
-}
-
-impl From<FileContents> for Vec<ClipEntry> {
-    fn from(FileContents { data, .. }: FileContents) -> Self {
-        data.into_iter()
-            .filter_map(
-                |value| if value.data.is_empty() { None } else { Some(ClipEntry::from(value)) },
-            )
-            .collect()
-    }
+impl FileHeader {
+    pub const SCHEMA_VERSION: u64 = 1;
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

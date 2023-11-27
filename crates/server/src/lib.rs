@@ -31,7 +31,9 @@ pub async fn serve_with_shutdown(
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
-        let history_manager = HistoryManager::new(&history_file_path);
+        let mut history_manager = HistoryManager::new(&history_file_path)
+            .await
+            .context(error::CreateHistoryManagerSnafu)?;
 
         tracing::info!("Load history from `{path}`", path = history_manager.path().display());
         let history_clips = history_manager
@@ -175,7 +177,9 @@ async fn serve_worker(
                     printable = clip.printable_data(Some(30))
                 );
                 let _unused = clipboard_manager.lock().await.insert(clip.clone());
-                let _unused = history_manager.put(&clip).await;
+                if let Err(err) = history_manager.put(&clip).await {
+                    tracing::error!("{err}");
+                }
             }
             Err(RecvError::Closed) => {
                 tracing::info!("ClipboardWatcher is closing, no further clip will be received");

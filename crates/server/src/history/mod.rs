@@ -15,10 +15,13 @@ pub struct HistoryManager {
 impl HistoryManager {
     /// # Errors
     #[inline]
-    pub fn new<P: AsRef<Path>>(file_path: P) -> Self {
+    pub async fn new<P>(file_path: P) -> Result<Self, Error>
+    where
+        P: AsRef<Path> + Send,
+    {
         let file_path = file_path.as_ref().to_owned();
-        let driver = Box::new(driver::FileSystemDriver::new(&file_path));
-        Self { file_path, driver }
+        let driver = driver::FileSystemDriver::new(&file_path).await?;
+        Ok(Self { file_path, driver: Box::new(driver) })
     }
 
     #[inline]
@@ -34,7 +37,7 @@ impl HistoryManager {
     pub async fn clear(&mut self) -> Result<(), Error> { self.driver.clear().await }
 
     #[inline]
-    pub async fn load(&self) -> Result<Vec<ClipEntry>, Error> { self.driver.load().await }
+    pub async fn load(&mut self) -> Result<Vec<ClipEntry>, Error> { self.driver.load().await }
 
     #[inline]
     pub async fn save(&mut self, data: &[ClipEntry]) -> Result<(), Error> {

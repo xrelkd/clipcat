@@ -8,7 +8,7 @@ use crate::history::Error;
 
 #[async_trait]
 pub trait Driver: Send + Sync {
-    async fn load(&self) -> Result<Vec<ClipEntry>, Error>;
+    async fn load(&mut self) -> Result<Vec<ClipEntry>, Error>;
 
     async fn save(&mut self, data: &[ClipEntry]) -> Result<(), Error>;
 
