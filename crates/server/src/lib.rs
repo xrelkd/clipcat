@@ -17,7 +17,7 @@ use tokio::sync::{broadcast::error::RecvError, Mutex};
 pub use self::{
     config::Config,
     error::{Error, Result},
-    watcher::ClipboardWatcherOptions,
+    watcher::{ClipboardWatcherOptions, Toggle as ClipboardWatcherToggle},
 };
 use self::{history::HistoryManager, manager::ClipboardManager, watcher::ClipboardWatcher};
 
@@ -60,11 +60,8 @@ pub async fn serve_with_shutdown(
         (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
 
-    let clipboard_watcher = {
-        let watcher = ClipboardWatcher::new(clipboard_backend.clone(), watcher_opts)
-            .context(error::CreateClipboardWatcherSnafu)?;
-        Arc::new(Mutex::new(watcher))
-    };
+    let clipboard_watcher = ClipboardWatcher::new(clipboard_backend, watcher_opts)
+        .context(error::CreateClipboardWatcherSnafu)?;
 
     let lifecycle_manager = LifecycleManager::<Error>::new();
     let handle = lifecycle_manager.handle();
@@ -73,7 +70,7 @@ pub async fn serve_with_shutdown(
             "gRPC server",
             create_grpc_server_future(
                 grpc_listen_address,
-                clipboard_watcher.clone(),
+                clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
         )
@@ -97,7 +94,7 @@ pub async fn serve_with_shutdown(
 
 fn create_grpc_server_future(
     listen_address: SocketAddr,
-    clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
+    clipboard_watcher_toggle: ClipboardWatcherToggle,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
@@ -105,7 +102,9 @@ fn create_grpc_server_future(
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
             let result = tonic::transport::Server::builder()
-                .add_service(WatcherServer::new(grpc::WatcherService::new(clipboard_watcher)))
+                .add_service(WatcherServer::new(grpc::WatcherService::new(
+                    clipboard_watcher_toggle,
+                )))
                 .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
                 .serve_with_shutdown(listen_address, signal)
                 .await
@@ -124,7 +123,7 @@ fn create_grpc_server_future(
 }
 
 fn create_clipboard_worker_future(
-    clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
+    clipboard_watcher: ClipboardWatcher,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     history_manager: HistoryManager,
     handle: Handle<Error>,
@@ -153,17 +152,14 @@ fn create_clipboard_worker_future(
 
 #[allow(clippy::redundant_pub_crate)]
 async fn serve_worker(
-    clipboard_watcher: Arc<Mutex<ClipboardWatcher>>,
+    clipboard_watcher: ClipboardWatcher,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
     mut history_manager: HistoryManager,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,
 ) -> Result<()> {
     let mut shutdown_signal = shutdown_signal.into_stream();
-    let mut clip_recv = {
-        let watcher = clipboard_watcher.lock().await;
-        watcher.subscribe()
-    };
+    let mut clip_recv = clipboard_watcher.subscribe();
 
     loop {
         let maybe_clip = tokio::select! {

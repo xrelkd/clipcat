@@ -1,18 +1,15 @@
-use std::sync::Arc;
-
 use clipcat_proto as proto;
-use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
-use crate::ClipboardWatcher;
+use crate::ClipboardWatcherToggle;
 
 pub struct WatcherService {
-    watcher: Arc<Mutex<ClipboardWatcher>>,
+    watcher_toggle: ClipboardWatcherToggle,
 }
 
 impl WatcherService {
     #[inline]
-    pub fn new(watcher: Arc<Mutex<ClipboardWatcher>>) -> Self { Self { watcher } }
+    pub const fn new(watcher_toggle: ClipboardWatcherToggle) -> Self { Self { watcher_toggle } }
 }
 
 #[tonic::async_trait]
@@ -21,12 +18,8 @@ impl proto::Watcher for WatcherService {
         &self,
         _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
-        let state = {
-            let mut watcher = self.watcher.lock().await;
-            watcher.enable();
-            proto::WatcherStateReply { state: watcher.state().into() }
-        };
-
+        self.watcher_toggle.enable();
+        let state = proto::WatcherStateReply { state: self.watcher_toggle.state().into() };
         Ok(Response::new(state))
     }
 
@@ -34,12 +27,8 @@ impl proto::Watcher for WatcherService {
         &self,
         _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
-        let state = {
-            let mut watcher = self.watcher.lock().await;
-            watcher.disable();
-            proto::WatcherStateReply { state: watcher.state().into() }
-        };
-
+        self.watcher_toggle.disable();
+        let state = proto::WatcherStateReply { state: self.watcher_toggle.state().into() };
         Ok(Response::new(state))
     }
 
@@ -47,12 +36,8 @@ impl proto::Watcher for WatcherService {
         &self,
         _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
-        let state = {
-            let mut watcher = self.watcher.lock().await;
-            watcher.toggle();
-            proto::WatcherStateReply { state: watcher.state().into() }
-        };
-
+        self.watcher_toggle.toggle();
+        let state = proto::WatcherStateReply { state: self.watcher_toggle.state().into() };
         Ok(Response::new(state))
     }
 
@@ -60,11 +45,7 @@ impl proto::Watcher for WatcherService {
         &self,
         _request: Request<()>,
     ) -> Result<Response<proto::WatcherStateReply>, Status> {
-        let state = {
-            let watcher = self.watcher.lock().await;
-            proto::WatcherStateReply { state: watcher.state().into() }
-        };
-
+        let state = proto::WatcherStateReply { state: self.watcher_toggle.state().into() };
         Ok(Response::new(state))
     }
 }
