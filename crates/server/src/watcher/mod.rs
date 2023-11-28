@@ -14,7 +14,7 @@ pub use self::{error::Error, options::Options as ClipboardWatcherOptions};
 use crate::backend::{ClipboardBackend, Error as BackendError};
 
 pub struct ClipboardWatcher {
-    is_running: Arc<AtomicBool>,
+    is_watching: Arc<AtomicBool>,
     clip_sender: broadcast::Sender<ClipEntry>,
     _join_handle: task::JoinHandle<Result<(), Error>>,
 }
@@ -46,11 +46,11 @@ impl ClipboardWatcher {
         };
 
         let (clip_sender, _event_receiver) = broadcast::channel(16);
-        let is_running = Arc::new(AtomicBool::new(true));
+        let is_watching = Arc::new(AtomicBool::new(true));
 
         let join_handle = task::spawn({
             let clip_sender = clip_sender.clone();
-            let is_watching = is_running.clone();
+            let is_watching = is_watching.clone();
 
             let mut subscriber = backend.subscribe()?;
             async move {
@@ -123,26 +123,35 @@ impl ClipboardWatcher {
             }
         });
 
-        Ok(Self { is_running, clip_sender, _join_handle: join_handle })
+        Ok(Self { is_watching, clip_sender, _join_handle: join_handle })
     }
 
     #[inline]
     pub fn subscribe(&self) -> broadcast::Receiver<ClipEntry> { self.clip_sender.subscribe() }
 
     #[inline]
-    pub fn enable(&mut self) {
-        self.is_running.store(true, Ordering::Release);
+    pub fn get_toggle(&self) -> Toggle { Toggle { is_watching: self.is_watching.clone() } }
+}
+
+pub struct Toggle {
+    is_watching: Arc<AtomicBool>,
+}
+
+impl Toggle {
+    #[inline]
+    pub fn enable(&self) {
+        self.is_watching.store(true, Ordering::Release);
         tracing::info!("ClipboardWatcher is watching for clipboard event");
     }
 
     #[inline]
-    pub fn disable(&mut self) {
-        self.is_running.store(false, Ordering::Release);
+    pub fn disable(&self) {
+        self.is_watching.store(false, Ordering::Release);
         tracing::info!("ClipboardWatcher is not watching for clipboard event");
     }
 
     #[inline]
-    pub fn toggle(&mut self) {
+    pub fn toggle(&self) {
         if self.is_watching() {
             self.disable();
         } else {
@@ -151,9 +160,11 @@ impl ClipboardWatcher {
     }
 
     #[inline]
-    pub fn is_watching(&self) -> bool { self.is_running.load(Ordering::Acquire) }
+    #[must_use]
+    pub fn is_watching(&self) -> bool { self.is_watching.load(Ordering::Acquire) }
 
     #[inline]
+    #[must_use]
     pub fn state(&self) -> ClipboardWatcherState {
         if self.is_watching() {
             ClipboardWatcherState::Enabled
