@@ -1,4 +1,4 @@
-use clipcat::ClipEntryMetadata;
+use clipcat_base::ClipEntryMetadata;
 
 pub const ENTRY_SEPARATOR: &str = "\n";
 pub const INDEX_SEPARATOR: char = ':';
@@ -38,7 +38,7 @@ pub trait FinderStream: Send + Sync {
 
 #[cfg(test)]
 mod tests {
-    use clipcat::{ClipEntry, ClipboardKind};
+    use clipcat_base::{ClipEntry, ClipboardKind};
 
     use crate::finder::FinderStream;
 

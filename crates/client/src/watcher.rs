@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clipcat::ClipboardWatcherState;
+use clipcat_base::ClipboardWatcherState;
 use clipcat_proto as proto;
 use tonic::Request;
 

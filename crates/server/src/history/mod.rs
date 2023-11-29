@@ -3,7 +3,7 @@ mod error;
 
 use std::path::{Path, PathBuf};
 
-use clipcat::ClipEntry;
+use clipcat_base::ClipEntry;
 
 pub use self::error::Error;
 

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{
     ClipboardLoad, ClipboardLoadExt, ClipboardStore, ClipboardStoreExt, ClipboardSubscribe,
     ClipboardWait, Error,

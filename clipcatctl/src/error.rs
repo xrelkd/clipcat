@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use simdutf8::basic::Utf8Error;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -23,11 +24,14 @@ pub enum Error {
     #[snafu(display("Could not call gRPC client, error: {source}"))]
     Client { source: clipcat_client::Error },
 
-    #[snafu(display("Error occurs while interactive with server, error: {error}"))]
+    #[snafu(display("Error occurs while interacting with server, error: {error}"))]
     OperationError { error: String },
 
     #[snafu(display("{error}"))]
-    EncodeData { error: clipcat::ClipEntryError },
+    EncodeData { error: clipcat_base::ClipEntryError },
+
+    #[snafu(display("{source}"))]
+    CheckUtf8String { source: Utf8Error },
 }
 
 impl From<clipcat_external_editor::Error> for Error {
@@ -122,6 +126,6 @@ impl From<clipcat_client::error::GetWatcherStateError> for Error {
     }
 }
 
-impl From<clipcat::ClipEntryError> for Error {
-    fn from(error: clipcat::ClipEntryError) -> Self { Self::EncodeData { error } }
+impl From<clipcat_base::ClipEntryError> for Error {
+    fn from(error: clipcat_base::ClipEntryError) -> Self { Self::EncodeData { error } }
 }

@@ -1,4 +1,4 @@
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardLoad, Error};
 use snafu::ErrorCompat;
 

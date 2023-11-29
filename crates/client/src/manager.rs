@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clipcat::{ClipEntry, ClipEntryMetadata, ClipboardKind};
+use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use clipcat_proto as proto;
 use tonic::Request;
 

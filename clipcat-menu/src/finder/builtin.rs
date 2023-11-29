@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use clipcat::ClipEntryMetadata;
+use clipcat_base::ClipEntryMetadata;
 use skim::{
     prelude::{SkimItemReader, SkimOptionsBuilder},
     Skim,

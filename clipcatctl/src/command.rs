@@ -1,7 +1,7 @@
 use std::{io::Write, num::ParseIntError, path::PathBuf, str::FromStr};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
+use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
 use clipcat_client::{Client, Manager as _, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
@@ -19,7 +19,7 @@ use crate::{
 const PREVIEW_LENGTH: usize = 100;
 
 #[derive(Parser)]
-#[clap(name = clipcat::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
+#[clap(name = clipcat_base::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
@@ -70,6 +70,14 @@ pub enum Commands {
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
+
+        #[clap(
+            long = "mime",
+            short = 'm',
+            default_value = "text/plain; charset=utf-8",
+            help = "Specify the MIME type of the content"
+        )]
+        mime: mime::Mime,
 
         #[clap(long = "file", short = 'f')]
         file_path: Option<PathBuf>,
@@ -253,9 +261,9 @@ impl Cli {
                 Some(Commands::Length) => {
                     println!("{len}", len = client.length().await?);
                 }
-                Some(Commands::Load { file_path, kind }) => {
-                    let data = load_file_or_read_stdin(file_path).await?;
-                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                Some(Commands::Load { kind, file_path, mime }) => {
+                    let (data, mime) = load_file_or_read_stdin(file_path, mime).await?;
+                    let _ = client.insert(&data, mime, kind).await?;
                 }
                 Some(Commands::Save { file_path, kind }) => {
                     let data = client.get_current_clip(kind).await?.encoded()?;
@@ -355,17 +363,42 @@ async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
     Ok(())
 }
 
-async fn load_file_or_read_stdin(file_path: Option<PathBuf>) -> Result<String, Error> {
+async fn load_file_or_read_stdin(
+    file_path: Option<PathBuf>,
+    mime: mime::Mime,
+) -> Result<(bytes::BytesMut, mime::Mime), Error> {
+    let mut content = bytes::BytesMut::new();
+
     if let Some(file_path) = file_path {
-        tokio::fs::read_to_string(&file_path)
+        let mut file = tokio::fs::OpenOptions::new()
+            .read(true)
+            .open(&file_path)
             .await
-            .context(error::ReadFileSnafu { filename: file_path.clone() })
+            .context(error::ReadFileSnafu { filename: file_path.clone() })?;
+        loop {
+            let size = file
+                .read_buf(&mut content)
+                .await
+                .context(error::ReadFileSnafu { filename: file_path.clone() })?;
+            if size == 0 {
+                break;
+            }
+        }
     } else {
-        let mut data = String::new();
-        let _size =
-            tokio::io::stdin().read_to_string(&mut data).await.context(error::ReadStdinSnafu)?;
-        Ok(data)
+        let mut file = tokio::io::stdin();
+        loop {
+            let size = file.read_buf(&mut content).await.context(error::ReadStdinSnafu)?;
+            if size == 0 {
+                break;
+            }
+        }
     }
+
+    if mime.type_() == mime::TEXT {
+        let _unused = simdutf8::basic::from_utf8(&content).context(error::CheckUtf8StringSnafu)?;
+    }
+
+    Ok((content, mime))
 }
 
 async fn save_file_or_write_stdout<Data>(

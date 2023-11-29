@@ -353,9 +353,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.8"
+version = "4.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2275f18819641850fa26c89acc84d465c1bf91ce57bc2748b28c420473352f64"
+checksum = "41fffed7514f420abec6d183b1d3acfd9099c79c3a10a06ade4f8203f1411272"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -363,9 +363,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.8"
+version = "4.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07cdf1b148b25c1e1f7a42225e30a0d99a615cd4637eae7365548dd4529b95bc"
+checksum = "63361bae7eef3771745f02d8d892bec2fee5f6e34af316ba556e7f97a7069ff1"
 dependencies = [
  "anstream",
  "anstyle",
@@ -379,7 +379,7 @@ version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bffe91f06a11b4b9420f62103854e90867812cd5d01557f853c5ee8e791b12ae"
 dependencies = [
- "clap 4.4.8",
+ "clap 4.4.10",
 ]
 
 [[package]]
@@ -421,8 +421,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "clipcat"
-version = "0.7.0"
+name = "clipcat-base"
+version = "0.7.1"
 dependencies = [
  "bytes",
  "directories",
@@ -437,10 +437,10 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "async-trait",
- "clipcat",
+ "clipcat-base",
  "clipcat-proto",
  "http 1.0.0",
  "mime",
@@ -451,11 +451,11 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "arboard",
  "bytes",
- "clipcat",
+ "clipcat-base",
  "mio",
  "sigfinn",
  "snafu",
@@ -468,20 +468,20 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clipcat",
+ "clipcat-base",
  "snafu",
  "tokio",
 ]
 
 [[package]]
 name = "clipcat-menu"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clap 4.4.8",
+ "clap 4.4.10",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
@@ -498,11 +498,11 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clap 4.4.8",
+ "clap 4.4.10",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-server",
  "snafu",
  "tokio",
@@ -510,9 +510,9 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clipcat",
+ "clipcat-base",
  "mime",
  "prost",
  "prost-build",
@@ -524,11 +524,11 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "async-trait",
  "bincode",
- "clipcat",
+ "clipcat-base",
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
@@ -544,17 +544,19 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clap 4.4.8",
+ "bytes",
+ "clap 4.4.10",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
  "mime",
  "serde",
  "serde_with",
+ "simdutf8",
  "snafu",
  "tokio",
  "toml",
@@ -565,11 +567,11 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
- "clap 4.4.8",
+ "clap 4.4.10",
  "clap_complete",
- "clipcat",
+ "clipcat-base",
  "clipcat-server",
  "daemonize",
  "directories",
@@ -2249,6 +2251,12 @@ name = "simd-adler32"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
+
+[[package]]
+name = "simdutf8"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 
 [[package]]
 name = "skim"

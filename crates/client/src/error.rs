@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use clipcat::ClipboardKind;
+use clipcat_base::ClipboardKind;
 use snafu::{Backtrace, Snafu};
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -12,9 +12,9 @@ use bytes::Bytes;
 use directories::ProjectDirs;
 
 pub use self::{
-    entry::{Entry as ClipEntry, EntryMetadata as ClipEntryMetadata, Error as ClipEntryError},
-    kind::ClipboardKind,
-    watcher_state::ClipboardWatcherState,
+    entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
+    kind::Kind as ClipboardKind,
+    watcher_state::WatcherState as ClipboardWatcherState,
 };
 
 pub const PROJECT_NAME: &str = "clipcat";

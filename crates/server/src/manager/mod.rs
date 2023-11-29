@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use clipcat::{ClipEntry, ClipEntryMetadata, ClipboardKind};
+use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use snafu::ResultExt;
 use time::OffsetDateTime;
 
@@ -171,7 +171,7 @@ impl ClipboardManager {
 mod tests {
     use std::{collections::HashSet, sync::Arc};
 
-    use clipcat::{ClipEntry, ClipboardKind};
+    use clipcat_base::{ClipEntry, ClipboardKind};
 
     use crate::{
         backend::MockClipboardBackend,

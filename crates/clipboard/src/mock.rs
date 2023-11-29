@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 
 use crate::{
     pubsub::{self, Publisher, Subscriber},

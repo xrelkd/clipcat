@@ -5,7 +5,7 @@ mod mock;
 mod pubsub;
 mod traits;
 
-pub use clipcat::ClipboardKind;
+pub use clipcat_base::ClipboardKind;
 
 pub use self::{
     default::Clipboard,

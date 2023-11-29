@@ -5,7 +5,7 @@ use std::sync::{
 
 use arboard::{ClearExtLinux, GetExtLinux, SetExtLinux};
 use bytes::Bytes;
-use clipcat::ClipboardContent;
+use clipcat_base::ClipboardContent;
 
 use crate::{
     listener::{WaylandListener, X11Listener},
@@ -58,19 +58,22 @@ impl ClipboardLoad for Clipboard {
 
         match arboard.get().clipboard(self.clipboard_kind).text() {
             Ok(text) => Ok(ClipboardContent::Plaintext(text)),
-            Err(arboard::Error::ContentNotAvailable) => {
-                match arboard.get().clipboard(self.clipboard_kind).image() {
-                    Ok(arboard::ImageData { width, height, bytes }) => {
-                        Ok(ClipboardContent::Image {
-                            width,
-                            height,
-                            bytes: Bytes::from(bytes.into_owned()),
-                        })
-                    }
-                    Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
-                    Err(_err) => Err(Error::Empty),
+            Err(
+                arboard::Error::ContentNotAvailable
+                | arboard::Error::ConversionFailure
+                | arboard::Error::Unknown { .. },
+            ) => match arboard.get().clipboard(self.clipboard_kind).image() {
+                Ok(arboard::ImageData { width, height, bytes }) => Ok(ClipboardContent::Image {
+                    width,
+                    height,
+                    bytes: Bytes::from(bytes.into_owned()),
+                }),
+                Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
+                Err(err) => {
+                    tracing::warn!("{err}");
+                    Err(Error::Empty)
                 }
-            }
+            },
             Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
             Err(_err) => Err(Error::Empty),
         }

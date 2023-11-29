@@ -39,7 +39,7 @@ impl ExternalEditor {
 
             [
                 std::env::temp_dir(),
-                PathBuf::from(format!(".{}-{:?}", clipcat::PROJECT_NAME, timestamp)),
+                PathBuf::from(format!(".{}-{:?}", clipcat_base::PROJECT_NAME, timestamp)),
             ]
             .into_iter()
             .collect::<PathBuf>()

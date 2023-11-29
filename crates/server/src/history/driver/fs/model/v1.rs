@@ -1,4 +1,4 @@
-use clipcat::{ClipEntry, ClipboardKind};
+use clipcat_base::{ClipEntry, ClipboardKind};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -19,7 +19,9 @@ impl FileContents {
             last_update: OffsetDateTime::now_utc(),
             data: data
                 .into_iter()
-                .filter_map(|e| if e.is_empty() { None } else { Some(ClipboardValue::from(e)) })
+                .filter_map(
+                    |entry| if entry.is_empty() { None } else { Some(ClipboardValue::from(entry)) },
+                )
                 .collect(),
         }
     }
@@ -27,7 +29,11 @@ impl FileContents {
 
 impl From<FileContents> for Vec<ClipEntry> {
     fn from(FileContents { data, .. }: FileContents) -> Self {
-        data.into_iter().map(ClipEntry::from).filter(|e| !e.is_empty()).collect()
+        data.into_iter()
+            .filter_map(
+                |value| if value.data.is_empty() { None } else { Some(ClipEntry::from(value)) },
+            )
+            .collect()
     }
 }
 
@@ -35,7 +41,7 @@ impl From<FileContents> for Vec<ClipEntry> {
 pub struct ClipboardValue {
     pub timestamp: OffsetDateTime,
 
-    #[serde(with = "clipcat::serde::mime")]
+    #[serde(with = "clipcat_base::serde::mime")]
     pub mime: mime::Mime,
 
     pub data: Vec<u8>,

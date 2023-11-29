@@ -1,4 +1,4 @@
-use clipcat::ClipboardKind;
+use clipcat_base::ClipboardKind;
 use snafu::Snafu;
 
 pub type Result<T> = std::result::Result<T, Error>;

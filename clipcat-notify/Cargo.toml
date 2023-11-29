@@ -18,7 +18,7 @@ clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 snafu         = "0.7"
 
-clipcat        = { path = "../crates/core" }
+clipcat-base   = { path = "../crates/base" }
 clipcat-server = { path = "../crates/server" }
 
 [lints]

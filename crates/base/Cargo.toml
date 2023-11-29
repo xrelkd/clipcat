@@ -1,5 +1,5 @@
 [package]
-name                 = "clipcat"
+name                 = "clipcat-base"
 description          = "Clipcat"
 version.workspace    = true
 authors.workspace    = true

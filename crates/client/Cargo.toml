@@ -22,7 +22,7 @@ prost-types = "0.12"
 snafu = "0.7"
 mime  = "0.3"
 
-clipcat       = { path = "../core" }
+clipcat-base  = { path = "../base" }
 clipcat-proto = { path = "../proto" }
 
 [lints]
