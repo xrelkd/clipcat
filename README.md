@@ -272,8 +272,8 @@ bindsym $mod+o exec $launcher-clipboard-remove
 | `clipcat-notify` | A tool for watching clipboard event. <br>                                               |
 |                  | It watches the clipboard and exit on clipboard changed. <br>                            |
 |                  | It returns exit code 0 if success, 1 if error occurred. <br>                            |
-|                  | **Note**: it does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, <br>      |
-|                  | it is just a tool for watch clipboard.                                                  |
+|                  | **Note**: It does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, <br>      |
+|                  | it is just a tool for watching clipboard.                                               |
 
 ## License
 
