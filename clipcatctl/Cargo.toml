@@ -22,10 +22,12 @@ toml       = "0.8"
 
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 
+bytes         = "1"
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 http          = "1"
 mime          = "0.3"
+simdutf8      = "0.1"
 snafu         = "0.7"
 
 clipcat-base            = { path = "../crates/base" }
