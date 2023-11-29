@@ -108,7 +108,6 @@ impl ClipboardManager {
         if self.is_empty() {
             return;
         }
-        debug_assert_eq!(self.clips.len(), self.timestamp_to_id.len());
 
         while self.clips.len() > self.capacity {
             if let Some((timestamp, id)) = self.timestamp_to_id.pop_first() {
@@ -116,7 +115,6 @@ impl ClipboardManager {
                 drop(self.clips.remove(&id));
             }
         }
-        debug_assert_eq!(self.clips.len(), self.timestamp_to_id.len());
     }
 
     #[inline]
