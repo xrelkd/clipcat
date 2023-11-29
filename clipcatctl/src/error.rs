@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use simdutf8::basic::Utf8Error;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -28,6 +29,9 @@ pub enum Error {
 
     #[snafu(display("{error}"))]
     EncodeData { error: clipcat_base::ClipEntryError },
+
+    #[snafu(display("{source}"))]
+    CheckUtf8String { source: Utf8Error },
 }
 
 impl From<clipcat_external_editor::Error> for Error {
