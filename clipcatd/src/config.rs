@@ -61,16 +61,31 @@ impl WatcherConfig {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct GrpcConfig {
+    #[serde(default = "GrpcConfig::default_enable_http")]
+    pub enable_http: bool,
+
+    #[serde(default = "GrpcConfig::default_enable_local_socket")]
+    pub enable_local_socket: bool,
+
     #[serde(default = "GrpcConfig::default_host")]
     pub host: IpAddr,
 
     #[serde(default = "GrpcConfig::default_port")]
     pub port: u16,
+
+    #[serde(default = "clipcat_base::config::default_unix_domain_socket")]
+    pub local_socket: PathBuf,
 }
 
 impl GrpcConfig {
     #[inline]
     pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
+
+    #[inline]
+    pub const fn default_enable_http() -> bool { true }
+
+    #[inline]
+    pub const fn default_enable_local_socket() -> bool { true }
 
     #[inline]
     pub const fn default_host() -> IpAddr { clipcat_base::DEFAULT_GRPC_HOST }
@@ -106,7 +121,13 @@ impl Default for WatcherConfig {
 
 impl Default for GrpcConfig {
     fn default() -> Self {
-        Self { host: clipcat_base::DEFAULT_GRPC_HOST, port: clipcat_base::DEFAULT_GRPC_PORT }
+        Self {
+            enable_http: true,
+            enable_local_socket: true,
+            host: clipcat_base::DEFAULT_GRPC_HOST,
+            port: clipcat_base::DEFAULT_GRPC_PORT,
+            local_socket: clipcat_base::config::default_unix_domain_socket(),
+        }
     }
 }
 
@@ -170,9 +191,10 @@ impl Config {
 
 impl From<Config> for clipcat_server::Config {
     fn from(Config { grpc, max_history, history_file_path, watcher, .. }: Config) -> Self {
-        let grpc_listen_address = grpc.socket_address();
+        let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
+        let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
         let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
-        Self { grpc_listen_address, max_history, history_file_path, watcher }
+        Self { grpc_listen_address, grpc_local_socket, max_history, history_file_path, watcher }
     }
 }
 
