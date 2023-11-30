@@ -33,10 +33,18 @@ impl Entry {
     ) -> Result<Self, Error> {
         let content = if mime.type_() == mime::TEXT {
             ClipboardContent::Plaintext(String::from_utf8_lossy(data).to_string())
-        } else if mime.subtype() == mime::PNG {
+        } else if mime.type_() == mime::IMAGE {
+            let image_format = match mime.subtype() {
+                mime::PNG => image::ImageFormat::Png,
+                mime::JPEG => image::ImageFormat::Jpeg,
+                mime::GIF => image::ImageFormat::Gif,
+                mime::BMP => image::ImageFormat::Bmp,
+                _ => return Err(Error::FormatNotAvailable),
+            };
+
             let cursor = std::io::Cursor::new(&data);
             let mut reader = image::io::Reader::new(cursor);
-            reader.set_format(image::ImageFormat::Png);
+            reader.set_format(image_format);
             reader
                 .decode()
                 .map(|img| {
@@ -45,7 +53,7 @@ impl Entry {
                     ClipboardContent::Image {
                         width: w as usize,
                         height: h as usize,
-                        bytes: image.into_raw().into(),
+                        bytes: bytes::Bytes::from(image.into_raw()),
                     }
                 })
                 .context(ConvertImageSnafu {})?
