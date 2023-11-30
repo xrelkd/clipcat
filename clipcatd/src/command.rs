@@ -34,6 +34,9 @@ pub struct Cli {
 
     #[clap(long = "grpc-port", help = "Specify gRPC port number")]
     grpc_port: Option<u16>,
+
+    #[clap(long = "grpc-socket-path", help = "Specify gRPC local socket path")]
+    grpc_socket_path: Option<PathBuf>,
 }
 
 impl Default for Cli {
@@ -94,6 +97,7 @@ impl Cli {
         }
 
         if let Some(host) = self.grpc_host {
+            config.grpc.enable_http = true;
             config.grpc.host = host;
         }
 
@@ -101,10 +105,25 @@ impl Cli {
             config.grpc.port = port;
         }
 
+        if let Some(path) = &self.grpc_socket_path {
+            config.grpc.local_socket = path.clone();
+            config.grpc.enable_local_socket = true;
+        }
+
+        if !config.grpc.enable_http && !config.grpc.enable_local_socket {
+            tracing::warn!(
+                "gRPC over HTTP and gRPC over local socket are disabled, force enable gRPC over \
+                 local socket",
+            );
+            config.grpc.enable_local_socket = true;
+            config.grpc.local_socket = clipcat_base::config::default_unix_domain_socket();
+        }
+
         Ok(config)
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     let daemonize = config.daemonize;
     let pid_file = PidFile::from(config.pid_file.clone());

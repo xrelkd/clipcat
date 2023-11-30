@@ -6,13 +6,17 @@ mod history;
 mod manager;
 mod watcher;
 
-use std::{future::Future, net::SocketAddr, pin::Pin, sync::Arc};
+use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
 use clipcat_proto::{ManagerServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
 use snafu::ResultExt;
-use tokio::sync::{broadcast::error::RecvError, Mutex};
+use tokio::{
+    net::UnixListener,
+    sync::{broadcast::error::RecvError, Mutex},
+};
+use tokio_stream::wrappers::UnixListenerStream;
 
 pub use self::{
     config::Config,
@@ -25,13 +29,21 @@ use self::{history::HistoryManager, manager::ClipboardManager, watcher::Clipboar
 ///
 /// This function will return an error if the server fails to start.
 pub async fn serve_with_shutdown(
-    Config { grpc_listen_address, max_history, history_file_path, watcher: watcher_opts }: Config,
+    Config {
+        grpc_listen_address,
+        grpc_local_socket,
+        max_history,
+        history_file_path,
+        watcher: watcher_opts,
+    }: Config,
 ) -> Result<()> {
     let clipboard_backend = backend::new_shared().context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
-        let history_manager = HistoryManager::new(&history_file_path);
+        let mut history_manager = HistoryManager::new(&history_file_path)
+            .await
+            .context(error::CreateHistoryManagerSnafu)?;
 
         tracing::info!("Load history from `{path}`", path = history_manager.path().display());
         let history_clips = history_manager
@@ -64,25 +76,39 @@ pub async fn serve_with_shutdown(
         .context(error::CreateClipboardWatcherSnafu)?;
 
     let lifecycle_manager = LifecycleManager::<Error>::new();
-    let handle = lifecycle_manager.handle();
-    let _handle = lifecycle_manager
-        .spawn(
-            "gRPC server",
-            create_grpc_server_future(
+
+    if let Some(grpc_listen_address) = grpc_listen_address {
+        let _handle = lifecycle_manager.spawn(
+            "gRPC HTTP server",
+            create_grpc_http_server_future(
                 grpc_listen_address,
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
-        )
-        .spawn(
-            "Clipboard worker",
-            create_clipboard_worker_future(
-                clipboard_watcher,
-                clipboard_manager,
-                history_manager,
-                handle,
+        );
+    }
+
+    if let Some(grpc_local_socket) = grpc_local_socket {
+        let _handle = lifecycle_manager.spawn(
+            "gRPC local socket server",
+            create_grpc_local_socket_server_future(
+                grpc_local_socket,
+                clipboard_watcher.get_toggle(),
+                clipboard_manager.clone(),
             ),
         );
+    }
+
+    let handle = lifecycle_manager.handle();
+    let _handle = lifecycle_manager.spawn(
+        "Clipboard worker",
+        create_clipboard_worker_future(
+            clipboard_watcher,
+            clipboard_manager,
+            history_manager,
+            handle,
+        ),
+    );
 
     if let Ok(Err(err)) = lifecycle_manager.serve().await {
         tracing::error!("{err}");
@@ -92,7 +118,54 @@ pub async fn serve_with_shutdown(
     }
 }
 
-fn create_grpc_server_future(
+fn create_grpc_local_socket_server_future(
+    local_socket: PathBuf,
+    clipboard_watcher_toggle: ClipboardWatcherToggle,
+    clipboard_manager: Arc<Mutex<ClipboardManager>>,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
+    move |signal| {
+        async move {
+            tracing::info!("Listen Clipcat gRPC endpoint on {}", local_socket.display());
+            if let Some(local_socket_parent) = local_socket.parent() {
+                if let Err(err) = tokio::fs::create_dir_all(&local_socket_parent)
+                    .await
+                    .context(error::CreateUnixListenerSnafu { socket_path: local_socket.clone() })
+                {
+                    return ExitStatus::Failure(err);
+                }
+            }
+
+            let uds_stream = match UnixListener::bind(&local_socket)
+                .context(error::CreateUnixListenerSnafu { socket_path: local_socket.clone() })
+            {
+                Ok(uds) => UnixListenerStream::new(uds),
+                Err(err) => return ExitStatus::Failure(err),
+            };
+
+            let result = tonic::transport::Server::builder()
+                .add_service(WatcherServer::new(grpc::WatcherService::new(
+                    clipboard_watcher_toggle,
+                )))
+                .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
+                .serve_with_incoming_shutdown(uds_stream, signal)
+                .await
+                .context(error::StartTonicServerSnafu);
+
+            match result {
+                Ok(()) => {
+                    tracing::info!("Remove {}", local_socket.display());
+                    drop(tokio::fs::remove_file(local_socket).await);
+                    tracing::info!("gRPC local socket server is shut down gracefully");
+                    ExitStatus::Success
+                }
+                Err(err) => ExitStatus::Failure(err),
+            }
+        }
+        .boxed()
+    }
+}
+
+fn create_grpc_http_server_future(
     listen_address: SocketAddr,
     clipboard_watcher_toggle: ClipboardWatcherToggle,
     clipboard_manager: Arc<Mutex<ClipboardManager>>,
@@ -112,7 +185,7 @@ fn create_grpc_server_future(
 
             match result {
                 Ok(()) => {
-                    tracing::info!("gRPC server is shut down gracefully");
+                    tracing::info!("gRPC HTTP server is shut down gracefully");
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
@@ -140,7 +213,7 @@ fn create_clipboard_worker_future(
             .await
             {
                 Ok(()) => {
-                    tracing::info!("gRPC health check server is shut down gracefully");
+                    tracing::info!("Clipboard worker is shut down gracefully");
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
@@ -175,7 +248,9 @@ async fn serve_worker(
                     printable = clip.printable_data(Some(30))
                 );
                 let _unused = clipboard_manager.lock().await.insert(clip.clone());
-                let _unused = history_manager.put(&clip).await;
+                if let Err(err) = history_manager.put(&clip).await {
+                    tracing::error!("{err}");
+                }
             }
             Err(RecvError::Closed) => {
                 tracing::info!("ClipboardWatcher is closing, no further clip will be received");

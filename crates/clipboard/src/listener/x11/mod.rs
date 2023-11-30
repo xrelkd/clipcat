@@ -42,62 +42,10 @@ impl Listener {
         let is_running = Arc::new(AtomicBool::new(true));
 
         tracing::info!("Connect X11 server");
-        let mut context = Context::new(display_name, clipboard_kind)?;
+        let context = Context::new(display_name, clipboard_kind)?;
         tracing::info!("X11 server connected");
 
-        let thread = thread::spawn({
-            let is_running = is_running.clone();
-            move || {
-                let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
-                let mut events = mio::Events::with_capacity(1024);
-
-                poll.registry()
-                    .register(
-                        &mut mio::unix::SourceFd(&context.as_raw_fd()),
-                        CONTEXT_TOKEN,
-                        mio::Interest::READABLE,
-                    )
-                    .context(error::RegisterIoResourceSnafu)?;
-
-                while is_running.load(Ordering::Relaxed) {
-                    tracing::trace!("Wait for readiness events");
-
-                    if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
-                        tracing::error!(
-                            "Error occurred while polling for readiness event, error: {err}"
-                        );
-                    }
-
-                    for event in &events {
-                        if event.token() == CONTEXT_TOKEN {
-                            match context.poll_for_event() {
-                                Ok(X11Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
-                                Ok(_) | Err(Error::NoEvent) => {}
-                                Err(err) => {
-                                    tracing::warn!(
-                                        "{err}, try to re-connect X11 server after {} \
-                                         millisecond(s)",
-                                        RETRY_INTERVAL.as_millis()
-                                    );
-                                    if let Err(err) = try_reconnect(
-                                        &poll,
-                                        &mut context,
-                                        MAX_RETRY_COUNT,
-                                        RETRY_INTERVAL,
-                                    ) {
-                                        notifier.close();
-                                        return Err(err);
-                                    }
-                                }
-                            };
-                        }
-                    }
-                }
-
-                notifier.close();
-                Ok(())
-            }
-        });
+        let thread = build_thread(is_running.clone(), context, notifier);
 
         Ok(Self { is_running, thread: Some(thread), subscriber })
     }
@@ -151,4 +99,56 @@ fn try_reconnect(
     }
     tracing::error!("Could not connect to X11 server");
     Err(Error::RetryLimitReached { value: max_retry_count })
+}
+
+#[allow(clippy::cognitive_complexity)]
+fn build_thread(
+    is_running: Arc<AtomicBool>,
+    mut context: Context,
+    notifier: pubsub::Publisher,
+) -> thread::JoinHandle<Result<(), Error>> {
+    thread::spawn(move || {
+        let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
+        let mut events = mio::Events::with_capacity(1024);
+
+        poll.registry()
+            .register(
+                &mut mio::unix::SourceFd(&context.as_raw_fd()),
+                CONTEXT_TOKEN,
+                mio::Interest::READABLE,
+            )
+            .context(error::RegisterIoResourceSnafu)?;
+
+        while is_running.load(Ordering::Relaxed) {
+            tracing::trace!("Wait for readiness events");
+
+            if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
+                tracing::error!("Error occurred while polling for readiness event, error: {err}");
+            }
+
+            for event in &events {
+                if event.token() == CONTEXT_TOKEN {
+                    match context.poll_for_event() {
+                        Ok(X11Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
+                        Ok(_) | Err(Error::NoEvent) => {}
+                        Err(err) => {
+                            tracing::warn!(
+                                "{err}, try to re-connect X11 server after {} millisecond(s)",
+                                RETRY_INTERVAL.as_millis()
+                            );
+                            if let Err(err) =
+                                try_reconnect(&poll, &mut context, MAX_RETRY_COUNT, RETRY_INTERVAL)
+                            {
+                                notifier.close();
+                                return Err(err);
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        notifier.close();
+        Ok(())
+    })
 }

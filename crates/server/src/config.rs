@@ -4,7 +4,9 @@ use crate::ClipboardWatcherOptions;
 
 #[derive(Clone, Debug)]
 pub struct Config {
-    pub grpc_listen_address: SocketAddr,
+    pub grpc_listen_address: Option<SocketAddr>,
+
+    pub grpc_local_socket: Option<PathBuf>,
 
     pub max_history: usize,
 

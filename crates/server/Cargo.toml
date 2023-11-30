@@ -14,13 +14,15 @@ keywords.workspace   = true
 [dependencies]
 tracing = "0.1"
 
-bincode = "1"
-serde   = { version = "1", features = ["derive"] }
+bincode    = "1"
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
 
-async-trait = "0.1"
-futures     = "0.3"
-sigfinn     = "0.1"
-tokio       = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+async-trait  = "0.1"
+futures      = "0.3"
+sigfinn      = "0.1"
+tokio        = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+tokio-stream = { version = "0.1", features = ["net"] }
 
 tonic = { version = "0.10", features = ["gzip"] }
 

@@ -1,7 +1,4 @@
-use std::{
-    net::IpAddr,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -10,9 +7,8 @@ use snafu::{ResultExt, Snafu};
 #[serde_as]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
-    pub server_host: IpAddr,
-
-    pub server_port: u16,
+    #[serde(with = "http_serde::uri")]
+    pub server_endpoint: http::Uri,
 
     #[serde(default = "Config::default_log_level")]
     #[serde_as(as = "DisplayFromStr")]
@@ -22,8 +18,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server_host: clipcat_base::DEFAULT_GRPC_HOST,
-            server_port: clipcat_base::DEFAULT_GRPC_PORT,
+            server_endpoint: clipcat_base::config::default_server_endpoint(),
             log_level: Self::default_log_level(),
         }
     }

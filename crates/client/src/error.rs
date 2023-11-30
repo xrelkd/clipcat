@@ -1,6 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 
-use std::fmt;
+use std::{fmt, path::PathBuf};
 
 use clipcat_base::ClipboardKind;
 use snafu::{Backtrace, Snafu};
@@ -11,11 +11,22 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[snafu(visibility(pub))]
 pub enum Error {
     #[snafu(display(
-        "Error occurs while connecting to Clipcat Server gRPC endpoint `{endpoint}`, error: \
-         {source}"
+        "Error occurs while connecting to Clipcat Server gRPC endpoint `{endpoint}` via HTTP, \
+         error: {source}"
     ))]
-    ConnectToClipcatServer {
+    ConnectToClipcatServerViaHttp {
         endpoint: http::Uri,
+        source: tonic::transport::Error,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display(
+        "Error occurs while connecting to Clipcat Server gRPC endpoint `{}` via local \
+         socket, error: {source}",
+        socket.display()
+    ))]
+    ConnectToClipcatServerViaLocalSocket {
+        socket: PathBuf,
         source: tonic::transport::Error,
         backtrace: Backtrace,
     },
