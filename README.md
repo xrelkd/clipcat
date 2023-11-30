@@ -168,17 +168,21 @@ $ clipcatd
 ```toml
 daemonize = true          # run as a traditional UNIX daemon
 max_history = 50          # max clip history limit
-log_level = 'INFO'        # log level
+log_level = "INFO"        # log level
+history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history" # file path of clip history
 
-[monitor]
+[watcher]
 load_current = true       # load current clipboard content at startup
 enable_clipboard = true   # watch X11 clipboard
 enable_primary = true     # watch X11 primary clipboard
 filter_min_size = 1       # ignores copy actions with a size <= `filter_min_size`, in bytes
 
 [grpc]
-host = '127.0.0.1'        # host address for gRPC
-port = 45045              # port number for gRPC
+enable_http = true         # enable gRPC over http
+enable_local_socket = true # enable gRPC over unix domain socket
+host = "127.0.0.1"         # host address for gRPC
+port = 45045               # port number for gRPC
+local_socket = "/run/user/<user-id>/clipcat/grpc.sock" # path of unix domain socket
 ```
 
 </details>
@@ -187,9 +191,14 @@ port = 45045              # port number for gRPC
 <summary>Configuration for <b>clipcatctl</b></summary>
 
 ```toml
-server_host = '127.0.0.1' # host address of clipcat gRPC server
-server_port = 45045       # port number of clipcat gRPC server
-log_level = 'INFO'        # log level
+# server endpoint
+# clipcatctl connects to server via unix domain socket if `server_endpoint` is a file path like:
+# "/run/user/<user-id>/clipcat/grpc.sock".
+# clipcatctl connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
+server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
+
+# log level
+log_level = "INFO"
 ```
 
 </details>
@@ -198,10 +207,14 @@ log_level = 'INFO'        # log level
 <summary>Configuration for <b>clipcat-menu</b></summary>
 
 ```toml
-server_host = '127.0.0.1' # host address of clipcat gRPC server
-server_port = 45045       # port number of clipcat gRPC server
-finder = 'rofi'           # the default finder to invoke when no "--finder=<finder>" option provided
-log_level = 'INFO'        # log level
+# server endpoint
+# clipcat-menu connects to server via unix domain socket if `server_endpoint` is a file path like:
+# "/run/user/<user-id>/clipcat/grpc.sock".
+# clipcat-menu connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
+server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
+
+finder = "rofi"           # the default finder to invoke when no "--finder=<finder>" option provided
+log_level = "INFO"        # log level
 
 [rofi]                    # options for "rofi"
 line_length = 100         # length of line
@@ -214,7 +227,7 @@ menu_length = 30          # length of menu
 menu_prompt = "Clipcat"   # prompt of menu
 
 [custom_finder]           # customize your finder
-program = 'fzf'           # external program name
+program = "fzf"           # external program name
 args = []                 # arguments for calling external program
 ```
 
