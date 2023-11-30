@@ -1,3 +1,4 @@
+pub mod config;
 mod entry;
 mod kind;
 pub mod serde;
