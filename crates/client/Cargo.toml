@@ -13,8 +13,10 @@ keywords.workspace   = true
 
 [dependencies]
 async-trait = "0.1"
+tokio       = { version = "1", features = ["net"] }
 
-http = "1"
+http  = "1"
+tower = "0.4"
 
 tonic       = { version = "0.10", features = ["gzip"] }
 prost-types = "0.12"
