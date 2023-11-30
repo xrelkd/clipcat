@@ -21,7 +21,7 @@ pub const PROJECT_NAME: &str = "clipcat";
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";
-pub const DAEMON_HISTORY_FILE_NAME: &str = "clipcatd-history.db";
+pub const DAEMON_HISTORY_FILE_NAME: &str = "clipcatd-history";
 
 pub const CTL_PROGRAM_NAME: &str = "clipcatctl";
 pub const CTL_CONFIG_NAME: &str = "clipcatctl.toml";

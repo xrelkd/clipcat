@@ -534,6 +534,7 @@ dependencies = [
  "futures",
  "mime",
  "serde",
+ "serde_json",
  "sigfinn",
  "snafu",
  "time",
