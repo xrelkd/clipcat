@@ -16,6 +16,7 @@ tracing            = "0.1"
 tracing-journald   = "0.3"
 tracing-subscriber = "0.3"
 
+http-serde = "2"
 serde      = { version = "1", features = ["derive"] }
 serde_with = "3"
 toml       = "0.8"
@@ -25,6 +26,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 bytes         = "1"
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
+directories   = "5"
 http          = "1"
 mime          = "0.3"
 simdutf8      = "0.1"

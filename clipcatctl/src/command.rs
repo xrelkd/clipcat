@@ -27,11 +27,8 @@ pub struct Cli {
     #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "host", short = 'H', help = "Specify a server host")]
-    server_host: Option<std::net::IpAddr>,
-
-    #[clap(long = "port", short = 'p', help = "Specify a server port")]
-    server_port: Option<u16>,
+    #[clap(long = "server-endpoint", help = "Specify a server endpoint")]
+    server_endpoint: Option<http::Uri>,
 
     #[clap(long = "log-level", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
@@ -105,7 +102,8 @@ pub enum Commands {
 
     #[clap(
         aliases = &["ls"],
-        about = "Print history of clipboard")]
+        about = "Print history of clipboard"
+    )]
     List {
         #[clap(long)]
         no_id: bool,
@@ -129,7 +127,8 @@ pub enum Commands {
 
     #[clap(
         aliases = &["rm", "delete", "del"],
-        about = "Remove clips with [ids]")]
+        about = "Remove clips with [ids]"
+    )]
     Remove { ids: Vec<String> },
 
     #[clap(name = "promote", about = "Replace content of clipboard with clip with <id>")]
@@ -177,12 +176,8 @@ impl Cli {
     fn load_config(&self) -> Config {
         let mut config =
             Config::load_or_default(self.config_file.clone().unwrap_or_else(Config::default_path));
-        if let Some(host) = self.server_host {
-            config.server_host = host;
-        }
-
-        if let Some(port) = self.server_port {
-            config.server_port = port;
+        if let Some(endpoint) = &self.server_endpoint {
+            config.server_endpoint = endpoint.clone();
         }
 
         if let Ok(log_level) = std::env::var("RUST_LOG") {
@@ -223,15 +218,11 @@ impl Cli {
             _ => {}
         }
 
-        let Config { server_host, server_port, log_level } = self.load_config();
+        let Config { server_endpoint, log_level } = self.load_config();
         init_tracing(log_level);
 
         let fut = async move {
-            let client = {
-                let grpc_endpoint: http::Uri =
-                    format!("http://{server_host}:{server_port}").parse().expect("valid uri");
-                Client::new(clipcat_client::Config { grpc_endpoint }).await?
-            };
+            let client = Client::new(server_endpoint).await?;
 
             match self.commands {
                 None => {
