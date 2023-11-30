@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use snafu::{Backtrace, Snafu};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -7,6 +9,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[snafu(display("Error occurs while starting tonic server, error: {source}"))]
     StartTonicServer { source: tonic::transport::Error, backtrace: Backtrace },
+
+    #[snafu(display("Error occurs while creating Unix domain socket listener on `{}`, error: {source}", socket_path.display()))]
+    CreateUnixListener { socket_path: PathBuf, source: std::io::Error, backtrace: Backtrace },
 
     #[snafu(display("Could not create clipboard backend, error: {source}"))]
     CreateClipboardBackend { source: crate::backend::Error },
