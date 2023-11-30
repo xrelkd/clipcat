@@ -24,12 +24,16 @@ impl Clipboard {
     pub fn new(clipboard_kind: ClipboardKind) -> Result<Self, Error> {
         let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
             if let Ok(display_name) = std::env::var("WAYLAND_DISPLAY") {
-                tracing::info!("Build Wayland listener with display `{display_name}`");
+                tracing::info!(
+                    "Build Wayland listener ({clipboard_kind}) with display `{display_name}`"
+                );
                 Arc::new(WaylandListener::new(clipboard_kind)?)
             } else {
                 match std::env::var("DISPLAY") {
                     Ok(display_name) => {
-                        tracing::info!("Build X11 listener with display `{display_name}`");
+                        tracing::info!(
+                            "Build X11 listener ({clipboard_kind}) with display `{display_name}`"
+                        );
                         Arc::new(X11Listener::new(Some(display_name), clipboard_kind)?)
                     }
                     Err(_) => Arc::new(X11Listener::new(None, clipboard_kind)?),
