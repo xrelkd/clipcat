@@ -488,6 +488,7 @@ dependencies = [
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
+ "http-serde",
  "serde",
  "serde_with",
  "skim",

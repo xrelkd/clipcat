@@ -1,7 +1,4 @@
-use std::{
-    net::{IpAddr, SocketAddr},
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -12,11 +9,8 @@ use crate::finder::FinderType;
 #[serde_as]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
-    #[serde(default = "Config::default_server_host")]
-    pub server_host: IpAddr,
-
-    #[serde(default = "Config::default_server_port")]
-    pub server_port: u16,
+    #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
+    pub server_endpoint: http::Uri,
 
     #[serde(default = "Config::default_log_level")]
     #[serde_as(as = "DisplayFromStr")]
@@ -36,17 +30,6 @@ pub struct Config {
 }
 
 impl Config {
-    #[inline]
-    pub const fn server_socket_address(&self) -> SocketAddr {
-        SocketAddr::new(self.server_host, self.server_port)
-    }
-
-    #[inline]
-    pub const fn default_server_host() -> IpAddr { clipcat_base::DEFAULT_GRPC_HOST }
-
-    #[inline]
-    pub const fn default_server_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
-
     #[inline]
     pub fn default_path() -> PathBuf {
         [
@@ -87,8 +70,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server_host: clipcat_base::DEFAULT_GRPC_HOST,
-            server_port: clipcat_base::DEFAULT_GRPC_PORT,
+            server_endpoint: clipcat_base::config::default_server_endpoint(),
             log_level: Self::default_log_level(),
             finder: FinderType::Rofi,
             rofi: Some(Rofi::default()),
