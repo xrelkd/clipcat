@@ -36,6 +36,8 @@
 - [x] Support `X11`
 - [x] Support `Wayland` (experimentally)
 - [x] Support `gRPC`
+  - [x] gRPC over `HTTP`
+  - [x] gRPC over `Unix domain socket`
 
 ## Installation
 
