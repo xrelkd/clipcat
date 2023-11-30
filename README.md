@@ -39,6 +39,20 @@
   - [x] gRPC over `HTTP`
   - [x] gRPC over `Unix domain socket`
 
+## Screenshots
+
+- Use [Rofi](https://github.com/davatorium/rofi) to select clip
+
+  ![screenshot finder rofi](docs/_static/screenshot-finder-rofi.png)
+
+- Use [dmenu](https://tools.suckless.org/dmenu/) to select clip
+
+  ![screenshot finder dmenu](docs/_static/screenshot-finder-dmenu.png)
+
+- Use [skim](https://github.com/lotabout/skim) to select clip
+
+  ![screenshot finder skim](docs/_static/screenshot-finder-skim.png)
+
 ## Installation
 
 <details>
