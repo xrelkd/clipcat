@@ -17,7 +17,7 @@
   outputs = { self, nixpkgs, flake-utils, fenix, crane }:
     let
       name = "clipcat";
-      version = "0.7.1";
+      version = "0.8.0";
     in
     (flake-utils.lib.eachDefaultSystem
       (system:
