@@ -138,13 +138,7 @@ impl Cli {
         };
 
         let fut = async move {
-            let client = {
-                let grpc_endpoint: http::Uri =
-                    format!("http://{server_addr}", server_addr = config.server_socket_address())
-                        .parse()
-                        .expect("valid uri");
-                Client::new(clipcat_client::Config { grpc_endpoint }).await?
-            };
+            let client = Client::new(config.server_endpoint).await?;
 
             let clips = client.list(PREVIEW_LENGTH).await?;
 
