@@ -450,6 +450,7 @@ dependencies = [
  "tokio",
  "tonic",
  "tower",
+ "tracing",
 ]
 
 [[package]]
