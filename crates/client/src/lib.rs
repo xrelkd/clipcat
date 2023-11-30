@@ -21,6 +21,7 @@ pub struct Client {
 impl Client {
     /// # Errors
     pub async fn new(grpc_endpoint: http::Uri) -> Result<Self> {
+        tracing::info!("Connect to server via endpoint `{}`", grpc_endpoint);
         let scheme = grpc_endpoint.scheme();
         if scheme == Some(&http::uri::Scheme::HTTP) {
             Self::connect_http(grpc_endpoint).await
