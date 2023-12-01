@@ -251,10 +251,10 @@ async fn serve_worker(
 
         match maybe_clip {
             Ok(clip) => {
-                tracing::info!(
-                    "New clip: {kind} [{printable}]",
+                tracing::debug!(
+                    "New clip: {kind} [{basic_info}]",
                     kind = clip.kind(),
-                    printable = clip.printable_data(Some(30))
+                    basic_info = clip.basic_information()
                 );
                 let _unused = clipboard_manager.lock().await.insert(clip.clone());
                 if let Err(err) = history_manager.put(&clip).await {
