@@ -1,25 +1,22 @@
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
     pub server_endpoint: http::Uri,
 
-    #[serde(default = "Config::default_log_level")]
-    #[serde_as(as = "DisplayFromStr")]
-    pub log_level: tracing::Level,
+    #[serde(default)]
+    pub log: clipcat_cli::config::LogConfig,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             server_endpoint: clipcat_base::config::default_server_endpoint(),
-            log_level: Self::default_log_level(),
+            log: clipcat_cli::config::LogConfig::default(),
         }
     }
 }
@@ -45,9 +42,6 @@ impl Config {
 
     #[inline]
     pub fn load_or_default<P: AsRef<Path>>(path: P) -> Self { Self::load(path).unwrap_or_default() }
-
-    #[inline]
-    pub const fn default_log_level() -> tracing::Level { tracing::Level::INFO }
 }
 
 #[derive(Debug, Snafu)]
