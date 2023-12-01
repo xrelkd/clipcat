@@ -33,6 +33,7 @@
 - [x] Copy/Paste plaintext
 - [x] Copy/Paste image
 - [x] Persistent contents of clipboard
+- [x] Support snippets
 - [x] Support `X11`
 - [x] Support `Wayland` (experimentally)
 - [x] Support `gRPC`
@@ -199,6 +200,54 @@ enable_local_socket = true # enable gRPC over unix domain socket
 host = "127.0.0.1"         # host address for gRPC
 port = 45045               # port number for gRPC
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock" # path of unix domain socket
+
+# snippets, only UTF-8 text is supported.
+[[snippets]]
+# name of snippet
+name = "os-release"
+
+# file path to the snippet, if both `content` and `file_path` are provided, `file_path` is preferred
+file_path = "/etc/os-release"
+
+[[snippets]]
+# name of snippet
+name = "cxx-io-speed-up"
+
+# content of the snippet, if both `content` and `file_path` are provided, `file_path` is preferred
+content = '''
+int io_speed_up = [] {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
+    return 0;
+}();
+'''
+
+[[snippets]]
+name = "rust-sieve-primes"
+content = '''
+fn sieve_primes(n: usize) -> Vec<usize> {
+    if n < 2 {
+        return Vec::new();
+    }
+    let root_n = f64::from(n as i32).sqrt().floor() as usize;
+    let mut is_prime = vec![true; n + 1];
+    for i in 2..=root_n {
+        if !is_prime[i] {
+            continue;
+        }
+        for j in ((i << 1)..=n).step_by(i) {
+            is_prime[j] = false;
+        }
+    }
+    is_prime
+        .into_iter()
+        .enumerate()
+        .skip(2)
+        .filter_map(|(i, x)| if x { Some(i) } else { None })
+        .collect()
+}
+'''
 ```
 
 </details>
