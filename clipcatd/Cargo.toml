@@ -28,6 +28,8 @@ daemonize     = "0.5"
 directories   = "5"
 exitcode      = "1"
 libc          = "0.2"
+mime          = "0.3"
+simdutf8      = "0.1"
 snafu         = "0.7"
 
 clipcat-base   = { path = "../crates/base" }

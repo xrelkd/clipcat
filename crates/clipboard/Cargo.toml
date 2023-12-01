@@ -18,9 +18,10 @@ tracing = "0.1"
 
 arboard = "3"
 
-bytes = "1"
-mio   = { version = "0.8", features = ["os-ext"] }
-snafu = "0.7"
+bytes       = "1"
+mio         = { version = "0.8", features = ["os-ext"] }
+parking_lot = "0.12"
+snafu       = "0.7"
 
 clipcat-base = { path = "../base/" }
 

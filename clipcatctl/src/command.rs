@@ -86,7 +86,7 @@ pub enum Commands {
             long = "kind",
             short = 'k',
             default_value = "clipboard",
-            help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
+            help = "Specify which clipboard to extract (\"clipboard\", \"primary\", \"secondary\")"
         )]
         kind: ClipboardKind,
 
@@ -134,12 +134,12 @@ pub enum Commands {
     #[clap(name = "promote", about = "Replace content of clipboard with clip with <id>")]
     Mark {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
 
         #[clap(value_parser = parse_hex )]
         id: u64,
@@ -247,14 +247,14 @@ impl Cli {
                     println!("{data}");
                 }
                 Some(Commands::Insert { kind, data }) => {
-                    let _ = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                    let _id = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
                 }
                 Some(Commands::Length) => {
                     println!("{len}", len = client.length().await?);
                 }
                 Some(Commands::Load { kind, file_path, mime }) => {
                     let (data, mime) = load_file_or_read_stdin(file_path, mime).await?;
-                    let _ = client.insert(&data, mime, kind).await?;
+                    let _id = client.insert(&data, mime, kind).await?;
                 }
                 Some(Commands::Save { file_path, kind }) => {
                     let data = client.get_current_clip(kind).await?.encoded()?;
@@ -310,9 +310,17 @@ impl Cli {
                         println!("{new_id:016x}");
                     }
                 }
-                Some(Commands::Mark { id, kind }) => {
-                    if client.mark(id, kind).await? {
-                        println!("Ok");
+                Some(Commands::Mark { id, mut kinds }) => {
+                    if kinds.is_empty() {
+                        kinds.push(ClipboardKind::Clipboard);
+                    } else {
+                        kinds.sort_unstable();
+                        kinds.dedup();
+                    }
+                    for kind in kinds {
+                        if client.mark(id, kind).await? {
+                            println!("Ok ({kind})");
+                        }
                     }
                 }
                 Some(Commands::EnableWatcher) => {

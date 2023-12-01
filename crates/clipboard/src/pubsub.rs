@@ -1,4 +1,6 @@
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::Arc;
+
+use parking_lot::{Condvar, Mutex};
 
 use crate::{ClipboardKind, ClipboardWait, Error};
 
@@ -21,18 +23,14 @@ pub struct Publisher(Arc<(Mutex<State>, Condvar)>);
 impl Publisher {
     pub fn notify_all(&self) {
         let (lock, condvar) = &*self.0;
-        if let Ok(mut state) = lock.lock() {
-            *state = State::Running;
-            condvar.notify_all();
-        }
+        *lock.lock() = State::Running;
+        let _unused = condvar.notify_all();
     }
 
     pub fn close(&self) {
         let (lock, condvar) = &*self.0;
-        if let Ok(mut state) = lock.lock() {
-            *state = State::Stopped;
-            condvar.notify_all();
-        }
+        *lock.lock() = State::Stopped;
+        let _unused = condvar.notify_all();
     }
 }
 
@@ -52,8 +50,8 @@ impl ClipboardWait for Subscriber {
     fn wait(&self) -> Result<ClipboardKind, Error> {
         let (lock, condvar) = &*self.inner;
         let result = {
-            let state = lock.lock().unwrap();
-            let state = condvar.wait(state).unwrap();
+            let mut state = lock.lock();
+            condvar.wait(&mut state);
             match *state {
                 State::Running => Ok(self.kind),
                 State::Stopped => Err(Error::NotifierClosed),
