@@ -7,7 +7,7 @@ use snafu::{ResultExt, Snafu};
 #[serde_as]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Config {
-    #[serde(with = "http_serde::uri")]
+    #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
     pub server_endpoint: http::Uri,
 
     #[serde(default = "Config::default_log_level")]
