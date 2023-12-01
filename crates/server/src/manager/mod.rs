@@ -1,7 +1,7 @@
 mod error;
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, HashSet},
     sync::Arc,
 };
 
@@ -27,6 +27,8 @@ pub struct ClipboardManager {
 
     // use BTreeMap to store timestamps for remove the oldest clip
     timestamp_to_id: BTreeMap<OffsetDateTime, u64>,
+
+    snippet_ids: HashSet<u64>,
 }
 
 impl ClipboardManager {
@@ -38,6 +40,7 @@ impl ClipboardManager {
             clips: HashMap::new(),
             current_clips: [None; ClipboardKind::MAX_LENGTH],
             timestamp_to_id: BTreeMap::new(),
+            snippet_ids: HashSet::new(),
         }
     }
 
@@ -66,8 +69,27 @@ impl ClipboardManager {
         self.remove_oldest();
     }
 
+    pub fn insert_snippets(&mut self, snippets: &[ClipEntry]) {
+        for clip in snippets {
+            let (id, timestamp) = (clip.id(), clip.timestamp());
+            let _ = self.timestamp_to_id.insert(timestamp, id);
+            drop(self.clips.insert(id, clip.clone()));
+            let _unused = self.snippet_ids.insert(id);
+        }
+
+        self.remove_oldest();
+    }
+
     #[inline]
-    pub fn export(&self) -> Vec<ClipEntry> { self.iter().cloned().collect() }
+    pub fn export(&self, with_snippets: bool) -> Vec<ClipEntry> {
+        self.iter()
+            .filter(|entry| {
+                let is_snippet = self.is_snippet(entry.id());
+                !is_snippet || with_snippets
+            })
+            .cloned()
+            .collect()
+    }
 
     #[inline]
     pub fn list(&self, preview_length: usize) -> Vec<ClipEntryMetadata> {
@@ -109,10 +131,19 @@ impl ClipboardManager {
             return;
         }
 
-        while self.clips.len() > self.capacity {
+        let snippet_count = self.snippet_ids.len();
+        let now = OffsetDateTime::now_utc();
+
+        while self.clips.len() > self.capacity + snippet_count {
             if let Some((timestamp, id)) = self.timestamp_to_id.pop_first() {
-                tracing::trace!("Remove old clip (id: {id}, timestamp: {timestamp})");
-                drop(self.clips.remove(&id));
+                if self.snippet_ids.contains(&id) {
+                    tracing::trace!("Retain snippet clip and update its timestamp (id: {id})");
+                    let _ = self.timestamp_to_id.insert(now, id);
+                    let _ = self.clips.get_mut(&id).map(|entry| entry.set_timestamp(now));
+                } else {
+                    tracing::trace!("Remove old clip (id: {id}, timestamp: {timestamp})");
+                    drop(self.clips.remove(&id));
+                }
             }
         }
     }
@@ -122,6 +153,10 @@ impl ClipboardManager {
 
     #[inline]
     fn remove_inner(&mut self, id: u64) -> Option<ClipEntry> {
+        if let Some(id) = self.snippet_ids.get(&id) {
+            return self.clips.get(id).cloned();
+        }
+
         for kind in ClipboardKind::all_kinds().map(usize::from) {
             if Some(id) == self.current_clips[kind] {
                 self.current_clips[kind] = None;
@@ -138,9 +173,9 @@ impl ClipboardManager {
 
     #[inline]
     pub fn clear(&mut self) {
-        self.timestamp_to_id.clear();
+        self.timestamp_to_id.retain(|_, id| self.snippet_ids.contains(id));
         self.current_clips = [None; ClipboardKind::MAX_LENGTH];
-        self.clips.clear();
+        self.clips.retain(|id, _| self.snippet_ids.contains(id));
     }
 
     pub fn replace(&mut self, old_id: u64, data: &[u8], mime: &mime::Mime) -> (bool, u64) {
@@ -163,6 +198,9 @@ impl ClipboardManager {
 
         Ok(())
     }
+
+    #[inline]
+    fn is_snippet(&self, id: u64) -> bool { self.snippet_ids.contains(&id) }
 }
 
 #[cfg(test)]
@@ -224,7 +262,7 @@ mod tests {
         assert_eq!(mgr.len(), cap);
         assert_eq!(mgr.capacity(), cap);
 
-        let mut exported = mgr.export();
+        let mut exported = mgr.export(false);
         exported.sort_unstable();
         let mut clips = clips[(n - mgr.capacity())..].to_vec();
         clips.sort_unstable();
@@ -246,7 +284,7 @@ mod tests {
         assert_eq!(mgr.get_current_clip(ClipboardKind::Primary), clips.last());
         assert_eq!(mgr.len(), n);
 
-        let dumped = mgr.export().into_iter().collect::<HashSet<_>>();
+        let dumped = mgr.export(false).into_iter().collect::<HashSet<_>>();
         let clips = clips.into_iter().collect::<HashSet<_>>();
 
         assert_eq!(dumped, clips);
@@ -266,7 +304,7 @@ mod tests {
         assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
         assert_eq!(mgr.len(), n);
 
-        let mut exported = mgr.export();
+        let mut exported = mgr.export(false);
         clips.sort_unstable();
         exported.sort_unstable();
 

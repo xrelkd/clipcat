@@ -110,6 +110,9 @@ impl Entry {
     pub const fn timestamp(&self) -> OffsetDateTime { self.timestamp }
 
     #[inline]
+    pub fn set_timestamp(&mut self, timestamp: OffsetDateTime) { self.timestamp = timestamp; }
+
+    #[inline]
     #[must_use]
     pub const fn is_utf8_string(&self) -> bool {
         matches!(self.content, ClipboardContent::Plaintext(_))

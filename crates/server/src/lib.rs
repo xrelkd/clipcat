@@ -8,6 +8,7 @@ mod watcher;
 
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
+use clipcat_base::ClipEntry;
 use clipcat_proto::{ManagerServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
@@ -36,6 +37,7 @@ pub async fn serve_with_shutdown(
         history_file_path,
         watcher: watcher_opts,
     }: Config,
+    snippets: &[ClipEntry],
 ) -> Result<()> {
     let clipboard_backend = backend::new_shared().context(error::CreateClipboardBackendSnafu)?;
 
@@ -61,6 +63,10 @@ pub async fn serve_with_shutdown(
         if clip_count > 0 {
             tracing::info!("{clip_count} clip(s) loaded");
         }
+        let snippet_count = snippets.len();
+        if snippet_count > 0 {
+            tracing::info!("{snippet_count} snippet(s) loaded");
+        }
 
         tracing::info!("Initialize ClipboardManager with capacity {max_history}");
         let mut clipboard_manager =
@@ -68,6 +74,9 @@ pub async fn serve_with_shutdown(
 
         tracing::info!("Import {clip_count} clip(s) into ClipboardManager");
         clipboard_manager.import(&history_clips);
+
+        tracing::info!("Import {snippet_count} snippet(s) into ClipboardManager");
+        clipboard_manager.insert_snippets(snippets);
 
         (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
@@ -266,7 +275,7 @@ async fn serve_worker(
 
     let (clips, history_capacity) = {
         let manager = clipboard_manager.lock().await;
-        (manager.export(), manager.capacity())
+        (manager.export(false), manager.capacity())
     };
 
     {
