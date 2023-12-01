@@ -3,7 +3,6 @@ use std::{io::Write, net::IpAddr, path::PathBuf, time::Duration};
 use clap::{CommandFactory, Parser, Subcommand};
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     config::Config,
@@ -139,7 +138,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         daemonize::Daemonize::new().pid_file(pid_file.clone_path()).start()?;
     }
 
-    init_tracing(config.log_level);
+    config.log.registry();
     let snippets = config.load_snippets();
     let config = clipcat_server::Config::from(config);
 
@@ -166,24 +165,6 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
 
     tracing::info!("{} is shutdown", clipcat_base::DAEMON_PROGRAM_NAME);
     exit_status
-}
-
-fn init_tracing(log_level: tracing::Level) {
-    // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
-
-    // format
-    let fmt_layer =
-        tracing_subscriber::fmt::layer().pretty().with_thread_ids(true).with_thread_names(true);
-
-    // subscriber
-    let registry = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
-    match tracing_journald::layer() {
-        Ok(layer) => registry.with(layer).init(),
-        Err(_err) => {
-            registry.init();
-        }
-    }
 }
 
 #[allow(unsafe_code)]
