@@ -9,7 +9,6 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     runtime::Runtime,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     config::Config,
@@ -181,11 +180,11 @@ impl Cli {
         }
 
         if let Ok(log_level) = std::env::var("RUST_LOG") {
-            config.log_level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
+            config.log.level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
         }
 
         if let Some(log_level) = self.log_level {
-            config.log_level = log_level;
+            config.log.level = log_level;
         }
 
         config
@@ -218,8 +217,8 @@ impl Cli {
             _ => {}
         }
 
-        let Config { server_endpoint, log_level } = self.load_config();
-        init_tracing(log_level);
+        let Config { server_endpoint, log } = self.load_config();
+        log.registry();
 
         let fut = async move {
             let client = Client::new(server_endpoint).await?;
@@ -423,22 +422,4 @@ fn print_watcher_state(state: ClipboardWatcherState) {
         ClipboardWatcherState::Disabled => "Clipboard watcher is not running",
     };
     println!("{msg}");
-}
-
-fn init_tracing(log_level: tracing::Level) {
-    // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
-
-    // format
-    let fmt_layer =
-        tracing_subscriber::fmt::layer().pretty().with_thread_ids(true).with_thread_names(true);
-
-    // subscriber
-    let registry = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
-    match tracing_journald::layer() {
-        Ok(layer) => registry.with(layer).init(),
-        Err(_err) => {
-            registry.init();
-        }
-    }
 }

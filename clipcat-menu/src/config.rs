@@ -1,20 +1,14 @@
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 
 use crate::finder::FinderType;
 
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
     pub server_endpoint: http::Uri,
-
-    #[serde(default = "Config::default_log_level")]
-    #[serde_as(as = "DisplayFromStr")]
-    pub log_level: tracing::Level,
 
     #[serde(default)]
     pub finder: FinderType,
@@ -27,6 +21,9 @@ pub struct Config {
 
     #[serde(default)]
     pub custom_finder: Option<CustomFinder>,
+
+    #[serde(default)]
+    pub log: clipcat_cli::config::LogConfig,
 }
 
 impl Config {
@@ -39,9 +36,6 @@ impl Config {
         .into_iter()
         .collect()
     }
-
-    #[inline]
-    pub const fn default_log_level() -> tracing::Level { tracing::Level::INFO }
 
     #[inline]
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
@@ -71,11 +65,11 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             server_endpoint: clipcat_base::config::default_server_endpoint(),
-            log_level: Self::default_log_level(),
             finder: FinderType::Rofi,
             rofi: Some(Rofi::default()),
             dmenu: Some(Dmenu::default()),
             custom_finder: Some(CustomFinder::default()),
+            log: clipcat_cli::config::LogConfig::default(),
         }
     }
 }

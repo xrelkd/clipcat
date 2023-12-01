@@ -437,6 +437,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipcat-cli"
+version = "0.9.0"
+dependencies = [
+ "serde",
+ "serde_with",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "clipcat-client"
 version = "0.9.0"
 dependencies = [
@@ -487,12 +498,12 @@ dependencies = [
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
  "http-serde",
  "serde",
- "serde_with",
  "skim",
  "snafu",
  "tokio",
@@ -559,6 +570,7 @@ dependencies = [
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-client",
  "clipcat-external-editor",
  "directories",
@@ -566,7 +578,6 @@ dependencies = [
  "http-serde",
  "mime",
  "serde",
- "serde_with",
  "simdutf8",
  "snafu",
  "tokio",
@@ -583,6 +594,7 @@ dependencies = [
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-server",
  "daemonize",
  "directories",
@@ -590,7 +602,6 @@ dependencies = [
  "libc",
  "mime",
  "serde",
- "serde_with",
  "simdutf8",
  "snafu",
  "tokio",
