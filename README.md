@@ -185,8 +185,14 @@ $ clipcatd
 ```toml
 daemonize = true          # run as a traditional UNIX daemon
 max_history = 50          # max clip history limit
-log_level = "INFO"        # log level
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history" # file path of clip history
+
+[log]
+file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
+emit_journald = true             # emit log message to journald
+emit_stdout = false              # emit log message to stdout
+emit_stderr = false              # emit log message to stderr
+level = "INFO"                   # log level
 
 [watcher]
 load_current = true       # load current clipboard content at startup
@@ -262,8 +268,12 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 # clipcatctl connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
-# log level
-log_level = "INFO"
+[log]
+file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
+emit_journald = true             # emit log message to journald
+emit_stdout = false              # emit log message to stdout
+emit_stderr = false              # emit log message to stderr
+level = "INFO"                   # log level
 ```
 
 </details>
@@ -279,7 +289,13 @@ log_level = "INFO"
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
 finder = "rofi"           # the default finder to invoke when no "--finder=<finder>" option provided
-log_level = "INFO"        # log level
+
+[log]
+file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
+emit_journald = true             # emit log message to journald
+emit_stdout = false              # emit log message to stdout
+emit_stderr = false              # emit log message to stderr
+level = "INFO"                   # log level
 
 [rofi]                    # options for "rofi"
 line_length = 100         # length of line
