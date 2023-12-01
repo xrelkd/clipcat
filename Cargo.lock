@@ -461,6 +461,7 @@ dependencies = [
  "bytes",
  "clipcat-base",
  "mio",
+ "parking_lot",
  "sigfinn",
  "snafu",
  "tokio",
