@@ -437,6 +437,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipcat-cli"
+version = "0.9.0"
+dependencies = [
+ "serde",
+ "serde_with",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "clipcat-client"
 version = "0.9.0"
 dependencies = [
