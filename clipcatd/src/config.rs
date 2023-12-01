@@ -29,7 +29,11 @@ pub struct Config {
     #[serde(default, alias = "monitor")]
     pub watcher: WatcherConfig,
 
+    #[serde(default)]
     pub grpc: GrpcConfig,
+
+    #[serde(default)]
+    pub snippets: Vec<SnippetConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -94,6 +98,71 @@ impl GrpcConfig {
     pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
 }
 
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SnippetConfig {
+    name: String,
+
+    file_path: Option<PathBuf>,
+
+    content: Option<String>,
+}
+
+impl SnippetConfig {
+    #[allow(clippy::cognitive_complexity)]
+    fn load(&self) -> Option<clipcat_base::ClipEntry> {
+        let Self { name, file_path, content } = self;
+        tracing::trace!("Load snippet `{name}`");
+        let data = match (file_path, content) {
+            (Some(file_path), Some(_content)) => {
+                tracing::warn!(
+                    "Loading snippet, both `file_path` and `content` are provided, prefer \
+                     `file_path`"
+                );
+                std::fs::read(file_path)
+                    .map_err(|err| {
+                        tracing::warn!(
+                            "Failed to load snippet from `{}`, error: {err}",
+                            file_path.display()
+                        );
+                    })
+                    .ok()
+            }
+            (Some(file_path), None) => std::fs::read(file_path)
+                .map_err(|err| {
+                    tracing::warn!(
+                        "Failed to load snippet from `{}`, error: {err}",
+                        file_path.display()
+                    );
+                })
+                .ok(),
+            (None, Some(content)) => Some(content.as_bytes().to_vec()),
+            (None, None) => None,
+        };
+
+        if let Some(data) = data {
+            if data.is_empty() {
+                tracing::warn!("Snippet `{name}` is empty, ignored it");
+                return None;
+            }
+
+            if let Err(err) = simdutf8::basic::from_utf8(&data) {
+                tracing::warn!("Snippet `{name}` is not valid UTF-8 string, error: {err}");
+                return None;
+            }
+
+            clipcat_base::ClipEntry::new(
+                &data,
+                &mime::TEXT_PLAIN_UTF_8,
+                clipcat_base::ClipboardKind::Clipboard,
+                None,
+            )
+            .ok()
+        } else {
+            None
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -104,6 +173,7 @@ impl Default for Config {
             log_level: Self::default_log_level(),
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
+            snippets: Vec::new(),
         }
     }
 }
@@ -186,6 +256,10 @@ impl Config {
         }
 
         Ok(config)
+    }
+
+    pub fn load_snippets(&self) -> Vec<clipcat_base::ClipEntry> {
+        self.snippets.iter().filter_map(SnippetConfig::load).collect()
     }
 }
 
