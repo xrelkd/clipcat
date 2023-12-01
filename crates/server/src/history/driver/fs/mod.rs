@@ -4,11 +4,12 @@ use std::{
     fs::{File, OpenOptions},
     io::{Seek, SeekFrom, Write},
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use async_trait::async_trait;
 use clipcat_base::ClipEntry;
+use parking_lot::Mutex;
 use snafu::ResultExt;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
@@ -36,7 +37,7 @@ impl FileSystemDriver {
     {
         let inner = self.inner.clone();
         tokio::task::spawn_blocking(move || {
-            let mut driver = inner.lock().unwrap();
+            let mut driver = inner.lock();
             driver.save(clips)
         })
         .await
@@ -49,7 +50,7 @@ impl Driver for FileSystemDriver {
     async fn load(&mut self) -> Result<Vec<ClipEntry>, Error> {
         let inner = self.inner.clone();
         tokio::task::spawn_blocking(move || {
-            let mut driver = inner.lock().unwrap();
+            let mut driver = inner.lock();
             Ok(driver.load())
         })
         .await
@@ -63,7 +64,7 @@ impl Driver for FileSystemDriver {
     async fn clear(&mut self) -> Result<(), Error> {
         let inner = self.inner.clone();
         tokio::task::spawn_blocking(move || {
-            let mut driver = inner.lock().unwrap();
+            let mut driver = inner.lock();
             driver.clear()
         })
         .await
@@ -74,7 +75,7 @@ impl Driver for FileSystemDriver {
         let inner = self.inner.clone();
         let clip = clip.clone();
         tokio::task::spawn_blocking(move || {
-            let mut driver = inner.lock().unwrap();
+            let mut driver = inner.lock();
             driver.put(&clip)
         })
         .await
@@ -84,7 +85,7 @@ impl Driver for FileSystemDriver {
     async fn shrink_to(&mut self, min_capacity: usize) -> Result<(), Error> {
         let inner = self.inner.clone();
         tokio::task::spawn_blocking(move || {
-            let mut driver = inner.lock().unwrap();
+            let mut driver = inner.lock();
             driver.shrink_to(min_capacity)
         })
         .await

@@ -27,6 +27,7 @@ tokio-stream = { version = "0.1", features = ["net"] }
 tonic = { version = "0.10", features = ["gzip"] }
 
 mime = "0.3"
+parking_lot = "0.12"
 snafu = "0.7"
 time = { version = "0.3", features = [
   "formatting",

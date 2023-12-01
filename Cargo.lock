@@ -538,6 +538,7 @@ dependencies = [
  "clipcat-proto",
  "futures",
  "mime",
+ "parking_lot",
  "serde",
  "serde_json",
  "sigfinn",
