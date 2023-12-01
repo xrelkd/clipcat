@@ -105,7 +105,7 @@ impl FinderRunner {
     }
 
     pub async fn single_select(
-        self,
+        &self,
         clips: &[ClipEntryMetadata],
     ) -> Result<Option<(usize, ClipEntryMetadata)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Single).await?;
@@ -118,7 +118,7 @@ impl FinderRunner {
     }
 
     pub async fn multiple_select(
-        self,
+        &self,
         clips: &[ClipEntryMetadata],
     ) -> Result<Vec<(usize, ClipEntryMetadata)>, FinderError> {
         let selected_indices = self.select(clips, SelectionMode::Multiple).await?;
@@ -126,7 +126,7 @@ impl FinderRunner {
     }
 
     pub async fn select(
-        self,
+        &self,
         clips: &[ClipEntryMetadata],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
@@ -138,11 +138,11 @@ impl FinderRunner {
     }
 
     async fn select_externally(
-        self,
+        &self,
         clips: &[ClipEntryMetadata],
         selection_mode: SelectionMode,
     ) -> Result<Vec<usize>, FinderError> {
-        if let Some(external) = self.external {
+        if let Some(external) = &self.external {
             let input_data = external.generate_input(clips);
             let mut child = external
                 .spawn_child(selection_mode)

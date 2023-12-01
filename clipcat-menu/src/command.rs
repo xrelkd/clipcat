@@ -56,12 +56,12 @@ pub enum Commands {
     #[clap(about = "Insert selected clip into clipboard")]
     Insert {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
     },
 
     #[clap(
@@ -143,10 +143,17 @@ impl Cli {
             let clips = client.list(PREVIEW_LENGTH).await?;
 
             match commands {
-                Some(Commands::Insert { kind }) => {
-                    insert_clip(&clips, finder, &client, kind).await?;
+                Some(Commands::Insert { mut kinds }) => {
+                    if kinds.is_empty() {
+                        kinds.push(ClipboardKind::Clipboard);
+                    } else {
+                        kinds.sort_unstable();
+                        kinds.dedup();
+                    }
+
+                    insert_clip(&clips, &finder, &client, &kinds).await?;
                 }
-                None => insert_clip(&clips, finder, &client, ClipboardKind::Clipboard).await?,
+                None => insert_clip(&clips, &finder, &client, &[ClipboardKind::Clipboard]).await?,
                 Some(Commands::Remove) => {
                     let selections = finder.multiple_select(&clips).await?;
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
@@ -190,9 +197,9 @@ impl Cli {
 
 async fn insert_clip(
     clips: &[ClipEntryMetadata],
-    finder: FinderRunner,
+    finder: &FinderRunner,
     client: &Client,
-    clipboard_kind: ClipboardKind,
+    clipboard_kinds: &[ClipboardKind],
 ) -> Result<(), Error> {
     let selection = finder.single_select(clips).await?;
     if let Some((index, clip)) = selection {
@@ -202,7 +209,9 @@ async fn insert_clip(
             clip.id,
             clip.preview,
         );
-        let _ok = client.mark(clip.id, clipboard_kind).await?;
+        for &clipboard_kind in clipboard_kinds {
+            let _ok = client.mark(clip.id, clipboard_kind).await?;
+        }
     } else {
         tracing::info!("Nothing is selected");
     }
