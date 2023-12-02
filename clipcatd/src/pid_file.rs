@@ -21,16 +21,17 @@ impl PidFile {
     pub fn path(&self) -> &Path { &self.path }
 
     #[inline]
+    pub fn create(&self) -> Result<(), Error> {
+        tracing::info!("Create PID file `{}`", self.path.display());
+        std::fs::write(&self.path, std::process::id().to_string())
+            .context(CreatePidFileSnafu { file_path: self.path.clone() })?;
+        Ok(())
+    }
+
+    #[inline]
     pub fn remove(self) -> Result<(), Error> {
         tracing::info!("Remove PID file `{}`", self.path.display());
         std::fs::remove_file(&self.path).context(RemovePidFileSnafu { file_path: self.path })
-    }
-
-    pub fn create(&self) -> Result<(), Error> {
-        let file_content = format!("{pid}", pid = std::process::id());
-        std::fs::write(&self.path, file_content)
-            .context(CreatePidFileSnafu { file_path: self.path.clone() })?;
-        Ok(())
     }
 }
 

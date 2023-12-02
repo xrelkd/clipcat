@@ -161,7 +161,9 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
                 std::thread::sleep(polling_interval);
             }
         } else {
-            tracing::warn!("Another instance (PID: {pid}) is running");
+            tracing::warn!(
+                "Another instance (PID: {pid}) is running, please terminate `{pid}` first"
+            );
             return Ok(());
         }
     }
@@ -201,6 +203,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
 #[allow(unsafe_code)]
 #[inline]
 fn kill_other(pid: libc::pid_t) -> Result<(), Error> {
+    tracing::info!("Try to terminate another instance (PID: {pid})");
     let ret = unsafe { libc::kill(pid, libc::SIGTERM) };
     if ret != 0 {
         return Err(Error::SendSignalTermination { pid });
