@@ -152,7 +152,7 @@ fn build_thread(
                                 Err(err) => {
                                     tracing::warn!(
                                         "Clipboard is changed but we could not get available \
-                                         formats, error {err}"
+                                         formats, error: {err}"
                                     );
                                 }
                             }
