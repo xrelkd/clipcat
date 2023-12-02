@@ -104,7 +104,7 @@ pub enum Commands {
 
     #[clap(about = "Print clip with <id>")]
     Get {
-        #[clap(value_parser= parse_hex )]
+        #[clap(value_parser = parse_hex)]
         id: Option<u64>,
     },
 
@@ -119,7 +119,7 @@ pub enum Commands {
 
     #[clap(about = "Update clip with <id>")]
     Update {
-        #[clap(value_parser= parse_hex )]
+        #[clap(value_parser = parse_hex)]
         id: u64,
         data: String,
     },
@@ -178,9 +178,11 @@ pub enum Commands {
     GetWatcherState,
 }
 
-impl Cli {
-    pub fn new() -> Self { Self::parse() }
+impl Default for Cli {
+    fn default() -> Self { Self::parse() }
+}
 
+impl Cli {
     fn load_config(&self) -> Config {
         let mut config =
             Config::load_or_default(self.config_file.clone().unwrap_or_else(Config::default_path));
@@ -349,22 +351,6 @@ impl Cli {
     }
 }
 
-#[inline]
-fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
-
-async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
-    let metadata_list = client.list(PREVIEW_LENGTH).await?;
-    for metadata in metadata_list {
-        let ClipEntryMetadata { id, preview, .. } = metadata;
-        if no_id {
-            println!("{preview}");
-        } else {
-            println!("{id:016x}: {preview}");
-        }
-    }
-    Ok(())
-}
-
 async fn load_file_or_read_stdin(
     file_path: Option<PathBuf>,
     mime: mime::Mime,
@@ -427,3 +413,19 @@ fn print_watcher_state(state: ClipboardWatcherState) {
     };
     println!("{msg}");
 }
+
+async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
+    let metadata_list = client.list(PREVIEW_LENGTH).await?;
+    for metadata in metadata_list {
+        let ClipEntryMetadata { id, preview, .. } = metadata;
+        if no_id {
+            println!("{preview}");
+        } else {
+            println!("{id:016x}: {preview}");
+        }
+    }
+    Ok(())
+}
+
+#[inline]
+fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }

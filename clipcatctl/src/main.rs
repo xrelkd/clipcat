@@ -1,11 +1,11 @@
-mod command;
+mod cli;
 mod config;
 mod error;
 
-use self::command::Cli;
+use self::cli::Cli;
 
 fn main() {
-    match Cli::new().run() {
+    match Cli::default().run() {
         Ok(exit_code) => {
             std::process::exit(exit_code);
         }
