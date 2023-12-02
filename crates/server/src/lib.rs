@@ -162,7 +162,10 @@ fn create_grpc_local_socket_server_future(
 
             match result {
                 Ok(()) => {
-                    tracing::info!("Remove {}", local_socket.display());
+                    tracing::info!(
+                        "Remove Unix domain socket `{path}`",
+                        path = local_socket.display()
+                    );
                     drop(tokio::fs::remove_file(local_socket).await);
                     tracing::info!("gRPC local socket server is shut down gracefully");
                     ExitStatus::Success
