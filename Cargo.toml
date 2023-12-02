@@ -1,5 +1,5 @@
 [workspace.package]
-version     = "0.9.0"
+version     = "0.10.0"
 authors     = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage    = "https://github.com/xrelkd/clipcat"
 repository  = "https://github.com/xrelkd/clipcat"
