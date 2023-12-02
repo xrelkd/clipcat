@@ -90,9 +90,11 @@ pub enum Commands {
     },
 }
 
-impl Cli {
-    pub fn new() -> Self { Self::parse() }
+impl Default for Cli {
+    fn default() -> Self { Self::parse() }
+}
 
+impl Cli {
     pub fn run(self) -> Result<(), Error> {
         let Self { commands, config_file, finder, menu_length, line_length, log_level } = self;
 
