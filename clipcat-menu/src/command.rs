@@ -21,19 +21,34 @@ pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCAT_MENU_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long, short = 'f', help = "Specify a finder")]
+    #[clap(long, short = 'f', env = "CLIPCAT_MENU_FINDER", help = "Specify a finder")]
     finder: Option<FinderType>,
 
-    #[clap(long, short = 'm', help = "Specify the menu length of finder")]
+    #[clap(
+        long,
+        short = 'm',
+        env = "CLIPCAT_MENU_MENU_LENGTH",
+        help = "Specify the menu length of finder"
+    )]
     menu_length: Option<usize>,
 
-    #[clap(long, short = 'l', help = "Specify the length of a line showing on finder")]
+    #[clap(
+        long,
+        short = 'l',
+        env = "CLIPCAT_MENU_LINE_LENGTH",
+        help = "Specify the length of a line showing on finder"
+    )]
     line_length: Option<usize>,
 
-    #[clap(long = "log-level", help = "Specify a log level")]
+    #[clap(long = "log-level", env = "CLIPCAT_MENU_LOG_LEVEL", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
 }
 
@@ -70,7 +85,7 @@ pub enum Commands {
 
     #[clap(about = "Edit selected clip")]
     Edit {
-        #[clap(env = "EDITOR", long = "editor", short = 'e', help = "Specify a external editor")]
+        #[clap(long = "editor", short = 'e', env = "EDITOR", help = "Specify a external editor")]
         editor: String,
     },
 }
