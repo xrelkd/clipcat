@@ -137,21 +137,41 @@ impl Cli {
 
 #[allow(clippy::cognitive_complexity)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
-    let daemonize = config.daemonize;
+    config.log.registry();
+
     let pid_file = PidFile::from(config.pid_file.clone());
-    if daemonize {
-        if pid_file.exists() && replace {
-            let pid = pid_file.try_load()?;
-            kill_other(pid)?;
+    if pid_file.exists() {
+        let pid = pid_file.try_load()?;
+        if replace {
+            if let Err(err) = kill_other(pid) {
+                tracing::warn!(
+                    "Error occurs while trying to terminate another instance, error: {err}"
+                );
+            };
 
-            // sleep for a while
-            std::thread::sleep(Duration::from_millis(200));
+            let polling_interval = Duration::from_millis(200);
+            while pid_file.exists() {
+                tracing::warn!(
+                    "PID file `{path}` exists, another instance (PID: {pid}) is still running, \
+                     sleep for {dur}ms",
+                    path = pid_file.path().display(),
+                    dur = polling_interval.as_millis()
+                );
+                // sleep for a while
+                std::thread::sleep(polling_interval);
+            }
+        } else {
+            tracing::warn!("Another instance (PID: {pid}) is running");
+            return Ok(());
         }
-
-        daemonize::Daemonize::new().pid_file(pid_file.path()).start()?;
     }
 
-    config.log.registry();
+    if config.daemonize {
+        daemonize::Daemonize::new().pid_file(pid_file.path()).start()?;
+    } else {
+        pid_file.create()?;
+    }
+
     let snippets = config.load_snippets();
     let config = clipcat_server::Config::from(config);
 
@@ -170,10 +190,8 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         Err(err) => Err(err),
     };
 
-    if daemonize {
-        if let Err(err) = pid_file.remove() {
-            tracing::error!("{err}");
-        }
+    if let Err(err) = pid_file.remove() {
+        tracing::error!("{err}");
     }
 
     tracing::info!("{} is shutdown", clipcat_base::DAEMON_PROGRAM_NAME);
