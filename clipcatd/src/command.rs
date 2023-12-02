@@ -22,19 +22,32 @@ pub struct Cli {
     #[clap(long = "replace", short = 'r', help = "Try to replace existing daemon")]
     replace: bool,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCATD_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "history-file", help = "Specify a history file")]
+    #[clap(
+        long = "history-file",
+        env = "CLIPCATD_HISTORY_FILE_PATH",
+        help = "Specify a history file"
+    )]
     history_file_path: Option<PathBuf>,
 
-    #[clap(long = "grpc-host", help = "Specify gRPC host address")]
+    #[clap(long = "grpc-host", env = "CLIPCATD_GRPC_HOST", help = "Specify gRPC host address")]
     grpc_host: Option<IpAddr>,
 
-    #[clap(long = "grpc-port", help = "Specify gRPC port number")]
+    #[clap(long = "grpc-port", env = "CLIPCATD_GRPC_PORT", help = "Specify gRPC port number")]
     grpc_port: Option<u16>,
 
-    #[clap(long = "grpc-socket-path", help = "Specify gRPC local socket path")]
+    #[clap(
+        long = "grpc-socket-path",
+        env = "CLIPCATD_GRPC_SOCKET_PATH",
+        help = "Specify gRPC local socket path"
+    )]
     grpc_socket_path: Option<PathBuf>,
 }
 
@@ -105,8 +118,8 @@ impl Cli {
         }
 
         if let Some(path) = &self.grpc_socket_path {
-            config.grpc.local_socket = path.clone();
             config.grpc.enable_local_socket = true;
+            config.grpc.local_socket = path.clone();
         }
 
         if !config.grpc.enable_http && !config.grpc.enable_local_socket {
