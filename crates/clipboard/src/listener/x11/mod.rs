@@ -129,12 +129,25 @@ fn build_thread(
             for event in &events {
                 if event.token() == CONTEXT_TOKEN {
                     match context.poll_for_event() {
-                        Ok(X11Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
+                        Ok(X11Event::XfixesSelectionNotify(_event)) => {
+                            match context.get_available_formats() {
+                                Ok(formats) => {
+                                    let _format = formats;
+                                    notifier.notify_all();
+                                }
+                                Err(err) => {
+                                    tracing::warn!(
+                                        "Clipboard is changed but we could not get available \
+                                         formats, error {err}"
+                                    );
+                                }
+                            }
+                        }
                         Ok(_) | Err(Error::NoEvent) => {}
                         Err(err) => {
                             tracing::warn!(
-                                "{err}, try to re-connect X11 server after {} millisecond(s)",
-                                RETRY_INTERVAL.as_millis()
+                                "{err}, try to re-connect X11 server after {n}ms",
+                                n = RETRY_INTERVAL.as_millis()
                             );
                             if let Err(err) =
                                 try_reconnect(&poll, &mut context, MAX_RETRY_COUNT, RETRY_INTERVAL)

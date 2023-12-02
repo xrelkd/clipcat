@@ -1,16 +1,27 @@
-use std::os::{fd::AsRawFd, unix::prelude::RawFd};
+use std::{
+    os::{fd::AsRawFd, unix::prelude::RawFd},
+    thread,
+    time::{Duration, Instant},
+};
 
 use snafu::ResultExt;
 use x11rb::{
     connection::Connection,
-    protocol::{xfixes, xfixes::ConnectionExt as _, xproto, xproto::ConnectionExt as _},
+    protocol::{
+        xfixes,
+        xfixes::ConnectionExt as _,
+        xproto::{self, ConnectionExt as _},
+    },
     rust_connection::RustConnection,
+    wrapper::ConnectionExt as _,
 };
 
 use crate::{
     listener::x11::{error, Error},
     ClipboardKind,
 };
+
+const LONG_TIMEOUT_DUR: Duration = Duration::from_millis(1000);
 
 #[derive(Debug)]
 pub struct Context {
@@ -94,6 +105,73 @@ impl Context {
         self.flush()?;
         Ok(())
     }
+
+    pub fn get_available_formats(&self) -> Result<Vec<String>, Error> {
+        drop(
+            self.connection
+                .delete_property(self.window, self.atom_cache.clipcat_clipboard)
+                .context(error::DeletePropertySnafu)?,
+        );
+
+        drop(
+            self.connection
+                .convert_selection(
+                    self.window,
+                    self.clipboard_kind(),
+                    self.atom_cache.targets,
+                    self.atom_cache.clipcat_clipboard,
+                    xproto::Time::CURRENT_TIME,
+                )
+                .context(error::ConvertSelectionSnafu)?,
+        );
+        self.connection.sync().context(error::SynchroniseWithX11Snafu)?;
+
+        let timeout_end = Instant::now() + LONG_TIMEOUT_DUR;
+        while Instant::now() < timeout_end {
+            let maybe_event = self.connection.poll_for_event().context(error::PollForEventSnafu)?;
+            let Some(event) = maybe_event else {
+                thread::sleep(std::time::Duration::from_millis(1));
+                continue;
+            };
+
+            match event {
+                // The first response after requesting a selection.
+                x11rb::protocol::Event::SelectionNotify(event) => {
+                    let reply = self
+                        .connection
+                        .get_property(
+                            false,
+                            self.window,
+                            event.property,
+                            xproto::AtomEnum::NONE,
+                            0,
+                            u32::try_from(1024 * std::mem::size_of::<xproto::Atom>())
+                                .unwrap_or(u32::MAX),
+                        )
+                        .context(error::GetPropertySnafu)?
+                        .reply()
+                        .context(error::GetPropertyReplySnafu)?;
+
+                    let mut formats = Vec::new();
+                    if let Some(atoms) = reply.value32() {
+                        for atom in atoms {
+                            let atom_name = self
+                                .connection
+                                .get_atom_name(atom)
+                                .context(error::GetAtomNameSnafu)?
+                                .reply()
+                                .context(error::GetAtomNameReplySnafu)?
+                                .name;
+                            formats.push(String::from_utf8_lossy(&atom_name).clone().to_string());
+                        }
+                    }
+                    return Ok(formats);
+                }
+                _ => continue,
+            }
+        }
+        Ok(Vec::new())
+    }
 }
 
 impl AsRawFd for Context {
@@ -102,27 +180,33 @@ impl AsRawFd for Context {
 
 #[derive(Debug)]
 struct AtomCache {
+    clipcat_clipboard: xproto::Atom,
     clipboard_manager: xproto::Atom,
     clipboard_selection: xproto::Atom,
     primary_selection: xproto::Atom,
     secondary_selection: xproto::Atom,
+    targets: xproto::Atom,
 }
 
 impl AtomCache {
     fn new(conn: &impl Connection) -> Result<Self, Error> {
         Ok(Self {
-            clipboard_manager: get_intern_atom(conn, "CLIPBOARD_MANAGER")?,
-            clipboard_selection: get_intern_atom(conn, "CLIPBOARD")?,
+            clipcat_clipboard: get_intern_atom(conn, b"CLIPCAT_CLIPBOARD")?,
+            clipboard_manager: get_intern_atom(conn, b"CLIPBOARD_MANAGER")?,
+            clipboard_selection: get_intern_atom(conn, b"CLIPBOARD")?,
             primary_selection: xproto::AtomEnum::PRIMARY.into(),
             secondary_selection: xproto::AtomEnum::SECONDARY.into(),
+            targets: get_intern_atom(conn, b"TARGETS")?,
         })
     }
 }
 
 #[inline]
-pub fn get_intern_atom(conn: &impl Connection, atom_name: &str) -> Result<xproto::Atom, Error> {
-    conn.intern_atom(false, atom_name.as_bytes())
-        .with_context(|_| error::GetAtomIdentifierByNameSnafu { atom_name: atom_name.to_string() })?
+pub fn get_intern_atom(conn: &impl Connection, atom_name: &[u8]) -> Result<xproto::Atom, Error> {
+    conn.intern_atom(false, atom_name)
+        .with_context(|_| error::GetAtomIdentifierByNameSnafu {
+            atom_name: String::from_utf8_lossy(atom_name).clone(),
+        })?
         .reply()
         .map(|r| r.atom)
         .context(error::ReplySnafu)
