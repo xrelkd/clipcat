@@ -1,4 +1,4 @@
-use std::{io::Write, num::ParseIntError, path::PathBuf, str::FromStr};
+use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
@@ -23,13 +23,22 @@ pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCATCTL_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "server-endpoint", help = "Specify a server endpoint")]
+    #[clap(
+        long = "server-endpoint",
+        env = "CLIPCATCTL_SERVER_ENDPOINT",
+        help = "Specify a server endpoint"
+    )]
     server_endpoint: Option<http::Uri>,
 
-    #[clap(long = "log-level", help = "Specify a log level")]
+    #[clap(long = "log-level", env = "CLIPCATCTL_LOG_LEVEL", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
 }
 
@@ -179,10 +188,6 @@ impl Cli {
             config.server_endpoint = endpoint.clone();
         }
 
-        if let Ok(log_level) = std::env::var("RUST_LOG") {
-            config.log.level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
-        }
-
         if let Some(log_level) = self.log_level {
             config.log.level = log_level;
         }
@@ -296,8 +301,7 @@ impl Cli {
                         let _ok = client.mark(new_id, ClipboardKind::Clipboard).await?;
                     } else {
                         println!(
-                            "{:016x} is a {}, you could not edit with text editor",
-                            id,
+                            "{id:016x} is a {}, you could not edit with text editor",
                             data.mime().essence_str()
                         );
                     }
