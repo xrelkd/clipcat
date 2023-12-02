@@ -65,11 +65,11 @@ impl Cli {
                         let mut subscriber =
                             backend.subscribe().context(error::SubscribeClipboardSnafu)?;
 
-                        while let Some(kind) = subscriber.next().await {
+                        while let Some((kind, _mime)) = subscriber.next().await {
                             match kind {
                                 ClipboardKind::Clipboard if enable_clipboard => return Ok(()),
                                 ClipboardKind::Primary if enable_primary => return Ok(()),
-                                ClipboardKind::Secondary if enable_primary => return Ok(()),
+                                ClipboardKind::Secondary if enable_secondary => return Ok(()),
                                 _ => continue,
                             }
                         }

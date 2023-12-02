@@ -471,6 +471,7 @@ dependencies = [
  "arboard",
  "bytes",
  "clipcat-base",
+ "mime",
  "mio",
  "parking_lot",
  "sigfinn",

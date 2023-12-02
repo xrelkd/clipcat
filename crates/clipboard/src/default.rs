@@ -57,29 +57,42 @@ impl ClipboardSubscribe for Clipboard {
 }
 
 impl ClipboardLoad for Clipboard {
-    fn load(&self) -> Result<ClipboardContent, Error> {
-        let mut arboard = arboard::Clipboard::new()?;
+    fn load(&self, mime: Option<mime::Mime>) -> Result<ClipboardContent, Error> {
+        match mime {
+            None => self
+                .load(Some(mime::TEXT_PLAIN_UTF_8))
+                .map_or_else(|_| self.load(Some(mime::IMAGE_PNG)), Ok),
+            Some(mime) => {
+                let mut arboard = arboard::Clipboard::new()?;
 
-        match arboard.get().clipboard(self.clipboard_kind).text() {
-            Ok(text) => Ok(ClipboardContent::Plaintext(text)),
-            Err(
-                arboard::Error::ContentNotAvailable
-                | arboard::Error::ConversionFailure
-                | arboard::Error::Unknown { .. },
-            ) => match arboard.get().clipboard(self.clipboard_kind).image() {
-                Ok(arboard::ImageData { width, height, bytes }) => Ok(ClipboardContent::Image {
-                    width,
-                    height,
-                    bytes: Bytes::from(bytes.into_owned()),
-                }),
-                Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
-                Err(err) => {
-                    tracing::warn!("{err}");
+                if mime.type_() == mime::TEXT {
+                    match arboard.get().clipboard(self.clipboard_kind).text() {
+                        Ok(text) => Ok(ClipboardContent::Plaintext(text)),
+                        Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
+                        Err(err) => {
+                            tracing::warn!("{err}");
+                            Err(Error::Empty)
+                        }
+                    }
+                } else if mime.type_() == mime::IMAGE {
+                    match arboard.get().clipboard(self.clipboard_kind).image() {
+                        Ok(arboard::ImageData { width, height, bytes }) => {
+                            Ok(ClipboardContent::Image {
+                                width,
+                                height,
+                                bytes: Bytes::from(bytes.into_owned()),
+                            })
+                        }
+                        Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
+                        Err(err) => {
+                            tracing::warn!("{err}");
+                            Err(Error::Empty)
+                        }
+                    }
+                } else {
                     Err(Error::Empty)
                 }
-            },
-            Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
-            Err(_err) => Err(Error::Empty),
+            }
         }
     }
 }

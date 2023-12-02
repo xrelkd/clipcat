@@ -2,6 +2,7 @@ mod context;
 mod error;
 
 use std::{
+    collections::HashSet,
     os::fd::AsRawFd,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -79,10 +80,7 @@ fn try_reconnect(
 
     for _ in 0..max_retry_count {
         if let Err(err) = context.reconnect() {
-            tracing::warn!(
-                "{err}, try to re-connect after {} millisecond(s)",
-                retry_interval.as_millis()
-            );
+            tracing::warn!("{err}, try to re-connect after {n}ms", n = retry_interval.as_millis());
             std::thread::sleep(retry_interval);
         } else {
             poll.registry()
@@ -107,6 +105,8 @@ fn build_thread(
     mut context: Context,
     notifier: pubsub::Publisher,
 ) -> thread::JoinHandle<Result<(), Error>> {
+    let filter = ClipFilter::new();
+
     thread::spawn(move || {
         let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
         let mut events = mio::Events::with_capacity(1024);
@@ -129,12 +129,39 @@ fn build_thread(
             for event in &events {
                 if event.token() == CONTEXT_TOKEN {
                     match context.poll_for_event() {
-                        Ok(X11Event::XfixesSelectionNotify(_)) => notifier.notify_all(),
+                        Ok(X11Event::XfixesSelectionNotify(_event)) => {
+                            match context.get_available_formats() {
+                                Ok(formats) => {
+                                    // filter sensitive content
+                                    if filter.filter_atom(&formats) {
+                                        tracing::info!("Sensitive content detected, ignore it");
+                                        continue;
+                                    }
+
+                                    for format in formats {
+                                        if format == "UTF8_STRING" {
+                                            notifier.notify_all(mime::TEXT_PLAIN_UTF_8);
+                                            break;
+                                        }
+                                        if let Ok(mime) = format.parse() {
+                                            notifier.notify_all(mime);
+                                            break;
+                                        }
+                                    }
+                                }
+                                Err(err) => {
+                                    tracing::warn!(
+                                        "Clipboard is changed but we could not get available \
+                                         formats, error {err}"
+                                    );
+                                }
+                            }
+                        }
                         Ok(_) | Err(Error::NoEvent) => {}
                         Err(err) => {
                             tracing::warn!(
-                                "{err}, try to re-connect X11 server after {} millisecond(s)",
-                                RETRY_INTERVAL.as_millis()
+                                "{err}, try to re-connect X11 server after {n}ms",
+                                n = RETRY_INTERVAL.as_millis()
                             );
                             if let Err(err) =
                                 try_reconnect(&poll, &mut context, MAX_RETRY_COUNT, RETRY_INTERVAL)
@@ -151,4 +178,19 @@ fn build_thread(
         notifier.close();
         Ok(())
     })
+}
+
+struct ClipFilter {
+    sensitive_atoms: HashSet<String>,
+}
+
+impl ClipFilter {
+    fn new() -> Self {
+        Self { sensitive_atoms: HashSet::from(["x-kde-passwordManagerHint".to_string()]) }
+    }
+
+    #[inline]
+    fn filter_atom(&self, atoms: &[String]) -> bool {
+        atoms.iter().any(|atom| self.sensitive_atoms.contains(atom))
+    }
 }

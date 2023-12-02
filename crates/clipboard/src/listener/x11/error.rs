@@ -91,6 +91,12 @@ pub enum Error {
         backtrace: snafu::Backtrace,
     },
 
+    #[snafu(display("Could not delete property, error: {source}"))]
+    DeleteProperty {
+        source: x11rb::errors::ConnectionError,
+        backtrace: snafu::Backtrace,
+    },
+
     #[snafu(display("Could not change window attributes, error: {source}"))]
     ChangeWindowAttributes {
         source: x11rb::errors::ConnectionError,
@@ -110,6 +116,12 @@ pub enum Error {
         backtrace: snafu::Backtrace,
     },
 
+    #[snafu(display("Could not get atom name reply, error: {source}"))]
+    GetAtomNameReply {
+        source: x11rb::errors::ReplyError,
+        backtrace: snafu::Backtrace,
+    },
+
     #[snafu(display("Could not get property reply, error: {source}"))]
     GetPropertyReply {
         source: x11rb::errors::ReplyError,
@@ -124,12 +136,6 @@ pub enum Error {
 
     #[snafu(display("Could not convert selection, error: {source}"))]
     ConvertSelection {
-        source: x11rb::errors::ConnectionError,
-        backtrace: snafu::Backtrace,
-    },
-
-    #[snafu(display("Could not delete property, error: {source}"))]
-    DeleteProperty {
         source: x11rb::errors::ConnectionError,
         backtrace: snafu::Backtrace,
     },
@@ -156,6 +162,12 @@ pub enum Error {
     #[snafu(display("Could not select Xfixes selection input, error: {source}"))]
     SelectXfixesSelectionInput {
         source: x11rb::errors::ConnectionError,
+        backtrace: snafu::Backtrace,
+    },
+
+    #[snafu(display("Could not synchronise with X11 server, error: {source}"))]
+    SynchroniseWithX11 {
+        source: x11rb::errors::ReplyError,
         backtrace: snafu::Backtrace,
     },
 }

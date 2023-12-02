@@ -79,8 +79,10 @@ fn build_thread(
             tracing::trace!("Wait for readiness events");
 
             match wl_clipboard_get_contents(clipboard_type, Seat::Unspecified, MimeType::Any) {
-                Ok((_pipe, _mime_type)) => {
-                    notifier.notify_all();
+                Ok((_pipe, mime_type)) => {
+                    if let Ok(mime) = mime_type.parse() {
+                        notifier.notify_all(mime);
+                    }
                     continue;
                 }
                 Err(

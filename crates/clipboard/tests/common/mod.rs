@@ -42,7 +42,7 @@ pub trait ClipboardTester {
 
         for _ in 0..5 {
             std::thread::sleep(Duration::from_millis(20));
-            if let ClipboardContent::Plaintext(loaded_data) = clipboard.load()? {
+            if let ClipboardContent::Plaintext(loaded_data) = clipboard.load(None)? {
                 assert_eq!(loaded_data.len(), original_data.len());
                 assert_eq!(loaded_data, original_data);
             } else {
@@ -58,10 +58,10 @@ pub trait ClipboardTester {
         let clipboard = self.new_clipboard()?;
 
         clipboard.store(ClipboardContent::Plaintext(data.to_string()))?;
-        assert_eq!(clipboard.load().unwrap(), ClipboardContent::Plaintext(data.to_string()));
+        assert_eq!(clipboard.load(None).unwrap(), ClipboardContent::Plaintext(data.to_string()));
 
         clipboard.clear()?;
-        assert!(match clipboard.load() {
+        assert!(match clipboard.load(None) {
             Ok(ClipboardContent::Plaintext(s)) => s.is_empty(),
             Err(Error::Empty) => true,
             _ => false,

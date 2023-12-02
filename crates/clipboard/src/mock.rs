@@ -47,21 +47,39 @@ impl ClipboardSubscribe for Clipboard {
 }
 
 impl ClipboardLoad for Clipboard {
-    fn load(&self) -> Result<ClipboardContent, Error> {
-        self.data.read().map_or_else(
+    fn load(&self, mime: Option<mime::Mime>) -> Result<ClipboardContent, Error> {
+        let maybe_data = self.data.read().map_or_else(
             |_| Err(Error::Empty),
             |data| data.as_ref().map_or_else(|| Err(Error::Empty), |data| Ok(data.clone())),
-        )
+        );
+        match maybe_data {
+            Ok(content) => {
+                if let Some(mime) = mime {
+                    let content_mime = match content {
+                        ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
+                        ClipboardContent::Image { .. } => mime::IMAGE_PNG,
+                    };
+                    (content_mime == mime).then_some(content).ok_or(Error::Empty)
+                } else {
+                    Ok(content)
+                }
+            }
+            Err(err) => Err(err),
+        }
     }
 }
 
 impl ClipboardStore for Clipboard {
     #[inline]
     fn store(&self, content: ClipboardContent) -> Result<(), Error> {
+        let mime = match content {
+            ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
+            ClipboardContent::Image { .. } => mime::IMAGE_PNG,
+        };
         match self.data.write() {
             Ok(mut data) => {
                 *data = Some(content);
-                self.publisher.notify_all();
+                self.publisher.notify_all(mime);
                 Ok(())
             }
             Err(_err) => Err(Error::PrimitivePoisoned),
