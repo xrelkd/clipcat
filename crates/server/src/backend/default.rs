@@ -45,9 +45,13 @@ impl DefaultClipboardBackend {
 #[async_trait]
 impl ClipboardBackend for DefaultClipboardBackend {
     #[inline]
-    async fn load(&self, kind: ClipboardKind) -> Result<ClipboardContent> {
+    async fn load(
+        &self,
+        kind: ClipboardKind,
+        mime: Option<mime::Mime>,
+    ) -> Result<ClipboardContent> {
         let clipboard = self.select_clipboard(kind)?;
-        task::spawn_blocking(move || match clipboard.load() {
+        task::spawn_blocking(move || match clipboard.load(mime) {
             Ok(data) => Ok(data),
             Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
             Err(source) => Err(Error::LoadDataFromClipboard { source }),

@@ -66,7 +66,7 @@ impl ClipboardWatcher {
                         .map(|(kind, &enable)| (ClipboardKind::from(kind), enable))
                     {
                         if enable {
-                            match backend.load(kind).await {
+                            match backend.load(kind, None).await {
                                 Ok(data) => {
                                     if data.len() > filter_min_size {
                                         current_contents[usize::from(kind)] = data.clone();
@@ -93,9 +93,10 @@ impl ClipboardWatcher {
                 }
 
                 loop {
-                    let kind = subscriber.next().await.context(error::SubscriberClosedSnafu)?;
+                    let (kind, mime) =
+                        subscriber.next().await.context(error::SubscriberClosedSnafu)?;
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
-                        match backend.load(kind).await {
+                        match backend.load(kind, Some(mime)).await {
                             Ok(new_content)
                                 if new_content.len() > filter_min_size
                                     && current_contents[usize::from(kind)] != new_content =>
