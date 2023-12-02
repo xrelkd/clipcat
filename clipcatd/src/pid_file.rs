@@ -10,15 +10,12 @@ pub struct PidFile {
 impl PidFile {
     pub fn try_load(&self) -> Result<libc::pid_t, Error> {
         let pid_data = std::fs::read_to_string(self)
-            .context(ReadPidFileSnafu { filename: self.clone_path() })?;
+            .context(ReadPidFileSnafu { filename: self.path.clone() })?;
         pid_data.trim().parse().context(ParseProcessIdSnafu { value: pid_data })
     }
 
     #[inline]
     pub fn exists(&self) -> bool { self.path.exists() }
-
-    #[inline]
-    pub fn clone_path(&self) -> PathBuf { self.path().to_path_buf() }
 
     #[inline]
     pub fn path(&self) -> &Path { &self.path }

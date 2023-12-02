@@ -51,11 +51,6 @@ pub struct Cli {
     grpc_socket_path: Option<PathBuf>,
 }
 
-impl Default for Cli {
-    #[inline]
-    fn default() -> Self { Self::parse() }
-}
-
 #[derive(Clone, Subcommand)]
 pub enum Commands {
     #[clap(about = "Print version information")]
@@ -66,6 +61,11 @@ pub enum Commands {
 
     #[clap(about = "Output default configuration")]
     DefaultConfig,
+}
+
+impl Default for Cli {
+    #[inline]
+    fn default() -> Self { Self::parse() }
 }
 
 impl Cli {
@@ -148,7 +148,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
             std::thread::sleep(Duration::from_millis(200));
         }
 
-        daemonize::Daemonize::new().pid_file(pid_file.clone_path()).start()?;
+        daemonize::Daemonize::new().pid_file(pid_file.path()).start()?;
     }
 
     config.log.registry();
