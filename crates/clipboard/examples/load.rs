@@ -4,7 +4,7 @@ use snafu::ErrorCompat;
 
 fn main() -> Result<(), Error> {
     let clipboard = Clipboard::new(ClipboardKind::Clipboard)?;
-    match clipboard.load() {
+    match clipboard.load(None) {
         Ok(ClipboardContent::Plaintext(text)) => {
             println!("size: {}", text.len());
             println!("data: \"{text}\"");

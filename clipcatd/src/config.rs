@@ -5,11 +5,9 @@ use std::{
 
 use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
 use snafu::{ResultExt, Snafu};
 
-#[serde_as]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     pub daemonize: bool,
 
@@ -22,9 +20,8 @@ pub struct Config {
     #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
-    #[serde(default = "Config::default_log_level")]
-    #[serde_as(as = "DisplayFromStr")]
-    pub log_level: tracing::Level,
+    #[serde(default)]
+    pub log: clipcat_cli::config::LogConfig,
 
     #[serde(default, alias = "monitor")]
     pub watcher: WatcherConfig,
@@ -170,7 +167,7 @@ impl Default for Config {
             pid_file: Self::default_pid_file_path(),
             max_history: Self::default_max_history(),
             history_file_path: Self::default_history_file_path(),
-            log_level: Self::default_log_level(),
+            log: clipcat_cli::config::LogConfig::default(),
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
             snippets: Vec::new(),
@@ -211,9 +208,6 @@ impl Config {
         .into_iter()
         .collect()
     }
-
-    #[inline]
-    pub const fn default_log_level() -> tracing::Level { tracing::Level::INFO }
 
     #[inline]
     pub fn default_history_file_path() -> PathBuf {

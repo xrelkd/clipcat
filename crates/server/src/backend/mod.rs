@@ -22,7 +22,7 @@ pub fn new_shared() -> Result<Arc<dyn ClipboardBackend>> {
 
 #[derive(Debug)]
 pub struct Subscriber {
-    receiver: mpsc::UnboundedReceiver<ClipboardKind>,
+    receiver: mpsc::UnboundedReceiver<(ClipboardKind, mime::Mime)>,
     join_handles: task::JoinSet<()>,
 }
 
@@ -57,7 +57,9 @@ where
 }
 
 impl Subscriber {
-    pub async fn next(&mut self) -> Option<ClipboardKind> { self.receiver.recv().await }
+    pub async fn next(&mut self) -> Option<(ClipboardKind, mime::Mime)> {
+        self.receiver.recv().await
+    }
 }
 
 impl Drop for Subscriber {
@@ -69,7 +71,8 @@ impl Drop for Subscriber {
 
 #[async_trait]
 pub trait ClipboardBackend: Sync + Send {
-    async fn load(&self, kind: ClipboardKind) -> Result<ClipboardContent>;
+    async fn load(&self, kind: ClipboardKind, mime: Option<mime::Mime>)
+        -> Result<ClipboardContent>;
 
     async fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> Result<()>;
 

@@ -3,7 +3,6 @@ use std::{io::Write, net::IpAddr, path::PathBuf, time::Duration};
 use clap::{CommandFactory, Parser, Subcommand};
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     config::Config,
@@ -23,25 +22,33 @@ pub struct Cli {
     #[clap(long = "replace", short = 'r', help = "Try to replace existing daemon")]
     replace: bool,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCATD_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "history-file", help = "Specify a history file")]
+    #[clap(
+        long = "history-file",
+        env = "CLIPCATD_HISTORY_FILE_PATH",
+        help = "Specify a history file"
+    )]
     history_file_path: Option<PathBuf>,
 
-    #[clap(long = "grpc-host", help = "Specify gRPC host address")]
+    #[clap(long = "grpc-host", env = "CLIPCATD_GRPC_HOST", help = "Specify gRPC host address")]
     grpc_host: Option<IpAddr>,
 
-    #[clap(long = "grpc-port", help = "Specify gRPC port number")]
+    #[clap(long = "grpc-port", env = "CLIPCATD_GRPC_PORT", help = "Specify gRPC port number")]
     grpc_port: Option<u16>,
 
-    #[clap(long = "grpc-socket-path", help = "Specify gRPC local socket path")]
+    #[clap(
+        long = "grpc-socket-path",
+        env = "CLIPCATD_GRPC_SOCKET_PATH",
+        help = "Specify gRPC local socket path"
+    )]
     grpc_socket_path: Option<PathBuf>,
-}
-
-impl Default for Cli {
-    #[inline]
-    fn default() -> Self { Self::parse() }
 }
 
 #[derive(Clone, Subcommand)]
@@ -54,6 +61,11 @@ pub enum Commands {
 
     #[clap(about = "Output default configuration")]
     DefaultConfig,
+}
+
+impl Default for Cli {
+    #[inline]
+    fn default() -> Self { Self::parse() }
 }
 
 impl Cli {
@@ -106,8 +118,8 @@ impl Cli {
         }
 
         if let Some(path) = &self.grpc_socket_path {
-            config.grpc.local_socket = path.clone();
             config.grpc.enable_local_socket = true;
+            config.grpc.local_socket = path.clone();
         }
 
         if !config.grpc.enable_http && !config.grpc.enable_local_socket {
@@ -125,21 +137,43 @@ impl Cli {
 
 #[allow(clippy::cognitive_complexity)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
-    let daemonize = config.daemonize;
+    config.log.registry();
+
     let pid_file = PidFile::from(config.pid_file.clone());
-    if daemonize {
-        if pid_file.exists() && replace {
-            let pid = pid_file.try_load()?;
-            kill_other(pid)?;
+    if pid_file.exists() {
+        let pid = pid_file.try_load()?;
+        if replace {
+            if let Err(err) = kill_other(pid) {
+                tracing::warn!(
+                    "Error occurs while trying to terminate another instance, error: {err}"
+                );
+            };
 
-            // sleep for a while
-            std::thread::sleep(Duration::from_millis(200));
+            let polling_interval = Duration::from_millis(200);
+            while pid_file.exists() {
+                tracing::warn!(
+                    "PID file `{path}` exists, another instance (PID: {pid}) is still running, \
+                     sleep for {dur}ms",
+                    path = pid_file.path().display(),
+                    dur = polling_interval.as_millis()
+                );
+                // sleep for a while
+                std::thread::sleep(polling_interval);
+            }
+        } else {
+            tracing::warn!(
+                "Another instance (PID: {pid}) is running, please terminate `{pid}` first"
+            );
+            return Ok(());
         }
-
-        daemonize::Daemonize::new().pid_file(pid_file.clone_path()).start()?;
     }
 
-    init_tracing(config.log_level);
+    if config.daemonize {
+        daemonize::Daemonize::new().pid_file(pid_file.path()).start()?;
+    } else {
+        pid_file.create()?;
+    }
+
     let snippets = config.load_snippets();
     let config = clipcat_server::Config::from(config);
 
@@ -158,37 +192,18 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         Err(err) => Err(err),
     };
 
-    if daemonize {
-        if let Err(err) = pid_file.remove() {
-            tracing::error!("{err}");
-        }
+    if let Err(err) = pid_file.remove() {
+        tracing::error!("{err}");
     }
 
     tracing::info!("{} is shutdown", clipcat_base::DAEMON_PROGRAM_NAME);
     exit_status
 }
 
-fn init_tracing(log_level: tracing::Level) {
-    // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
-
-    // format
-    let fmt_layer =
-        tracing_subscriber::fmt::layer().pretty().with_thread_ids(true).with_thread_names(true);
-
-    // subscriber
-    let registry = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
-    match tracing_journald::layer() {
-        Ok(layer) => registry.with(layer).init(),
-        Err(_err) => {
-            registry.init();
-        }
-    }
-}
-
 #[allow(unsafe_code)]
 #[inline]
 fn kill_other(pid: libc::pid_t) -> Result<(), Error> {
+    tracing::info!("Try to terminate another instance (PID: {pid})");
     let ret = unsafe { libc::kill(pid, libc::SIGTERM) };
     if ret != 0 {
         return Err(Error::SendSignalTermination { pid });

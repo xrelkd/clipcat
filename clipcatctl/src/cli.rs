@@ -1,4 +1,4 @@
-use std::{io::Write, num::ParseIntError, path::PathBuf, str::FromStr};
+use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
@@ -9,7 +9,6 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     runtime::Runtime,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     config::Config,
@@ -24,13 +23,22 @@ pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCATCTL_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long = "server-endpoint", help = "Specify a server endpoint")]
+    #[clap(
+        long = "server-endpoint",
+        env = "CLIPCATCTL_SERVER_ENDPOINT",
+        help = "Specify a server endpoint"
+    )]
     server_endpoint: Option<http::Uri>,
 
-    #[clap(long = "log-level", help = "Specify a log level")]
+    #[clap(long = "log-level", env = "CLIPCATCTL_LOG_LEVEL", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
 }
 
@@ -96,7 +104,7 @@ pub enum Commands {
 
     #[clap(about = "Print clip with <id>")]
     Get {
-        #[clap(value_parser= parse_hex )]
+        #[clap(value_parser = parse_hex)]
         id: Option<u64>,
     },
 
@@ -111,7 +119,7 @@ pub enum Commands {
 
     #[clap(about = "Update clip with <id>")]
     Update {
-        #[clap(value_parser= parse_hex )]
+        #[clap(value_parser = parse_hex)]
         id: u64,
         data: String,
     },
@@ -170,9 +178,11 @@ pub enum Commands {
     GetWatcherState,
 }
 
-impl Cli {
-    pub fn new() -> Self { Self::parse() }
+impl Default for Cli {
+    fn default() -> Self { Self::parse() }
+}
 
+impl Cli {
     fn load_config(&self) -> Config {
         let mut config =
             Config::load_or_default(self.config_file.clone().unwrap_or_else(Config::default_path));
@@ -180,12 +190,8 @@ impl Cli {
             config.server_endpoint = endpoint.clone();
         }
 
-        if let Ok(log_level) = std::env::var("RUST_LOG") {
-            config.log_level = tracing::Level::from_str(&log_level).unwrap_or(tracing::Level::INFO);
-        }
-
         if let Some(log_level) = self.log_level {
-            config.log_level = log_level;
+            config.log.level = log_level;
         }
 
         config
@@ -218,8 +224,8 @@ impl Cli {
             _ => {}
         }
 
-        let Config { server_endpoint, log_level } = self.load_config();
-        init_tracing(log_level);
+        let Config { server_endpoint, log } = self.load_config();
+        log.registry();
 
         let fut = async move {
             let client = Client::new(server_endpoint).await?;
@@ -297,8 +303,7 @@ impl Cli {
                         let _ok = client.mark(new_id, ClipboardKind::Clipboard).await?;
                     } else {
                         println!(
-                            "{:016x} is a {}, you could not edit with text editor",
-                            id,
+                            "{id:016x} is a {}, you could not edit with text editor",
                             data.mime().essence_str()
                         );
                     }
@@ -344,22 +349,6 @@ impl Cli {
 
         Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(fut)
     }
-}
-
-#[inline]
-fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
-
-async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
-    let metadata_list = client.list(PREVIEW_LENGTH).await?;
-    for metadata in metadata_list {
-        let ClipEntryMetadata { id, preview, .. } = metadata;
-        if no_id {
-            println!("{preview}");
-        } else {
-            println!("{id:016x}: {preview}");
-        }
-    }
-    Ok(())
 }
 
 async fn load_file_or_read_stdin(
@@ -425,20 +414,18 @@ fn print_watcher_state(state: ClipboardWatcherState) {
     println!("{msg}");
 }
 
-fn init_tracing(log_level: tracing::Level) {
-    // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
-
-    // format
-    let fmt_layer =
-        tracing_subscriber::fmt::layer().pretty().with_thread_ids(true).with_thread_names(true);
-
-    // subscriber
-    let registry = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
-    match tracing_journald::layer() {
-        Ok(layer) => registry.with(layer).init(),
-        Err(_err) => {
-            registry.init();
+async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
+    let metadata_list = client.list(PREVIEW_LENGTH).await?;
+    for metadata in metadata_list {
+        let ClipEntryMetadata { id, preview, .. } = metadata;
+        if no_id {
+            println!("{preview}");
+        } else {
+            println!("{id:016x}: {preview}");
         }
     }
+    Ok(())
 }
+
+#[inline]
+fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }

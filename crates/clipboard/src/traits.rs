@@ -4,9 +4,9 @@ use crate::{ClipboardKind, Error};
 
 pub trait Load {
     /// # Errors
-    fn load(&self) -> Result<ClipboardContent, Error>;
+    fn load(&self, mime: Option<mime::Mime>) -> Result<ClipboardContent, Error>;
 
-    fn is_empty(&self) -> bool { matches!(self.load(), Err(Error::Empty)) }
+    fn is_empty(&self) -> bool { matches!(self.load(None), Err(Error::Empty)) }
 }
 
 pub trait Store {
@@ -19,7 +19,7 @@ pub trait Store {
 
 pub trait Wait {
     /// # Errors
-    fn wait(&self) -> Result<ClipboardKind, Error>;
+    fn wait(&self) -> Result<(ClipboardKind, mime::Mime), Error>;
 }
 
 pub trait Subscribe: Send + Sync {
@@ -32,7 +32,7 @@ pub trait Subscribe: Send + Sync {
 pub trait LoadExt: Load {
     /// # Errors
     fn load_string(&self) -> Result<String, Error> {
-        if let ClipboardContent::Plaintext(text) = self.load()? {
+        if let ClipboardContent::Plaintext(text) = self.load(Some(mime::TEXT_PLAIN_UTF_8))? {
             Ok(text)
         } else {
             Err(Error::Empty)
@@ -54,8 +54,8 @@ impl<C: Store + ?Sized> StoreExt for C {}
 pub trait LoadWait: Load + Subscribe {
     /// # Errors
     fn load_wait(&self) -> Result<ClipboardContent, Error> {
-        let _ = self.subscribe()?.wait()?;
-        self.load()
+        let (_, mime) = self.subscribe()?.wait()?;
+        self.load(Some(mime))
     }
 }
 

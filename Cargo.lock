@@ -422,7 +422,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bytes",
  "directories",
@@ -437,8 +437,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipcat-cli"
+version = "0.10.0"
+dependencies = [
+ "serde",
+ "serde_with",
+ "tracing",
+ "tracing-journald",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "clipcat-client"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -455,11 +466,12 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "arboard",
  "bytes",
  "clipcat-base",
+ "mime",
  "mio",
  "parking_lot",
  "sigfinn",
@@ -473,7 +485,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "clipcat-base",
  "snafu",
@@ -482,17 +494,17 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-client",
  "clipcat-external-editor",
  "http 1.0.0",
  "http-serde",
  "serde",
- "serde_with",
  "skim",
  "snafu",
  "tokio",
@@ -504,7 +516,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "clap 4.4.10",
  "clap_complete",
@@ -516,7 +528,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -530,7 +542,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -553,12 +565,13 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bytes",
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-client",
  "clipcat-external-editor",
  "directories",
@@ -566,7 +579,6 @@ dependencies = [
  "http-serde",
  "mime",
  "serde",
- "serde_with",
  "simdutf8",
  "snafu",
  "tokio",
@@ -578,11 +590,12 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "clap 4.4.10",
  "clap_complete",
  "clipcat-base",
+ "clipcat-cli",
  "clipcat-server",
  "daemonize",
  "directories",
@@ -590,7 +603,6 @@ dependencies = [
  "libc",
  "mime",
  "serde",
- "serde_with",
  "simdutf8",
  "snafu",
  "tokio",

@@ -6,7 +6,6 @@ use clipcat_client::{Client, Manager};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     config::Config,
@@ -22,19 +21,34 @@ pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
 
-    #[clap(long = "config", short = 'c', help = "Specify a configuration file")]
+    #[clap(
+        long = "config",
+        short = 'c',
+        env = "CLIPCAT_MENU_CONFIG_FILE_PATH",
+        help = "Specify a configuration file"
+    )]
     config_file: Option<PathBuf>,
 
-    #[clap(long, short = 'f', help = "Specify a finder")]
+    #[clap(long, short = 'f', env = "CLIPCAT_MENU_FINDER", help = "Specify a finder")]
     finder: Option<FinderType>,
 
-    #[clap(long, short = 'm', help = "Specify the menu length of finder")]
+    #[clap(
+        long,
+        short = 'm',
+        env = "CLIPCAT_MENU_MENU_LENGTH",
+        help = "Specify the menu length of finder"
+    )]
     menu_length: Option<usize>,
 
-    #[clap(long, short = 'l', help = "Specify the length of a line showing on finder")]
+    #[clap(
+        long,
+        short = 'l',
+        env = "CLIPCAT_MENU_LINE_LENGTH",
+        help = "Specify the length of a line showing on finder"
+    )]
     line_length: Option<usize>,
 
-    #[clap(long = "log-level", help = "Specify a log level")]
+    #[clap(long = "log-level", env = "CLIPCAT_MENU_LOG_LEVEL", help = "Specify a log level")]
     log_level: Option<tracing::Level>,
 }
 
@@ -71,14 +85,16 @@ pub enum Commands {
 
     #[clap(about = "Edit selected clip")]
     Edit {
-        #[clap(env = "EDITOR", long = "editor", short = 'e', help = "Specify a external editor")]
+        #[clap(long = "editor", short = 'e', env = "EDITOR", help = "Specify a external editor")]
         editor: String,
     },
 }
 
-impl Cli {
-    pub fn new() -> Self { Self::parse() }
+impl Default for Cli {
+    fn default() -> Self { Self::parse() }
+}
 
+impl Cli {
     pub fn run(self) -> Result<(), Error> {
         let Self { commands, config_file, finder, menu_length, line_length, log_level } = self;
 
@@ -116,10 +132,10 @@ impl Cli {
 
         let mut config = Config::load_or_default(config_file.unwrap_or_else(Config::default_path));
         if let Some(log_level) = log_level {
-            config.log_level = log_level;
+            config.log.level = log_level;
         }
 
-        init_tracing(config.log_level);
+        config.log.registry();
 
         let finder = {
             if let Some(finder) = finder {
@@ -203,12 +219,7 @@ async fn insert_clip(
 ) -> Result<(), Error> {
     let selection = finder.single_select(clips).await?;
     if let Some((index, clip)) = selection {
-        tracing::info!(
-            "Inserting clip (index: {}, id: {:016x}, content: {:?})",
-            index,
-            clip.id,
-            clip.preview,
-        );
+        tracing::info!("Inserting clip (index: {index}, id: {:016x})", clip.id);
         for &clipboard_kind in clipboard_kinds {
             let _ok = client.mark(clip.id, clipboard_kind).await?;
         }
@@ -217,22 +228,4 @@ async fn insert_clip(
     }
 
     Ok(())
-}
-
-fn init_tracing(log_level: tracing::Level) {
-    // filter
-    let filter_layer = tracing_subscriber::filter::LevelFilter::from_level(log_level);
-
-    // format
-    let fmt_layer =
-        tracing_subscriber::fmt::layer().pretty().with_thread_ids(true).with_thread_names(true);
-
-    // subscriber
-    let registry = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
-    match tracing_journald::layer() {
-        Ok(layer) => registry.with(layer).init(),
-        Err(_err) => {
-            registry.init();
-        }
-    }
 }

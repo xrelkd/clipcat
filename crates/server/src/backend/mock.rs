@@ -17,10 +17,14 @@ impl MockClipboardBackend {
 #[async_trait]
 impl ClipboardBackend for MockClipboardBackend {
     #[inline]
-    async fn load(&self, _kind: ClipboardKind) -> Result<ClipboardContent> {
+    async fn load(
+        &self,
+        _kind: ClipboardKind,
+        mime: Option<mime::Mime>,
+    ) -> Result<ClipboardContent> {
         let clipboard = self.0.clone();
-        task::spawn_blocking(move || match clipboard.load() {
-            Ok(d) => Ok(d),
+        task::spawn_blocking(move || match clipboard.load(mime) {
+            Ok(data) => Ok(data),
             Err(clipcat_clipboard::Error::Empty) => Err(Error::EmptyClipboard),
             Err(source) => Err(Error::LoadDataFromClipboard { source }),
         })

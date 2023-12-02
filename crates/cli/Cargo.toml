@@ -1,0 +1,23 @@
+[package]
+name                 = "clipcat-cli"
+description          = "Clipcat CLI common library"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+serde      = { version = "1", features = ["derive"] }
+serde_with = "3"
+
+tracing            = "0.1"
+tracing-journald   = "0.3"
+tracing-subscriber = "0.3"
+
+[lints]
+workspace = true

@@ -129,6 +129,24 @@ impl Entry {
     }
 
     #[must_use]
+    pub fn basic_information(&self) -> String {
+        let (content_type, size) = match &self.content {
+            ClipboardContent::Plaintext(text) => (mime::TEXT_PLAIN_UTF_8, text.len()),
+            ClipboardContent::Image { width: _, height: _, bytes } => {
+                (mime::IMAGE_PNG, bytes.len())
+            }
+        };
+
+        let timestamp = self
+            .timestamp
+            .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
+            .format(&Rfc3339)
+            .unwrap_or_default();
+        let size = humansize::format_size(size, humansize::BINARY);
+        format!("[{content_type} {size} {timestamp}]")
+    }
+
+    #[must_use]
     pub fn printable_data(&self, line_length: Option<usize>) -> String {
         fn truncate(s: &str, max_chars: usize) -> &str {
             match s.char_indices().nth(max_chars) {
@@ -139,16 +157,7 @@ impl Entry {
 
         let data = match &self.content {
             ClipboardContent::Plaintext(text) => text.clone(),
-            ClipboardContent::Image { width: _, height: _, bytes } => {
-                let content_type = mime::IMAGE_PNG;
-                let size = humansize::format_size(bytes.len(), humansize::BINARY);
-                let timestamp = self
-                    .timestamp
-                    .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
-                    .format(&Rfc3339)
-                    .unwrap_or_default();
-                format!("[{content_type} {size} {timestamp}]")
-            }
+            ClipboardContent::Image { .. } => self.basic_information(),
         };
 
         let data = match line_length {
