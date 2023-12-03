@@ -31,17 +31,20 @@ use time::OffsetDateTime;
 pub use self::proto::{
     manager_client::ManagerClient,
     manager_server::{Manager, ManagerServer},
+    system_client::SystemClient,
+    system_server::{System, SystemServer},
     watcher_client::WatcherClient,
     watcher_server::{Watcher, WatcherServer},
     BatchRemoveRequest, BatchRemoveResponse, ClipEntry, ClipEntryMetadata, ClipboardKind,
-    GetCurrentClipRequest, GetCurrentClipResponse, GetRequest, GetResponse, InsertRequest,
-    InsertResponse, LengthResponse, ListRequest, ListResponse, MarkRequest, MarkResponse,
-    RemoveRequest, RemoveResponse, UpdateRequest, UpdateResponse, WatcherState, WatcherStateReply,
+    GetCurrentClipRequest, GetCurrentClipResponse, GetRequest, GetResponse,
+    GetSystemVersionResponse, InsertRequest, InsertResponse, LengthResponse, ListRequest,
+    ListResponse, MarkRequest, MarkResponse, RemoveRequest, RemoveResponse, UpdateRequest,
+    UpdateResponse, WatcherState, WatcherStateReply,
 };
 
 impl From<ClipboardKind> for clipcat_base::ClipboardKind {
-    fn from(t: ClipboardKind) -> Self {
-        match t {
+    fn from(kind: ClipboardKind) -> Self {
+        match kind {
             ClipboardKind::Clipboard => Self::Clipboard,
             ClipboardKind::Primary => Self::Primary,
             ClipboardKind::Secondary => Self::Secondary,
@@ -50,8 +53,8 @@ impl From<ClipboardKind> for clipcat_base::ClipboardKind {
 }
 
 impl From<clipcat_base::ClipboardKind> for ClipboardKind {
-    fn from(t: clipcat_base::ClipboardKind) -> Self {
-        match t {
+    fn from(kind: clipcat_base::ClipboardKind) -> Self {
+        match kind {
             clipcat_base::ClipboardKind::Clipboard => Self::Clipboard,
             clipcat_base::ClipboardKind::Primary => Self::Primary,
             clipcat_base::ClipboardKind::Secondary => Self::Secondary,
