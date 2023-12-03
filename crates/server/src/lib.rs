@@ -10,7 +10,7 @@ mod watcher;
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
 use clipcat_base::ClipEntry;
-use clipcat_proto::{ManagerServer, WatcherServer};
+use clipcat_proto::{ManagerServer, SystemServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
 use notification::Notification;
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
@@ -174,6 +174,7 @@ fn create_grpc_local_socket_server_future(
             };
 
             let result = tonic::transport::Server::builder()
+                .add_service(SystemServer::new(grpc::SystemService::new()))
                 .add_service(WatcherServer::new(grpc::WatcherService::new(
                     clipboard_watcher_toggle,
                 )))
@@ -223,6 +224,7 @@ fn create_grpc_http_server_future(
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
             let result = tonic::transport::Server::builder()
+                .add_service(SystemServer::new(grpc::SystemService::new()))
                 .add_service(WatcherServer::new(grpc::WatcherService::new(
                     clipboard_watcher_toggle,
                 )))
