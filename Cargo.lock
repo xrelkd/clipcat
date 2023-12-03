@@ -522,7 +522,11 @@ dependencies = [
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
+ "mime",
+ "serde",
+ "serde_json",
  "snafu",
+ "time",
  "tokio",
 ]
 
