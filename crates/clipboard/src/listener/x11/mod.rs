@@ -131,12 +131,28 @@ fn build_thread(
                     match context.poll_for_event() {
                         Ok(X11Event::XfixesSelectionNotify(_event)) => {
                             match context.get_available_formats() {
-                                Ok(formats) => {
+                                Ok(mut formats) => {
                                     // filter sensitive content
                                     if filter.filter_atom(&formats) {
                                         tracing::info!("Sensitive content detected, ignore it");
                                         continue;
                                     }
+
+                                    // sort available formats by type, some applications provide
+                                    // image in `text/html` format, we prefer to use `image`
+                                    formats.sort_unstable_by_key(|format| {
+                                        if format.starts_with("image/png") {
+                                            1
+                                        } else if format.starts_with("image") {
+                                            2
+                                        } else if format.starts_with("text") {
+                                            3
+                                        } else if format == "UTF8_STRING" {
+                                            4
+                                        } else {
+                                            u32::MAX
+                                        }
+                                    });
 
                                     for format in formats {
                                         if format == "UTF8_STRING" {
