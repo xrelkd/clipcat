@@ -24,27 +24,9 @@ impl ClipboardWatcher {
         backend: Arc<dyn ClipboardBackend>,
         opts: ClipboardWatcherOptions,
     ) -> Result<Self, Error> {
-        let ClipboardWatcherOptions {
-            load_current,
-            enable_clipboard,
-            enable_primary,
-            filter_min_size,
-            filter_max_size,
-        } = opts;
-
-        let enabled_kinds = {
-            let mut kinds = [false; ClipboardKind::MAX_LENGTH];
-            if enable_clipboard {
-                kinds[usize::from(ClipboardKind::Clipboard)] = true;
-            }
-            if enable_primary {
-                kinds[usize::from(ClipboardKind::Primary)] = true;
-            }
-            if kinds.iter().all(|x| !x) {
-                tracing::warn!("Both clipboard and primary are not watched");
-            }
-            kinds
-        };
+        let enabled_kinds = opts.get_enable_kinds();
+        let check_content = opts.generate_content_checker();
+        let ClipboardWatcherOptions { load_current, .. } = opts;
 
         let (clip_sender, _event_receiver) = broadcast::channel(16);
         let is_watching = Arc::new(AtomicBool::new(true));
@@ -54,9 +36,6 @@ impl ClipboardWatcher {
             let is_watching = is_watching.clone();
 
             let mut subscriber = backend.subscribe()?;
-            let check_content_size = move |data: &ClipboardContent| {
-                data.len() > filter_min_size && data.len() <= filter_max_size
-            };
 
             async move {
                 let mut current_contents: [ClipboardContent; ClipboardKind::MAX_LENGTH] = [
@@ -73,7 +52,7 @@ impl ClipboardWatcher {
                         if enable {
                             match backend.load(kind, None).await {
                                 Ok(data) => {
-                                    if check_content_size(&data) {
+                                    if check_content(&data) {
                                         current_contents[usize::from(kind)] = data.clone();
                                         if let Err(_err) = clip_sender.send(
                                             ClipEntry::from_clipboard_content(data, kind, None),
@@ -103,7 +82,7 @@ impl ClipboardWatcher {
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
                         match backend.load(kind, Some(mime)).await {
                             Ok(new_content)
-                                if check_content_size(&new_content)
+                                if check_content(&new_content)
                                     && current_contents[usize::from(kind)] != new_content =>
                             {
                                 current_contents[usize::from(kind)] = new_content.clone();
