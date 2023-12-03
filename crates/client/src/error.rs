@@ -217,3 +217,16 @@ impl fmt::Display for GetWatcherStateError {
         }
     }
 }
+
+#[derive(Debug)]
+pub enum GetSystemVersionError {
+    Status { source: tonic::Status },
+}
+
+impl fmt::Display for GetSystemVersionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Status { source } => source.fmt(f),
+        }
+    }
+}
