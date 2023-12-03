@@ -6,14 +6,14 @@ use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubsc
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::backend::{error, ClipboardBackend, Error, Result, Subscriber};
+use crate::backend::{error, traits, Error, Result, Subscriber};
 
 #[derive(Clone)]
-pub struct DefaultClipboardBackend {
+pub struct Backend {
     clipboards: Vec<Arc<Clipboard>>,
 }
 
-impl DefaultClipboardBackend {
+impl Backend {
     /// # Errors
     pub fn new() -> Result<Self> {
         let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
@@ -43,7 +43,7 @@ impl DefaultClipboardBackend {
 }
 
 #[async_trait]
-impl ClipboardBackend for DefaultClipboardBackend {
+impl traits::Backend for Backend {
     #[inline]
     async fn load(
         &self,

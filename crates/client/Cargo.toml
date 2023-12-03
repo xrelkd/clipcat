@@ -23,8 +23,9 @@ tower = "0.4"
 tonic       = { version = "0.10", features = ["gzip"] }
 prost-types = "0.12"
 
-snafu = "0.7"
-mime  = "0.3"
+mime   = "0.3"
+semver = "1"
+snafu  = "0.7"
 
 clipcat-base  = { path = "../base" }
 clipcat-proto = { path = "../proto" }

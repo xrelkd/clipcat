@@ -2,7 +2,7 @@ use std::{io::Write, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind};
-use clipcat_client::{Client, Manager};
+use clipcat_client::{Client, Manager, System};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
@@ -55,8 +55,11 @@ pub struct Cli {
 #[allow(variant_size_differences)]
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Print version information")]
-    Version,
+    #[clap(about = "Print the client and server version information")]
+    Version {
+        #[clap(long = "client", help = "If true, shows client version only (no server required).")]
+        client: bool,
+    },
 
     #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
@@ -99,11 +102,8 @@ impl Cli {
         let Self { commands, config_file, finder, menu_length, line_length, log_level } = self;
 
         match commands {
-            Some(Commands::Version) => {
-                std::io::stdout()
-                    .write_all(Self::command().render_long_version().as_bytes())
-                    .expect("failed to write to stdout");
-
+            Some(Commands::Version { client }) if client => {
+                print_only_client_version();
                 return Ok(());
             }
             Some(Commands::Completions { shell }) => {
@@ -155,10 +155,10 @@ impl Cli {
 
         let fut = async move {
             let client = Client::new(config.server_endpoint).await?;
-
             let clips = client.list(PREVIEW_LENGTH).await?;
 
             match commands {
+                Some(Commands::Version { .. }) => print_version(&client).await,
                 Some(Commands::Insert { mut kinds }) => {
                     if kinds.is_empty() {
                         kinds.push(ClipboardKind::Clipboard);
@@ -228,4 +228,28 @@ async fn insert_clip(
     }
 
     Ok(())
+}
+
+fn print_only_client_version() {
+    let client_version = Cli::command().get_version().unwrap_or_default().to_string();
+    std::io::stdout()
+        .write_all(Cli::command().render_long_version().as_bytes())
+        .expect("Failed to write to stdout");
+    std::io::stdout()
+        .write_all(format!("Client Version: {client_version}\n").as_bytes())
+        .expect("Failed to write to stdout");
+}
+
+async fn print_version(client: &Client) {
+    let client_version = Cli::command().get_version().unwrap_or_default().to_string();
+    let server_version = client
+        .get_version()
+        .await
+        .map_or_else(|_err| "unknown".to_string(), |version| version.to_string());
+
+    let info = format!("Client Version: {client_version}\nServer Version: {server_version}\n",);
+    std::io::stdout()
+        .write_all(Cli::command().render_long_version().as_bytes())
+        .expect("Failed to write to stdout");
+    std::io::stdout().write_all(info.as_bytes()).expect("Failed to write to stdout");
 }

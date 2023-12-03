@@ -45,8 +45,8 @@ set -eu
 
 # check if executable works in this container
 /usr/bin/clipcatd       version
-/usr/bin/clipcatctl     version
-/usr/bin/clipcat-menu   version
+/usr/bin/clipcatctl     version --client
+/usr/bin/clipcat-menu   version --client
 /usr/bin/clipcat-notify version
 
 EOF
