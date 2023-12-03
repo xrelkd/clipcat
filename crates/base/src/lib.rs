@@ -73,4 +73,10 @@ impl ClipboardContent {
             Self::Image { bytes, .. } => bytes.len(),
         }
     }
+
+    #[inline]
+    pub const fn is_plaintext(&self) -> bool { matches!(&self, Self::Plaintext(_)) }
+
+    #[inline]
+    pub const fn is_image(&self) -> bool { matches!(&self, Self::Image { .. }) }
 }

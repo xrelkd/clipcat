@@ -33,6 +33,8 @@ pub struct Config {
     pub snippets: Vec<SnippetConfig>,
 }
 
+// SAFETY: user may use bool to enable/disable the functions
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
     #[serde(default)]
@@ -43,6 +45,9 @@ pub struct WatcherConfig {
 
     #[serde(default)]
     pub enable_primary: bool,
+
+    #[serde(default)]
+    pub capture_image: bool,
 
     #[serde(default = "WatcherConfig::default_filter_min_size")]
     pub filter_min_size: usize,
@@ -57,11 +62,19 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             load_current,
             enable_clipboard,
             enable_primary,
+            capture_image,
             filter_min_size,
             filter_max_size,
         }: WatcherConfig,
     ) -> Self {
-        Self { load_current, enable_clipboard, enable_primary, filter_min_size, filter_max_size }
+        Self {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            capture_image,
+            filter_min_size,
+            filter_max_size,
+        }
     }
 }
 
@@ -195,6 +208,7 @@ impl Default for WatcherConfig {
             load_current: true,
             enable_clipboard: true,
             enable_primary: true,
+            capture_image: true,
             filter_min_size: Self::default_filter_min_size(),
             filter_max_size: Self::default_filter_max_size(),
         }
