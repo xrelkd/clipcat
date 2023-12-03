@@ -1,6 +1,7 @@
 use std::{
     net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
+    time::Duration,
 };
 
 use directories::BaseDirs;
@@ -28,6 +29,9 @@ pub struct Config {
 
     #[serde(default)]
     pub grpc: GrpcConfig,
+
+    #[serde(default)]
+    pub desktop_notification: DesktopNofificationConfig,
 
     #[serde(default)]
     pub snippets: Vec<SnippetConfig>,
@@ -197,6 +201,7 @@ impl Default for Config {
             log: clipcat_cli::config::LogConfig::default(),
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
+            desktop_notification: DesktopNofificationConfig::default(),
             snippets: Vec::new(),
         }
     }
@@ -286,12 +291,61 @@ impl Config {
     }
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DesktopNofificationConfig {
+    #[serde(default = "DesktopNofificationConfig::default_enable")]
+    pub enable: bool,
+
+    #[serde(default = "DesktopNofificationConfig::default_icon")]
+    pub icon: String,
+
+    #[serde(default = "DesktopNofificationConfig::default_timeout_ms")]
+    pub timeout_ms: u64,
+}
+
+impl DesktopNofificationConfig {
+    pub const fn default_enable() -> bool { true }
+
+    pub fn default_icon() -> String { String::from("accessories-clipboard") }
+
+    pub const fn default_timeout_ms() -> u64 { 2000 }
+}
+
+impl Default for DesktopNofificationConfig {
+    fn default() -> Self {
+        Self {
+            enable: Self::default_enable(),
+            icon: Self::default_icon(),
+            timeout_ms: Self::default_timeout_ms(),
+        }
+    }
+}
+
+impl From<DesktopNofificationConfig> for clipcat_server::config::DesktopNofificationConfig {
+    fn from(
+        DesktopNofificationConfig { enable, icon, timeout_ms }: DesktopNofificationConfig,
+    ) -> Self {
+        Self { enable, icon, timeout: Duration::from_millis(timeout_ms) }
+    }
+}
+
 impl From<Config> for clipcat_server::Config {
-    fn from(Config { grpc, max_history, history_file_path, watcher, .. }: Config) -> Self {
+    fn from(
+        Config { grpc, max_history, history_file_path, watcher, desktop_notification, .. }: Config,
+    ) -> Self {
         let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
         let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
         let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
-        Self { grpc_listen_address, grpc_local_socket, max_history, history_file_path, watcher }
+        let desktop_notification =
+            clipcat_server::config::DesktopNofificationConfig::from(desktop_notification);
+        Self {
+            grpc_listen_address,
+            grpc_local_socket,
+            max_history,
+            history_file_path,
+            watcher,
+            desktop_notification,
+        }
     }
 }
 

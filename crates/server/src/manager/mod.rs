@@ -10,11 +10,11 @@ use snafu::ResultExt;
 use time::OffsetDateTime;
 
 pub use self::error::Error;
-use crate::backend::ClipboardBackend;
+use crate::{backend::ClipboardBackend, notification};
 
 const DEFAULT_CAPACITY: usize = 40;
 
-pub struct ClipboardManager {
+pub struct ClipboardManager<Notification> {
     backend: Arc<dyn ClipboardBackend>,
 
     capacity: usize,
@@ -29,10 +29,19 @@ pub struct ClipboardManager {
     timestamp_to_id: BTreeMap<OffsetDateTime, u64>,
 
     snippet_ids: HashSet<u64>,
+
+    notification: Notification,
 }
 
-impl ClipboardManager {
-    pub fn with_capacity(backend: Arc<dyn ClipboardBackend>, capacity: usize) -> Self {
+impl<Notification> ClipboardManager<Notification>
+where
+    Notification: notification::Notification,
+{
+    pub fn with_capacity(
+        backend: Arc<dyn ClipboardBackend>,
+        capacity: usize,
+        notification: Notification,
+    ) -> Self {
         let capacity = if capacity == 0 { DEFAULT_CAPACITY } else { capacity };
         Self {
             backend,
@@ -41,13 +50,14 @@ impl ClipboardManager {
             current_clips: [None; ClipboardKind::MAX_LENGTH],
             timestamp_to_id: BTreeMap::new(),
             snippet_ids: HashSet::new(),
+            notification,
         }
     }
 
     #[cfg(test)]
     #[inline]
-    pub fn new(backend: Arc<dyn ClipboardBackend>) -> Self {
-        Self::with_capacity(backend, DEFAULT_CAPACITY)
+    pub fn new(backend: Arc<dyn ClipboardBackend>, notification: Notification) -> Self {
+        Self::with_capacity(backend, DEFAULT_CAPACITY, notification)
     }
 
     #[inline]
@@ -176,6 +186,7 @@ impl ClipboardManager {
         self.timestamp_to_id.retain(|_, id| self.snippet_ids.contains(id));
         self.current_clips = [None; ClipboardKind::MAX_LENGTH];
         self.clips.retain(|id, _| self.snippet_ids.contains(id));
+        self.notification.on_history_cleared();
     }
 
     pub fn replace(&mut self, old_id: u64, data: &[u8], mime: &mime::Mime) -> (bool, u64) {
@@ -212,6 +223,7 @@ mod tests {
     use crate::{
         backend::MockClipboardBackend,
         manager::{ClipboardManager, DEFAULT_CAPACITY},
+        notification::MockNotification,
     };
 
     fn create_clips(n: usize) -> Vec<ClipEntry> {
@@ -220,8 +232,9 @@ mod tests {
 
     #[test]
     fn test_construction() {
+        let notification = MockNotification::default();
         let backend = Arc::new(MockClipboardBackend::new());
-        let mgr = ClipboardManager::new(backend);
+        let mgr = ClipboardManager::new(backend, notification);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), DEFAULT_CAPACITY);
@@ -230,7 +243,7 @@ mod tests {
 
         let cap = 20;
         let backend = Arc::new(MockClipboardBackend::new());
-        let mgr = ClipboardManager::with_capacity(backend, cap);
+        let mgr = ClipboardManager::with_capacity(backend, cap, notification);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
@@ -241,8 +254,9 @@ mod tests {
     #[test]
     fn test_capacity() {
         let backend = Arc::new(MockClipboardBackend::new());
+        let notification = MockNotification::default();
         let cap = 10;
-        let mut mgr = ClipboardManager::with_capacity(backend, cap);
+        let mut mgr = ClipboardManager::with_capacity(backend, cap, notification);
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
 
@@ -275,7 +289,8 @@ mod tests {
         let n = 20;
         let clips = create_clips(n);
         let backend = Arc::new(MockClipboardBackend::new());
-        let mut mgr = ClipboardManager::new(backend);
+        let notification = MockNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
         for clip in &clips {
             let _ = mgr.insert(clip.clone());
         }
@@ -295,7 +310,8 @@ mod tests {
         let n = 10;
         let mut clips = create_clips(n);
         let backend = Arc::new(MockClipboardBackend::new());
-        let mut mgr = ClipboardManager::with_capacity(backend, 20);
+        let notification = MockNotification::default();
+        let mut mgr = ClipboardManager::with_capacity(backend, 20, notification);
 
         mgr.import(&clips);
         assert_eq!(mgr.len(), n);
@@ -319,7 +335,8 @@ mod tests {
         let data2 = "АБВГД";
         let clip = ClipEntry::new(data1.as_bytes(), &MIME, ClipboardKind::Clipboard, None).unwrap();
         let backend = Arc::new(MockClipboardBackend::new());
-        let mut mgr = ClipboardManager::new(backend);
+        let notification = MockNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
 
@@ -336,7 +353,8 @@ mod tests {
     #[test]
     fn test_remove() {
         let backend = Arc::new(MockClipboardBackend::new());
-        let mut mgr = ClipboardManager::new(backend);
+        let notification = MockNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
         assert_eq!(mgr.len(), 0);
         assert!(!mgr.remove(43));
 
@@ -359,9 +377,10 @@ mod tests {
     #[test]
     fn test_clear() {
         let backend = Arc::new(MockClipboardBackend::new());
+        let notification = MockNotification::default();
         let n = 20;
         let clips = create_clips(n);
-        let mut mgr = ClipboardManager::new(backend);
+        let mut mgr = ClipboardManager::new(backend, notification);
 
         mgr.import(&clips);
         assert!(!mgr.is_empty());
