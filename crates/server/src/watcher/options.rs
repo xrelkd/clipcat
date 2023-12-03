@@ -54,9 +54,18 @@ impl Options {
     pub(crate) fn generate_content_checker(&self) -> impl Fn(&ClipboardContent) -> bool {
         let Self { capture_image, filter_max_size, filter_min_size, .. } = *self;
         move |data: &ClipboardContent| -> bool {
-            (data.is_plaintext() || (capture_image && data.is_image()))
+            let ret = (data.is_plaintext() || (capture_image && data.is_image()))
                 && data.len() > filter_min_size
-                && data.len() <= filter_max_size
+                && data.len() <= filter_max_size;
+            if !ret {
+                tracing::info!(
+                    "Clip ({info}) is ignored, because of the configuration (filter_min_size: \
+                     {filter_min_size}, filter_max_size: {filter_max_size}, capture_image: \
+                     {capture_image})",
+                    info = data.basic_information()
+                );
+            }
+            ret
         }
     }
 }
