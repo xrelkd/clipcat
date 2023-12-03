@@ -11,7 +11,7 @@ use snafu::{ResultExt, Snafu};
 pub struct Config {
     pub daemonize: bool,
 
-    #[serde(skip_serializing, default = "Config::default_pid_file_path")]
+    #[serde(default = "Config::default_pid_file_path")]
     pub pid_file: PathBuf,
 
     #[serde(default = "Config::default_max_history")]
