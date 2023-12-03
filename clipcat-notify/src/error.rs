@@ -16,5 +16,5 @@ pub enum Error {
     SubscribeClipboard { source: clipcat_server::backend::Error },
 
     #[snafu(display("Nothing to listen"))]
-    ListenNothing,
+    ListenToNothing,
 }

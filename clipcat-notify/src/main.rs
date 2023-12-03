@@ -4,7 +4,9 @@ use std::io::Write;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::ClipboardKind;
+use serde::Serialize;
 use snafu::ResultExt;
+use time::OffsetDateTime;
 use tokio::runtime::Runtime;
 
 use self::error::Error;
@@ -55,7 +57,7 @@ impl Cli {
                 let enable_secondary = !self.no_secondary;
 
                 if !enable_clipboard && !enable_primary && !enable_secondary {
-                    return Err(Error::ListenNothing);
+                    return Err(Error::ListenToNothing);
                 }
 
                 Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
@@ -65,13 +67,22 @@ impl Cli {
                         let mut subscriber =
                             backend.subscribe().context(error::SubscribeClipboardSnafu)?;
 
-                        while let Some((kind, _mime)) = subscriber.next().await {
+                        while let Some((kind, mime)) = subscriber.next().await {
                             match kind {
-                                ClipboardKind::Clipboard if enable_clipboard => return Ok(()),
-                                ClipboardKind::Primary if enable_primary => return Ok(()),
-                                ClipboardKind::Secondary if enable_secondary => return Ok(()),
+                                ClipboardKind::Clipboard if enable_clipboard => {}
+                                ClipboardKind::Primary if enable_primary => {}
+                                ClipboardKind::Secondary if enable_secondary => {}
                                 _ => continue,
                             }
+
+                            let info = {
+                                let now = OffsetDateTime::now_local()
+                                    .unwrap_or_else(|_| OffsetDateTime::now_utc());
+                                ClipInfo { kind, mime, timestamp: now }
+                            };
+                            serde_json::to_writer_pretty(std::io::stdout(), &info)
+                                .expect("`ClipInfo` is serializable");
+                            return Ok(());
                         }
 
                         drop(backend);
@@ -84,6 +95,18 @@ impl Cli {
             }
         }
     }
+}
+
+#[derive(Serialize)]
+struct ClipInfo {
+    #[serde(rename = "clipboard_kind", with = "clipcat_base::serde::clipboard_kind")]
+    kind: ClipboardKind,
+
+    #[serde(with = "clipcat_base::serde::mime")]
+    mime: mime::Mime,
+
+    #[serde(with = "time::serde::rfc3339")]
+    timestamp: OffsetDateTime,
 }
 
 fn main() {
