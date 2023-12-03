@@ -29,6 +29,7 @@ impl ClipboardWatcher {
             enable_clipboard,
             enable_primary,
             filter_min_size,
+            filter_max_size,
         } = opts;
 
         let enabled_kinds = {
@@ -53,6 +54,10 @@ impl ClipboardWatcher {
             let is_watching = is_watching.clone();
 
             let mut subscriber = backend.subscribe()?;
+            let check_content_size = move |data: &ClipboardContent| {
+                data.len() > filter_min_size && data.len() <= filter_max_size
+            };
+
             async move {
                 let mut current_contents: [ClipboardContent; ClipboardKind::MAX_LENGTH] = [
                     ClipboardContent::default(),
@@ -68,7 +73,7 @@ impl ClipboardWatcher {
                         if enable {
                             match backend.load(kind, None).await {
                                 Ok(data) => {
-                                    if data.len() > filter_min_size {
+                                    if check_content_size(&data) {
                                         current_contents[usize::from(kind)] = data.clone();
                                         if let Err(_err) = clip_sender.send(
                                             ClipEntry::from_clipboard_content(data, kind, None),
@@ -98,7 +103,7 @@ impl ClipboardWatcher {
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
                         match backend.load(kind, Some(mime)).await {
                             Ok(new_content)
-                                if new_content.len() > filter_min_size
+                                if check_content_size(&new_content)
                                     && current_contents[usize::from(kind)] != new_content =>
                             {
                                 current_contents[usize::from(kind)] = new_content.clone();

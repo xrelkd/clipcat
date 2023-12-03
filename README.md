@@ -198,7 +198,8 @@ level = "INFO"                   # log level
 load_current = true       # load current clipboard content at startup
 enable_clipboard = true   # watch X11 clipboard
 enable_primary = true     # watch X11 primary clipboard
-filter_min_size = 1       # ignores copy actions with a size <= `filter_min_size`, in bytes
+filter_min_size = 1       # ignore copy actions with a size <= `filter_min_size`, in bytes
+filter_max_size = 5242880 # ignore copy actions with a size > `filter_max_size`, in bytes
 
 [grpc]
 enable_http = true         # enable gRPC over http
