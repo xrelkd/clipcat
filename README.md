@@ -68,6 +68,42 @@
 </details>
 
 <details>
+    <summary>Install the pre-built binaries</summary>
+
+Pre-built binaries for Linux can be found on [the releases page](https://github.com/xrelkd/clipcat/releases/), the latest release is available [here](https://github.com/xrelkd/clipcat/releases/latest).
+
+For example, to install `clipcat` to `~/bin`:
+
+```bash
+# create ~/bin
+mkdir -p ~/bin
+
+# change directory to ~/bin
+cd ~/bin
+
+# download and extract clipcat to ~/bin/
+# NOTE: replace the version with the version you want to install
+export CLIPCAT_VERSION=v0.11.0
+
+# NOTE: the architecture of your machine,
+# available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
+export ARCH=x86_64-unknown-linux-musl
+curl -s -L "https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION}-${ARCH}.tar.gz" | tar xzf -
+
+# add `~/bin` to the paths that your shell searches for executables
+# this line should be added to your shells initialization file,
+# e.g. `~/.bashrc` or `~/.zshrc`
+export PATH="$PATH:$HOME/bin"
+
+# show version info
+clipcatd     version
+clipcatctl   version
+clipcat-menu version
+```
+
+</details>
+
+<details>
   <summary>Build from source</summary>
 
 `clipcat` requires the following tools and packages to build:
