@@ -46,18 +46,32 @@ pub struct WatcherConfig {
 
     #[serde(default = "WatcherConfig::default_filter_min_size")]
     pub filter_min_size: usize,
+
+    #[serde(default = "WatcherConfig::default_filter_max_size")]
+    pub filter_max_size: usize,
 }
 
 impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
     fn from(
-        WatcherConfig { load_current, enable_clipboard, enable_primary, filter_min_size }: WatcherConfig,
+        WatcherConfig {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            filter_min_size,
+            filter_max_size,
+        }: WatcherConfig,
     ) -> Self {
-        Self { load_current, enable_clipboard, enable_primary, filter_min_size }
+        Self { load_current, enable_clipboard, enable_primary, filter_min_size, filter_max_size }
     }
 }
 
 impl WatcherConfig {
     pub const fn default_filter_min_size() -> usize { 1 }
+
+    pub const fn default_filter_max_size() -> usize {
+        // 5 MiB
+        5 * (1 << 20)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -181,7 +195,8 @@ impl Default for WatcherConfig {
             load_current: true,
             enable_clipboard: true,
             enable_primary: true,
-            filter_min_size: 1,
+            filter_min_size: Self::default_filter_min_size(),
+            filter_max_size: Self::default_filter_max_size(),
         }
     }
 }
