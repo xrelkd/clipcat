@@ -12,11 +12,16 @@ categories.workspace = true
 keywords.workspace   = true
 
 [dependencies]
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
+mime          = "0.3"
 snafu         = "0.7"
+time          = { version = "0.3", features = ["local-offset", "serde"] }
 
 clipcat-base   = { path = "../crates/base" }
 clipcat-server = { path = "../crates/server" }

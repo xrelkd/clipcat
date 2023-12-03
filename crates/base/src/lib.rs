@@ -73,4 +73,19 @@ impl ClipboardContent {
             Self::Image { bytes, .. } => bytes.len(),
         }
     }
+
+    #[inline]
+    pub const fn is_plaintext(&self) -> bool { matches!(&self, Self::Plaintext(_)) }
+
+    #[inline]
+    pub const fn is_image(&self) -> bool { matches!(&self, Self::Image { .. }) }
+
+    pub fn basic_information(&self) -> String {
+        let (content_type, size) = match &self {
+            Self::Plaintext(text) => (mime::TEXT_PLAIN_UTF_8, text.len()),
+            Self::Image { width: _, height: _, bytes } => (mime::IMAGE_PNG, bytes.len()),
+        };
+        let size = humansize::format_size(size, humansize::BINARY);
+        format!("{content_type}, {size}")
+    }
 }

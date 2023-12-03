@@ -183,29 +183,50 @@ $ clipcatd
 <summary>Configuration for <b>clipcatd</b></summary>
 
 ```toml
-daemonize = true          # run as a traditional UNIX daemon
-max_history = 50          # max clip history limit
-history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history" # file path of clip history
+# run as a traditional UNIX daemon
+daemonize = true
+# max clip history limit
+max_history = 50
+# file path of clip history
+history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
 
 [log]
-file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
-emit_journald = true             # emit log message to journald
-emit_stdout = false              # emit log message to stdout
-emit_stderr = false              # emit log message to stderr
-level = "INFO"                   # log level
+# emit log message to a log file. Delete this line to disable emitting to a log file
+file_path = "/path/to/log/file"
+# emit log message to journald
+emit_journald = true
+# emit log message to stdout
+emit_stdout = false
+# emit log message to stderr
+emit_stderr = false
+# log level
+level = "INFO"
 
 [watcher]
-load_current = true       # load current clipboard content at startup
-enable_clipboard = true   # watch X11 clipboard
-enable_primary = true     # watch X11 primary clipboard
-filter_min_size = 1       # ignores copy actions with a size <= `filter_min_size`, in bytes
+# load current clipboard content at startup
+load_current = true
+# enable watching X11/Wayland clipboard selection
+enable_clipboard = true
+# enable watching X11/Wayland primary selection
+enable_primary = true
+# enable capturing image or not
+capture_image = true
+# ignore clips with a size <= `filter_min_size`, in bytes
+filter_min_size = 1
+# ignore clips with a size > `filter_max_size`, in bytes
+filter_max_size = 5242880
 
 [grpc]
-enable_http = true         # enable gRPC over http
-enable_local_socket = true # enable gRPC over unix domain socket
-host = "127.0.0.1"         # host address for gRPC
-port = 45045               # port number for gRPC
-local_socket = "/run/user/<user-id>/clipcat/grpc.sock" # path of unix domain socket
+# enable gRPC over http
+enable_http = true
+# enable gRPC over unix domain socket
+enable_local_socket = true
+# host address for gRPC
+host = "127.0.0.1"
+# port number for gRPC
+port = 45045
+# path of unix domain socket
+local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
 
 # snippets, only UTF-8 text is supported.
 [[snippets]]
@@ -269,11 +290,16 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [log]
-file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
-emit_journald = true             # emit log message to journald
-emit_stdout = false              # emit log message to stdout
-emit_stderr = false              # emit log message to stderr
-level = "INFO"                   # log level
+# emit log message to a log file. Delete this line to disable emitting to a log file
+file_path = "/path/to/log/file"
+# emit log message to journald
+emit_journald = true
+# emit log message to stdout
+emit_stdout = false
+# emit log message to stderr
+emit_stderr = false
+# log level
+level = "INFO"
 ```
 
 </details>
@@ -288,28 +314,45 @@ level = "INFO"                   # log level
 # clipcat-menu connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
-finder = "rofi"           # the default finder to invoke when no "--finder=<finder>" option provided
+# the default finder to invoke when no "--finder=<finder>" option provided
+finder = "rofi"
 
 [log]
-file_path = "/path/to/log/file"  # emit log message to a log file. Delete this line to disable emitting to a log file
-emit_journald = true             # emit log message to journald
-emit_stdout = false              # emit log message to stdout
-emit_stderr = false              # emit log message to stderr
-level = "INFO"                   # log level
+# emit log message to a log file. Delete this line to disable emitting to a log file
+file_path = "/path/to/log/file"
+# emit log message to journald
+emit_journald = true
+# emit log message to stdout
+emit_stdout = false
+# emit log message to stderr
+emit_stderr = false
+# log level
+level = "INFO"
 
-[rofi]                    # options for "rofi"
-line_length = 100         # length of line
-menu_length = 30          # length of menu
-menu_prompt = "Clipcat"   # prompt of menu
+# options for "rofi"
+[rofi]
+# length of line
+line_length = 100
+# length of menu
+menu_length = 30
+# prompt of menu
+menu_prompt = "Clipcat"
 
-[dmenu]                   # options for "dmenu"
-line_length = 100         # length of line
-menu_length = 30          # length of menu
-menu_prompt = "Clipcat"   # prompt of menu
+# options for "dmenu"
+[dmenu]
+# length of line
+line_length = 100
+# length of menu
+menu_length = 30
+# prompt of menu
+menu_prompt = "Clipcat"
 
-[custom_finder]           # customize your finder
-program = "fzf"           # external program name
-args = []                 # arguments for calling external program
+# customize your finder
+[custom_finder]
+# external program name
+program = "fzf"
+# arguments for calling external program
+args = []
 ```
 
 </details>

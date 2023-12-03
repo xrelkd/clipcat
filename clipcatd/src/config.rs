@@ -11,7 +11,7 @@ use snafu::{ResultExt, Snafu};
 pub struct Config {
     pub daemonize: bool,
 
-    #[serde(skip_serializing, default = "Config::default_pid_file_path")]
+    #[serde(default = "Config::default_pid_file_path")]
     pub pid_file: PathBuf,
 
     #[serde(default = "Config::default_max_history")]
@@ -33,6 +33,8 @@ pub struct Config {
     pub snippets: Vec<SnippetConfig>,
 }
 
+// SAFETY: user may use bool to enable/disable the functions
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
     #[serde(default)]
@@ -44,20 +46,45 @@ pub struct WatcherConfig {
     #[serde(default)]
     pub enable_primary: bool,
 
+    #[serde(default)]
+    pub capture_image: bool,
+
     #[serde(default = "WatcherConfig::default_filter_min_size")]
     pub filter_min_size: usize,
+
+    #[serde(default = "WatcherConfig::default_filter_max_size")]
+    pub filter_max_size: usize,
 }
 
 impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
     fn from(
-        WatcherConfig { load_current, enable_clipboard, enable_primary, filter_min_size }: WatcherConfig,
+        WatcherConfig {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            capture_image,
+            filter_min_size,
+            filter_max_size,
+        }: WatcherConfig,
     ) -> Self {
-        Self { load_current, enable_clipboard, enable_primary, filter_min_size }
+        Self {
+            load_current,
+            enable_clipboard,
+            enable_primary,
+            capture_image,
+            filter_min_size,
+            filter_max_size,
+        }
     }
 }
 
 impl WatcherConfig {
     pub const fn default_filter_min_size() -> usize { 1 }
+
+    pub const fn default_filter_max_size() -> usize {
+        // 5 MiB
+        5 * (1 << 20)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -181,7 +208,9 @@ impl Default for WatcherConfig {
             load_current: true,
             enable_clipboard: true,
             enable_primary: true,
-            filter_min_size: 1,
+            capture_image: true,
+            filter_min_size: Self::default_filter_min_size(),
+            filter_max_size: Self::default_filter_max_size(),
         }
     }
 }
