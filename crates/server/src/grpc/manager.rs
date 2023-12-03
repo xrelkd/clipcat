@@ -4,18 +4,21 @@ use clipcat_proto as proto;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
-use crate::ClipboardManager;
+use crate::{notification, ClipboardManager};
 
-pub struct ManagerService {
-    manager: Arc<Mutex<ClipboardManager>>,
+pub struct ManagerService<Notification> {
+    manager: Arc<Mutex<ClipboardManager<Notification>>>,
 }
 
-impl ManagerService {
-    pub fn new(manager: Arc<Mutex<ClipboardManager>>) -> Self { Self { manager } }
+impl<Notification> ManagerService<Notification> {
+    pub fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self { Self { manager } }
 }
 
 #[tonic::async_trait]
-impl proto::Manager for ManagerService {
+impl<Notification> proto::Manager for ManagerService<Notification>
+where
+    Notification: notification::Notification + 'static,
+{
     async fn insert(
         &self,
         request: Request<proto::InsertRequest>,

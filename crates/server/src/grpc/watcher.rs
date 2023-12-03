@@ -1,19 +1,24 @@
 use clipcat_proto as proto;
 use tonic::{Request, Response, Status};
 
-use crate::ClipboardWatcherToggle;
+use crate::{notification, ClipboardWatcherToggle};
 
-pub struct WatcherService {
-    watcher_toggle: ClipboardWatcherToggle,
+pub struct WatcherService<Notification> {
+    watcher_toggle: ClipboardWatcherToggle<Notification>,
 }
 
-impl WatcherService {
+impl<Notification> WatcherService<Notification> {
     #[inline]
-    pub const fn new(watcher_toggle: ClipboardWatcherToggle) -> Self { Self { watcher_toggle } }
+    pub const fn new(watcher_toggle: ClipboardWatcherToggle<Notification>) -> Self {
+        Self { watcher_toggle }
+    }
 }
 
 #[tonic::async_trait]
-impl proto::Watcher for WatcherService {
+impl<Notification> proto::Watcher for WatcherService<Notification>
+where
+    Notification: notification::Notification + 'static,
+{
     async fn enable_watcher(
         &self,
         _request: Request<()>,
