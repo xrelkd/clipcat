@@ -4,18 +4,18 @@ use clipcat_clipboard::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MockC
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::backend::{error, ClipboardBackend, ClipboardKind, Error, Result, Subscriber};
+use crate::backend::{error, traits, ClipboardKind, Error, Result, Subscriber};
 
 #[derive(Clone, Debug, Default)]
-pub struct MockClipboardBackend(MockClipboard);
+pub struct Backend(MockClipboard);
 
-impl MockClipboardBackend {
+impl Backend {
     #[must_use]
     pub fn new() -> Self { Self::default() }
 }
 
 #[async_trait]
-impl ClipboardBackend for MockClipboardBackend {
+impl traits::Backend for Backend {
     #[inline]
     async fn load(
         &self,
