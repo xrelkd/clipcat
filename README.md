@@ -83,7 +83,7 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.11.0
+export CLIPCAT_VERSION=v0.12.0
 
 # NOTE: the architecture of your machine,
 # available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
@@ -115,7 +115,7 @@ clipcat-menu version
 With the above tools and packages already installed, you can simply run:
 
 ```bash
-$ git clone https://github.com/xrelkd/clipcat.git
+$ git clone --branch=main https://github.com/xrelkd/clipcat.git
 $ cd clipcat
 
 $ cargo install --path clipcatd
