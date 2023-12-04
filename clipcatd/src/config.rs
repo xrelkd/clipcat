@@ -8,6 +8,8 @@ use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
 
+const DEFAULT_ICON_NAME: &str = "accessories-clipboard";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     pub daemonize: bool,
@@ -309,6 +311,35 @@ impl DesktopNotificationConfig {
     pub fn default_icon() -> String { String::from("accessories-clipboard") }
 
     pub const fn default_timeout_ms() -> u64 { 2000 }
+
+    pub fn search_icon(&self) -> PathBuf {
+        let icon_path = PathBuf::from(&self.icon);
+        if icon_path.exists() {
+            return icon_path;
+        };
+
+        let clipboard_icons = {
+            let iter = linicon::lookup_icon(self.icon.as_str()).use_fallback_themes(true);
+            if let Some(theme) = linicon::get_system_theme() {
+                iter.from_theme(theme)
+            } else {
+                iter
+            }
+        }
+        .collect::<Result<Vec<_>, _>>();
+
+        let mut clipboard_icons = match clipboard_icons {
+            Ok(icons) => icons,
+            Err(err) => {
+                tracing::warn!("Could not find icon, error: {err}");
+                return PathBuf::from(DEFAULT_ICON_NAME);
+            }
+        };
+
+        // sort by size
+        clipboard_icons.sort_unstable_by_key(|icon| icon.max_size);
+        clipboard_icons.pop().map_or_else(|| PathBuf::from(DEFAULT_ICON_NAME), |icon| icon.path)
+    }
 }
 
 impl Default for DesktopNotificationConfig {
@@ -322,9 +353,10 @@ impl Default for DesktopNotificationConfig {
 }
 
 impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotificationConfig {
-    fn from(
-        DesktopNotificationConfig { enable, icon, timeout_ms }: DesktopNotificationConfig,
-    ) -> Self {
+    fn from(config: DesktopNotificationConfig) -> Self {
+        let icon = config.search_icon();
+        let DesktopNotificationConfig { enable, timeout_ms, .. } = config;
+
         Self { enable, icon, timeout: Duration::from_millis(timeout_ms) }
     }
 }
