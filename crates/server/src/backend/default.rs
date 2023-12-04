@@ -15,11 +15,12 @@ pub struct Backend {
 
 impl Backend {
     /// # Errors
-    pub fn new() -> Result<Self> {
+    pub fn new(event_observers: &[Arc<dyn clipcat_clipboard::EventObserver>]) -> Result<Self> {
         let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
-
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
-            match Clipboard::new(kind).context(error::InitializeClipboardSnafu) {
+            match Clipboard::new(kind, event_observers.to_vec())
+                .context(error::InitializeClipboardSnafu)
+            {
                 Ok(clipboard) => clipboards.push(Arc::new(clipboard)),
                 Err(err) => {
                     if kind == ClipboardKind::Clipboard {

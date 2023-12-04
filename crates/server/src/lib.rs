@@ -43,12 +43,13 @@ pub async fn serve_with_shutdown(
     snippets: &[ClipEntry],
 ) -> Result<()> {
     let (desktop_notification, desktop_notification_worker) =
-        notification::DefaultNotification::new(
+        notification::DesktopNotification::new(
             desktop_notification_config.icon,
             desktop_notification_config.timeout,
         );
 
-    let clipboard_backend = backend::new_shared().context(error::CreateClipboardBackendSnafu)?;
+    let clipboard_backend = backend::new_shared(&[Arc::new(desktop_notification.clone())])
+        .context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
@@ -151,8 +152,8 @@ pub async fn serve_with_shutdown(
 
 fn create_grpc_local_socket_server_future(
     local_socket: PathBuf,
-    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DefaultNotification>,
-    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DefaultNotification>>>,
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
@@ -201,7 +202,7 @@ fn create_grpc_local_socket_server_future(
 }
 
 fn create_desktop_notification_worker_future(
-    worker: notification::DefaultNotificationWorker,
+    worker: notification::DesktopNotificationWorker,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
@@ -216,8 +217,8 @@ fn create_desktop_notification_worker_future(
 
 fn create_grpc_http_server_future(
     listen_address: SocketAddr,
-    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DefaultNotification>,
-    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DefaultNotification>>>,
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
@@ -246,8 +247,8 @@ fn create_grpc_http_server_future(
 }
 
 fn create_clipboard_worker_future(
-    clipboard_watcher: ClipboardWatcher<notification::DefaultNotification>,
-    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DefaultNotification>>>,
+    clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     history_manager: HistoryManager,
     handle: Handle<Error>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -275,8 +276,8 @@ fn create_clipboard_worker_future(
 
 #[allow(clippy::redundant_pub_crate)]
 async fn serve_worker(
-    clipboard_watcher: ClipboardWatcher<notification::DefaultNotification>,
-    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DefaultNotification>>>,
+    clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     mut history_manager: HistoryManager,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,

@@ -1,9 +1,9 @@
-mod default;
+mod desktop;
 mod mock;
 mod traits;
 
 pub use self::{
-    default::{Notification as DefaultNotification, Worker as DefaultNotificationWorker},
+    desktop::{Notification as DesktopNotification, Worker as DesktopNotificationWorker},
     mock::Notification as MockNotification,
     traits::Notification,
 };

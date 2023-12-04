@@ -124,13 +124,13 @@ where
 
     #[inline]
     pub fn get_toggle(&self) -> Toggle<Notification> {
-        Toggle { is_watching: self.is_watching.clone(), nofication: self.notification.clone() }
+        Toggle { is_watching: self.is_watching.clone(), notification: self.notification.clone() }
     }
 }
 
 pub struct Toggle<Notification> {
     is_watching: Arc<AtomicBool>,
-    nofication: Notification,
+    notification: Notification,
 }
 
 impl<Notification> Toggle<Notification>
@@ -140,14 +140,14 @@ where
     #[inline]
     pub fn enable(&self) {
         self.is_watching.store(true, Ordering::Release);
-        self.nofication.on_watcher_enabled();
+        self.notification.on_watcher_enabled();
         tracing::info!("ClipboardWatcher is watching for clipboard event");
     }
 
     #[inline]
     pub fn disable(&self) {
         self.is_watching.store(false, Ordering::Release);
-        self.nofication.on_watcher_disabled();
+        self.notification.on_watcher_disabled();
         tracing::info!("ClipboardWatcher is not watching for clipboard event");
     }
 

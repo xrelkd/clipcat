@@ -1,8 +1,7 @@
-use core::fmt;
-use std::time::Duration;
+use std::{fmt, time::Duration};
 
 use futures::{FutureExt, StreamExt};
-use notify_rust::Notification as DesktopNofification;
+use notify_rust::Notification as DesktopNotification;
 use tokio::sync::mpsc;
 
 use crate::notification::traits;
@@ -14,6 +13,8 @@ enum Event {
     HistoryCleared,
     WatcherEnabled,
     WatcherDisabled,
+    X11Connected { connection_info: String },
+    WaylandConnected { connection_info: String },
     Shutdown,
 }
 
@@ -40,6 +41,26 @@ impl traits::Notification for Notification {
     fn on_watcher_enabled(&self) { drop(self.event_sender.send(Event::WatcherEnabled)); }
 
     fn on_watcher_disabled(&self) { drop(self.event_sender.send(Event::WatcherDisabled)); }
+
+    fn on_x11_connected<C>(&self, connection_info: C)
+    where
+        C: fmt::Display,
+    {
+        drop(
+            self.event_sender
+                .send(Event::X11Connected { connection_info: connection_info.to_string() }),
+        );
+    }
+
+    fn on_wayland_connected<C>(&self, connection_info: C)
+    where
+        C: fmt::Display,
+    {
+        drop(
+            self.event_sender
+                .send(Event::WaylandConnected { connection_info: connection_info.to_string() }),
+        );
+    }
 }
 
 pub struct Worker {
@@ -69,12 +90,18 @@ impl Worker {
                 Some(Event::HistoryCleared) => "Clipboard history has been cleared.".to_string(),
                 Some(Event::WatcherEnabled) => "Watcher is enabled".to_string(),
                 Some(Event::WatcherDisabled) => "Watcher is disabled".to_string(),
+                Some(Event::X11Connected { connection_info }) => {
+                    format!("Connected to X11 server ({connection_info})")
+                }
+                Some(Event::WaylandConnected { connection_info }) => {
+                    format!("Connected to Wayland server ({connection_info})")
+                }
                 Some(Event::Shutdown) | None => {
                     prepare_to_shutdown = true;
                     format!("Daemon is shutting down. (PID: {pid})")
                 }
             };
-            if let Err(err) = DesktopNofification::new()
+            if let Err(err) = DesktopNotification::new()
                 .summary(NOTIFICATION_SUMMARY)
                 .body(&body)
                 .icon(icon)
@@ -87,6 +114,19 @@ impl Worker {
 
             if prepare_to_shutdown {
                 break;
+            }
+        }
+    }
+}
+
+impl clipcat_clipboard::EventObserver for Notification {
+    fn on_connected(&self, backend_kind: clipcat_clipboard::ListenerKind, connection_info: &str) {
+        match backend_kind {
+            clipcat_clipboard::ListenerKind::X11 => {
+                traits::Notification::on_x11_connected(self, connection_info);
+            }
+            clipcat_clipboard::ListenerKind::Wayland => {
+                traits::Notification::on_wayland_connected(self, connection_info);
             }
         }
     }

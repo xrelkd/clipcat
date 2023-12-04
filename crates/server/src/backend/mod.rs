@@ -7,6 +7,7 @@ mod traits;
 use std::sync::Arc;
 
 use clipcat_base::ClipboardKind;
+use clipcat_clipboard::EventObserver;
 
 use self::error::Result;
 pub use self::{
@@ -16,9 +17,11 @@ pub use self::{
 };
 
 /// # Errors
-pub fn new() -> Result<Box<dyn traits::Backend>> { Ok(Box::new(DefaultClipboardBackend::new()?)) }
+pub fn new(event_observers: &[Arc<dyn EventObserver>]) -> Result<Box<dyn traits::Backend>> {
+    Ok(Box::new(DefaultClipboardBackend::new(event_observers)?))
+}
 
 /// # Errors
-pub fn new_shared() -> Result<Arc<dyn traits::Backend>> {
-    Ok(Arc::new(DefaultClipboardBackend::new()?))
+pub fn new_shared(event_observers: &[Arc<dyn EventObserver>]) -> Result<Arc<dyn traits::Backend>> {
+    Ok(Arc::new(DefaultClipboardBackend::new(event_observers)?))
 }
