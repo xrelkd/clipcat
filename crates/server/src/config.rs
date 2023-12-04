@@ -21,7 +21,7 @@ pub struct Config {
 pub struct DesktopNotificationConfig {
     pub enable: bool,
 
-    pub icon: String,
+    pub icon: PathBuf,
 
     pub timeout: Duration,
 }
