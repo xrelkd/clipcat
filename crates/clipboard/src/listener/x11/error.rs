@@ -10,6 +10,9 @@ pub enum Error {
         value: usize,
     },
 
+    #[snafu(display("Listener is closing"))]
+    ListenerIsClosing,
+
     #[snafu(display("Error occurred while initializing `mio::Poll`, error: {source}"))]
     InitializeMioPoll {
         source: std::io::Error,

@@ -73,38 +73,6 @@ impl Drop for Listener {
     }
 }
 
-#[inline]
-fn try_reconnect(
-    poll: &mio::Poll,
-    context: &mut Context,
-    max_retry_count: usize,
-    retry_interval: Duration,
-) -> Result<(), Error> {
-    poll.registry()
-        .deregister(&mut mio::unix::SourceFd(&context.as_raw_fd()))
-        .context(error::DeregisterIoResourceSnafu)?;
-
-    for _ in 0..max_retry_count {
-        if let Err(err) = context.reconnect() {
-            tracing::warn!("{err}, try to re-connect after {n}ms", n = retry_interval.as_millis());
-            std::thread::sleep(retry_interval);
-        } else {
-            poll.registry()
-                .register(
-                    &mut mio::unix::SourceFd(&context.as_raw_fd()),
-                    CONTEXT_TOKEN,
-                    mio::Interest::READABLE,
-                )
-                .context(error::RegisterIoResourceSnafu)?;
-
-            tracing::info!("Re-connected to X11 server!");
-            return Ok(());
-        }
-    }
-    tracing::error!("Could not connect to X11 server");
-    Err(Error::RetryLimitReached { value: max_retry_count })
-}
-
 #[allow(clippy::cognitive_complexity)]
 fn build_thread(
     is_running: Arc<AtomicBool>,
@@ -186,9 +154,13 @@ fn build_thread(
                                 "{err}, try to re-connect X11 server after {n}ms",
                                 n = RETRY_INTERVAL.as_millis()
                             );
-                            if let Err(err) =
-                                try_reconnect(&poll, &mut context, MAX_RETRY_COUNT, RETRY_INTERVAL)
-                            {
+                            if let Err(err) = try_reconnect(
+                                &poll,
+                                &mut context,
+                                MAX_RETRY_COUNT,
+                                RETRY_INTERVAL,
+                                &is_running,
+                            ) {
                                 notifier.close();
                                 return Err(err);
                             }
@@ -204,6 +176,45 @@ fn build_thread(
         notifier.close();
         Ok(())
     })
+}
+
+// SAFETY: the function is complex because of `tracing`
+#[allow(clippy::cognitive_complexity)]
+#[inline]
+fn try_reconnect(
+    poll: &mio::Poll,
+    context: &mut Context,
+    max_retry_count: usize,
+    retry_interval: Duration,
+    is_running: &Arc<AtomicBool>,
+) -> Result<(), Error> {
+    poll.registry()
+        .deregister(&mut mio::unix::SourceFd(&context.as_raw_fd()))
+        .context(error::DeregisterIoResourceSnafu)?;
+
+    for _ in 0..max_retry_count {
+        if let Err(err) = context.reconnect() {
+            if !is_running.load(Ordering::Relaxed) {
+                tracing::warn!("Listener is about to quit, no need to re-connect to X11 server");
+                return Err(Error::ListenerIsClosing);
+            }
+            tracing::warn!("{err}, try to re-connect after {n}ms", n = retry_interval.as_millis());
+            std::thread::sleep(retry_interval);
+        } else {
+            poll.registry()
+                .register(
+                    &mut mio::unix::SourceFd(&context.as_raw_fd()),
+                    CONTEXT_TOKEN,
+                    mio::Interest::READABLE,
+                )
+                .context(error::RegisterIoResourceSnafu)?;
+
+            tracing::info!("Re-connected to X11 server!");
+            return Ok(());
+        }
+    }
+    tracing::error!("Could not connect to X11 server");
+    Err(Error::RetryLimitReached { value: max_retry_count })
 }
 
 struct ClipFilter {
