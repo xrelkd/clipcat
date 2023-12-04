@@ -33,6 +33,7 @@ lazy_static! {
 }
 
 pub const PROJECT_NAME: &str = "clipcat";
+pub const NOTIFICATION_SUMMARY: &str = "Clipcat - Clipboard Manager";
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";

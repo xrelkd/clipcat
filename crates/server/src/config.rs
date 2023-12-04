@@ -14,11 +14,11 @@ pub struct Config {
 
     pub watcher: ClipboardWatcherOptions,
 
-    pub desktop_notification: DesktopNofificationConfig,
+    pub desktop_notification: DesktopNotificationConfig,
 }
 
 #[derive(Clone, Debug)]
-pub struct DesktopNofificationConfig {
+pub struct DesktopNotificationConfig {
     pub enable: bool,
 
     pub icon: String,

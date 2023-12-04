@@ -172,6 +172,11 @@ impl Context {
         }
         Ok(Vec::new())
     }
+
+    pub fn display_name(&self) -> String {
+        let display_name = self.display_name.as_deref().unwrap_or(":0");
+        format!("display: {display_name}")
+    }
 }
 
 impl AsRawFd for Context {

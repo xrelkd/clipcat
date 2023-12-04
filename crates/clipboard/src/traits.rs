@@ -1,6 +1,6 @@
 use clipcat_base::ClipboardContent;
 
-use crate::{ClipboardKind, Error};
+use crate::{ClipboardKind, Error, ListenerKind};
 
 pub trait Load {
     /// # Errors
@@ -60,3 +60,7 @@ pub trait LoadWait: Load + Subscribe {
 }
 
 impl<C: Load + Subscribe + ?Sized> LoadWait for C {}
+
+pub trait EventObserver: Send + Sync {
+    fn on_connected(&self, _backend_kind: ListenerKind, _connection_info: &str) {}
+}
