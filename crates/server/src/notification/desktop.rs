@@ -1,4 +1,8 @@
-use std::{fmt, time::Duration};
+use std::{
+    fmt,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use futures::{FutureExt, StreamExt};
 use notify_rust::Notification as DesktopNotification;
@@ -22,12 +26,15 @@ pub struct Notification {
 }
 
 impl Notification {
-    pub fn new<S>(icon: S, timeout: Duration) -> (Self, Worker)
+    pub fn new<IconPath>(icon: IconPath, timeout: Duration) -> (Self, Worker)
     where
-        S: fmt::Display,
+        IconPath: AsRef<Path>,
     {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
-        (Self { event_sender }, Worker { event_receiver, icon: icon.to_string(), timeout })
+        (
+            Self { event_sender },
+            Worker { event_receiver, icon: icon.as_ref().to_path_buf(), timeout },
+        )
     }
 }
 
@@ -64,7 +71,7 @@ impl traits::Notification for Notification {
 pub struct Worker {
     event_receiver: mpsc::UnboundedReceiver<Event>,
 
-    icon: String,
+    icon: PathBuf,
 
     timeout: Duration,
 }
@@ -102,7 +109,7 @@ impl Worker {
             if let Err(err) = DesktopNotification::new()
                 .summary(clipcat_base::NOTIFICATION_SUMMARY)
                 .body(&body)
-                .icon(icon)
+                .icon(&icon.display().to_string())
                 .timeout(timeout)
                 .show_async()
                 .await
