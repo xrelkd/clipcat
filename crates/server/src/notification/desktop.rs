@@ -6,8 +6,6 @@ use tokio::sync::mpsc;
 
 use crate::notification::traits;
 
-const NOTIFICATION_SUMMARY: &str = clipcat_base::PROJECT_NAME;
-
 enum Event {
     DaemonStarted,
     HistoryCleared,
@@ -102,7 +100,7 @@ impl Worker {
                 }
             };
             if let Err(err) = DesktopNotification::new()
-                .summary(NOTIFICATION_SUMMARY)
+                .summary(clipcat_base::NOTIFICATION_SUMMARY)
                 .body(&body)
                 .icon(icon)
                 .timeout(timeout)
