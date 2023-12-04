@@ -2,7 +2,7 @@ use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
-use clipcat_client::{Client, Manager as _, Watcher as _};
+use clipcat_client::{Client, Manager as _, System, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
 use tokio::{
@@ -44,8 +44,11 @@ pub struct Cli {
 
 #[derive(Clone, Subcommand)]
 pub enum Commands {
-    #[clap(about = "Print version information")]
-    Version,
+    #[clap(about = "Print the client and server version information")]
+    Version {
+        #[clap(long = "client", help = "If true, shows client version only (no server required).")]
+        client: bool,
+    },
 
     #[clap(about = "Output shell completion code for the specified shell (bash, zsh, fish)")]
     Completions { shell: clap_complete::Shell },
@@ -199,11 +202,15 @@ impl Cli {
 
     #[allow(clippy::too_many_lines)]
     pub fn run(self) -> Result<i32, Error> {
+        let client_version = Self::command().get_version().unwrap_or_default().to_string();
         match self.commands {
-            Some(Commands::Version) => {
+            Some(Commands::Version { client }) if client => {
                 std::io::stdout()
                     .write_all(Self::command().render_long_version().as_bytes())
-                    .expect("failed to write to stdout");
+                    .expect("Failed to write to stdout");
+                std::io::stdout()
+                    .write_all(format!("Client Version: {client_version}\n").as_bytes())
+                    .expect("Failed to write to stdout");
 
                 return Ok(0);
             }
@@ -229,8 +236,25 @@ impl Cli {
 
         let fut = async move {
             let client = Client::new(server_endpoint).await?;
+            let server_version = client
+                .get_version()
+                .await
+                .map_or_else(|_err| "unknown".to_string(), |version| version.to_string());
 
             match self.commands {
+                Some(Commands::Version { .. }) => {
+                    let info = format!(
+                        "Client Version: {client_version}\nServer Version: {server_version}\n",
+                    );
+                    std::io::stdout()
+                        .write_all(Self::command().render_long_version().as_bytes())
+                        .expect("Failed to write to stdout");
+                    std::io::stdout()
+                        .write_all(info.as_bytes())
+                        .expect("Failed to write to stdout");
+
+                    return Ok(0);
+                }
                 None => {
                     print_list(&client, false).await?;
                 }

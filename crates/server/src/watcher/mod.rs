@@ -11,18 +11,26 @@ use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
 pub use self::{error::Error, options::Options as ClipboardWatcherOptions};
-use crate::backend::{ClipboardBackend, Error as BackendError};
+use crate::{
+    backend::{ClipboardBackend, Error as BackendError},
+    notification,
+};
 
-pub struct ClipboardWatcher {
+pub struct ClipboardWatcher<Notification> {
     is_watching: Arc<AtomicBool>,
     clip_sender: broadcast::Sender<ClipEntry>,
     _join_handle: task::JoinHandle<Result<(), Error>>,
+    notification: Notification,
 }
 
-impl ClipboardWatcher {
+impl<Notification> ClipboardWatcher<Notification>
+where
+    Notification: notification::Notification + Clone,
+{
     pub fn new(
         backend: Arc<dyn ClipboardBackend>,
         opts: ClipboardWatcherOptions,
+        notification: Notification,
     ) -> Result<Self, Error> {
         let enabled_kinds = opts.get_enable_kinds();
         let check_content = opts.generate_content_checker();
@@ -108,30 +116,38 @@ impl ClipboardWatcher {
             }
         });
 
-        Ok(Self { is_watching, clip_sender, _join_handle: join_handle })
+        Ok(Self { is_watching, clip_sender, _join_handle: join_handle, notification })
     }
 
     #[inline]
     pub fn subscribe(&self) -> broadcast::Receiver<ClipEntry> { self.clip_sender.subscribe() }
 
     #[inline]
-    pub fn get_toggle(&self) -> Toggle { Toggle { is_watching: self.is_watching.clone() } }
+    pub fn get_toggle(&self) -> Toggle<Notification> {
+        Toggle { is_watching: self.is_watching.clone(), notification: self.notification.clone() }
+    }
 }
 
-pub struct Toggle {
+pub struct Toggle<Notification> {
     is_watching: Arc<AtomicBool>,
+    notification: Notification,
 }
 
-impl Toggle {
+impl<Notification> Toggle<Notification>
+where
+    Notification: notification::Notification,
+{
     #[inline]
     pub fn enable(&self) {
         self.is_watching.store(true, Ordering::Release);
+        self.notification.on_watcher_enabled();
         tracing::info!("ClipboardWatcher is watching for clipboard event");
     }
 
     #[inline]
     pub fn disable(&self) {
         self.is_watching.store(false, Ordering::Release);
+        self.notification.on_watcher_disabled();
         tracing::info!("ClipboardWatcher is not watching for clipboard event");
     }
 

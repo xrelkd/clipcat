@@ -33,7 +33,12 @@ wl-clipboard-rs = "0.8"
 [dev-dependencies]
 tracing-subscriber = "0.3"
 
-tokio = { version = "1", features = ["rt", "signal", "sync"] }
+tokio = { version = "1", features = [
+  "macros",
+  "rt-multi-thread",
+  "signal",
+  "sync",
+] }
 
 sigfinn = "0.1"
 

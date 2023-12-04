@@ -6,20 +6,21 @@ use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubsc
 use snafu::ResultExt;
 use tokio::task;
 
-use crate::backend::{error, ClipboardBackend, Error, Result, Subscriber};
+use crate::backend::{error, traits, Error, Result, Subscriber};
 
 #[derive(Clone)]
-pub struct DefaultClipboardBackend {
+pub struct Backend {
     clipboards: Vec<Arc<Clipboard>>,
 }
 
-impl DefaultClipboardBackend {
+impl Backend {
     /// # Errors
-    pub fn new() -> Result<Self> {
+    pub fn new(event_observers: &[Arc<dyn clipcat_clipboard::EventObserver>]) -> Result<Self> {
         let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
-
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
-            match Clipboard::new(kind).context(error::InitializeClipboardSnafu) {
+            match Clipboard::new(kind, event_observers.to_vec())
+                .context(error::InitializeClipboardSnafu)
+            {
                 Ok(clipboard) => clipboards.push(Arc::new(clipboard)),
                 Err(err) => {
                     if kind == ClipboardKind::Clipboard {
@@ -43,7 +44,7 @@ impl DefaultClipboardBackend {
 }
 
 #[async_trait]
-impl ClipboardBackend for DefaultClipboardBackend {
+impl traits::Backend for Backend {
     #[inline]
     async fn load(
         &self,

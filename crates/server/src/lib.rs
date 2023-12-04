@@ -4,13 +4,15 @@ mod error;
 mod grpc;
 mod history;
 mod manager;
+mod notification;
 mod watcher;
 
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
 use clipcat_base::ClipEntry;
-use clipcat_proto::{ManagerServer, WatcherServer};
+use clipcat_proto::{ManagerServer, SystemServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
+use notification::Notification;
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
 use snafu::ResultExt;
 use tokio::{
@@ -36,10 +38,18 @@ pub async fn serve_with_shutdown(
         max_history,
         history_file_path,
         watcher: watcher_opts,
+        desktop_notification: desktop_notification_config,
     }: Config,
     snippets: &[ClipEntry],
 ) -> Result<()> {
-    let clipboard_backend = backend::new_shared().context(error::CreateClipboardBackendSnafu)?;
+    let (desktop_notification, desktop_notification_worker) =
+        notification::DesktopNotification::new(
+            desktop_notification_config.icon,
+            desktop_notification_config.timeout,
+        );
+
+    let clipboard_backend = backend::new_shared(&[Arc::new(desktop_notification.clone())])
+        .context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
@@ -69,8 +79,11 @@ pub async fn serve_with_shutdown(
         }
 
         tracing::info!("Initialize ClipboardManager with capacity {max_history}");
-        let mut clipboard_manager =
-            ClipboardManager::with_capacity(clipboard_backend.clone(), max_history);
+        let mut clipboard_manager = ClipboardManager::with_capacity(
+            clipboard_backend.clone(),
+            max_history,
+            desktop_notification.clone(),
+        );
 
         tracing::info!("Import {clip_count} clip(s) into ClipboardManager");
         clipboard_manager.import(&history_clips);
@@ -81,10 +94,18 @@ pub async fn serve_with_shutdown(
         (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
 
-    let clipboard_watcher = ClipboardWatcher::new(clipboard_backend, watcher_opts)
-        .context(error::CreateClipboardWatcherSnafu)?;
+    let clipboard_watcher =
+        ClipboardWatcher::new(clipboard_backend, watcher_opts, desktop_notification.clone())
+            .context(error::CreateClipboardWatcherSnafu)?;
 
     let lifecycle_manager = LifecycleManager::<Error>::new();
+
+    if desktop_notification_config.enable {
+        let _handle = lifecycle_manager.spawn(
+            "Desktop notification worker",
+            create_desktop_notification_worker_future(desktop_notification_worker),
+        );
+    }
 
     if let Some(grpc_listen_address) = grpc_listen_address {
         let _handle = lifecycle_manager.spawn(
@@ -119,6 +140,8 @@ pub async fn serve_with_shutdown(
         ),
     );
 
+    desktop_notification.on_started();
+
     if let Ok(Err(err)) = lifecycle_manager.serve().await {
         tracing::error!("{err}");
         Err(err)
@@ -129,8 +152,8 @@ pub async fn serve_with_shutdown(
 
 fn create_grpc_local_socket_server_future(
     local_socket: PathBuf,
-    clipboard_watcher_toggle: ClipboardWatcherToggle,
-    clipboard_manager: Arc<Mutex<ClipboardManager>>,
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
@@ -152,6 +175,7 @@ fn create_grpc_local_socket_server_future(
             };
 
             let result = tonic::transport::Server::builder()
+                .add_service(SystemServer::new(grpc::SystemService::new()))
                 .add_service(WatcherServer::new(grpc::WatcherService::new(
                     clipboard_watcher_toggle,
                 )))
@@ -177,16 +201,31 @@ fn create_grpc_local_socket_server_future(
     }
 }
 
+fn create_desktop_notification_worker_future(
+    worker: notification::DesktopNotificationWorker,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
+    move |signal| {
+        async move {
+            tracing::info!("Desktop notification worker is started");
+            let _result = worker.serve(signal).await;
+            tracing::info!("Desktop notification worker is shut down gracefully");
+            ExitStatus::Success
+        }
+        .boxed()
+    }
+}
+
 fn create_grpc_http_server_future(
     listen_address: SocketAddr,
-    clipboard_watcher_toggle: ClipboardWatcherToggle,
-    clipboard_manager: Arc<Mutex<ClipboardManager>>,
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
             let result = tonic::transport::Server::builder()
+                .add_service(SystemServer::new(grpc::SystemService::new()))
                 .add_service(WatcherServer::new(grpc::WatcherService::new(
                     clipboard_watcher_toggle,
                 )))
@@ -208,8 +247,8 @@ fn create_grpc_http_server_future(
 }
 
 fn create_clipboard_worker_future(
-    clipboard_watcher: ClipboardWatcher,
-    clipboard_manager: Arc<Mutex<ClipboardManager>>,
+    clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     history_manager: HistoryManager,
     handle: Handle<Error>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -237,8 +276,8 @@ fn create_clipboard_worker_future(
 
 #[allow(clippy::redundant_pub_crate)]
 async fn serve_worker(
-    clipboard_watcher: ClipboardWatcher,
-    clipboard_manager: Arc<Mutex<ClipboardManager>>,
+    clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     mut history_manager: HistoryManager,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,

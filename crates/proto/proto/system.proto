@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package clipcat;
+
+import "google/protobuf/empty.proto";
+
+service System {
+  rpc GetVersion(google.protobuf.Empty) returns (GetSystemVersionResponse);
+}
+
+message GetSystemVersionResponse {
+  uint64 major = 1;
+  uint64 minor = 2;
+  uint64 patch = 3;
+}

@@ -11,6 +11,7 @@ use std::{
 
 use bytes::Bytes;
 use directories::ProjectDirs;
+use lazy_static::lazy_static;
 
 pub use self::{
     entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
@@ -18,7 +19,21 @@ pub use self::{
     watcher_state::WatcherState as ClipboardWatcherState,
 };
 
+pub const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+lazy_static! {
+    pub static ref PROJECT_SEMVER: semver::Version = semver::Version::parse(PROJECT_VERSION)
+        .unwrap_or(semver::Version {
+            major: 0,
+            minor: 0,
+            patch: 0,
+            pre: semver::Prerelease::EMPTY,
+            build: semver::BuildMetadata::EMPTY
+        });
+}
+
 pub const PROJECT_NAME: &str = "clipcat";
+pub const NOTIFICATION_SUMMARY: &str = "Clipcat - Clipboard Manager";
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
 pub const DAEMON_CONFIG_NAME: &str = "clipcatd.toml";

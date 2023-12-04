@@ -1,5 +1,6 @@
 pub mod error;
 mod manager;
+mod system;
 mod watcher;
 
 use std::path::Path;
@@ -10,6 +11,7 @@ use tokio::net::UnixStream;
 pub use self::{
     error::{Error, Result},
     manager::Manager,
+    system::System,
     watcher::Watcher,
 };
 

@@ -42,6 +42,6 @@ jobs:
       - name: Test executable
         run: |
           ./result/bin/clipcatd version
-          ./result/bin/clipcatctl version
-          ./result/bin/clipcat-menu version
+          ./result/bin/clipcatctl version --client
+          ./result/bin/clipcat-menu version --client
           ./result/bin/clipcat-notify version

@@ -14,8 +14,14 @@ pub use self::{
     mock::Clipboard as MockClipboard,
     pubsub::Subscriber,
     traits::{
-        Load as ClipboardLoad, LoadExt as ClipboardLoadExt, LoadWait as ClipboardLoadWait,
-        Store as ClipboardStore, StoreExt as ClipboardStoreExt, Subscribe as ClipboardSubscribe,
-        Wait as ClipboardWait,
+        EventObserver, Load as ClipboardLoad, LoadExt as ClipboardLoadExt,
+        LoadWait as ClipboardLoadWait, Store as ClipboardStore, StoreExt as ClipboardStoreExt,
+        Subscribe as ClipboardSubscribe, Wait as ClipboardWait,
     },
 };
+
+#[derive(Clone, Copy, Debug)]
+pub enum ListenerKind {
+    X11,
+    Wayland,
+}

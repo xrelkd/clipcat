@@ -68,6 +68,42 @@
 </details>
 
 <details>
+    <summary>Install the pre-built binaries</summary>
+
+Pre-built binaries for Linux can be found on [the releases page](https://github.com/xrelkd/clipcat/releases/), the latest release is available [here](https://github.com/xrelkd/clipcat/releases/latest).
+
+For example, to install `clipcat` to `~/bin`:
+
+```bash
+# create ~/bin
+mkdir -p ~/bin
+
+# change directory to ~/bin
+cd ~/bin
+
+# download and extract clipcat to ~/bin/
+# NOTE: replace the version with the version you want to install
+export CLIPCAT_VERSION=v0.11.0
+
+# NOTE: the architecture of your machine,
+# available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
+export ARCH=x86_64-unknown-linux-musl
+curl -s -L "https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION}-${ARCH}.tar.gz" | tar xzf -
+
+# add `~/bin` to the paths that your shell searches for executables
+# this line should be added to your shells initialization file,
+# e.g. `~/.bashrc` or `~/.zshrc`
+export PATH="$PATH:$HOME/bin"
+
+# show version info
+clipcatd     version
+clipcatctl   version
+clipcat-menu version
+```
+
+</details>
+
+<details>
   <summary>Build from source</summary>
 
 `clipcat` requires the following tools and packages to build:
@@ -185,7 +221,7 @@ $ clipcatd
 ```toml
 # run as a traditional UNIX daemon
 daemonize = true
-# max clip history limit
+# maximum number of clip history
 max_history = 50
 # file path of clip history
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
@@ -227,6 +263,19 @@ host = "127.0.0.1"
 port = 45045
 # path of unix domain socket
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
+
+[desktop_notification]
+# enable desktop notification
+enable = true
+# path of a icon
+# The given icon will be displayed on desktop notification,
+# if your desktop notification server supports showing a icon
+# If not provided, the value `accessories-clipboard` will be applied
+icon = "/path/to/the/icon"
+# timeout duration in milliseconds, desktop notification
+# This sets the time from the time the notification is displayed until it is
+# closed again by the notification server
+timeout_ms = 2000
 
 # snippets, only UTF-8 text is supported.
 [[snippets]]
