@@ -221,7 +221,7 @@ $ clipcatd
 ```toml
 # run as a traditional UNIX daemon
 daemonize = true
-# max clip history limit
+# maximum number of clip history
 max_history = 50
 # file path of clip history
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
@@ -263,6 +263,19 @@ host = "127.0.0.1"
 port = 45045
 # path of unix domain socket
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
+
+[desktop_notification]
+# enable desktop notification
+enable = true
+# path of a icon
+# The given icon will be displayed on desktop notification,
+# if your desktop notification server supports showing a icon
+# If not provided, the value `accessories-clipboard` will be applied
+icon = "/path/to/the/icon"
+# timeout duration in milliseconds, desktop notification
+# This sets the time from the time the notification is displayed until it is
+# closed again by the notification server
+timeout_ms = 2000
 
 # snippets, only UTF-8 text is supported.
 [[snippets]]
