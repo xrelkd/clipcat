@@ -20,7 +20,8 @@ pub use self::error::Error;
 use crate::{
     listener::x11::error::InitializeMioPollSnafu,
     pubsub::{self, Subscriber},
-    ClipboardKind, ClipboardSubscribe,
+    traits::EventObserver,
+    ClipboardKind, ClipboardSubscribe, ListenerKind,
 };
 
 const CONTEXT_TOKEN: mio::Token = mio::Token(0);
@@ -38,15 +39,20 @@ impl Listener {
     pub fn new(
         display_name: Option<String>,
         clipboard_kind: ClipboardKind,
+        event_observers: Vec<Arc<dyn EventObserver>>,
     ) -> Result<Self, crate::Error> {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
         tracing::info!("Connect X11 server");
         let context = Context::new(display_name, clipboard_kind)?;
-        tracing::info!("X11 server connected");
 
-        let thread = build_thread(is_running.clone(), context, notifier);
+        tracing::info!("X11 server connected");
+        for observer in &event_observers {
+            observer.on_connected(ListenerKind::X11, &context.display_name());
+        }
+
+        let thread = build_thread(is_running.clone(), context, notifier, event_observers);
 
         Ok(Self { is_running, thread: Some(thread), subscriber })
     }
@@ -104,6 +110,7 @@ fn build_thread(
     is_running: Arc<AtomicBool>,
     mut context: Context,
     notifier: pubsub::Publisher,
+    event_observers: Vec<Arc<dyn EventObserver>>,
 ) -> thread::JoinHandle<Result<(), Error>> {
     let filter = ClipFilter::new();
 
@@ -184,6 +191,9 @@ fn build_thread(
                             {
                                 notifier.close();
                                 return Err(err);
+                            }
+                            for observer in &event_observers {
+                                observer.on_connected(ListenerKind::X11, &context.display_name());
                             }
                         }
                     };
