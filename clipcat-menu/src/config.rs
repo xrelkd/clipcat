@@ -84,6 +84,9 @@ pub struct Rofi {
 
     #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
+
+    #[serde(default)]
+    pub extra_arguments: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -96,6 +99,9 @@ pub struct Dmenu {
 
     #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
+
+    #[serde(default)]
+    pub extra_arguments: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -111,6 +117,7 @@ impl Default for Rofi {
             menu_prompt: default_menu_prompt(),
             menu_length: default_menu_length(),
             line_length: default_line_length(),
+            extra_arguments: Vec::new(),
         }
     }
 }
@@ -121,6 +128,7 @@ impl Default for Dmenu {
             menu_prompt: default_menu_prompt(),
             menu_length: default_menu_length(),
             line_length: default_line_length(),
+            extra_arguments: Vec::new(),
         }
     }
 }

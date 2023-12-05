@@ -8,12 +8,13 @@ pub struct Dmenu {
     menu_length: usize,
     line_length: usize,
     menu_prompt: String,
+    extra_arguments: Vec<String>,
 }
 
 impl From<config::Dmenu> for Dmenu {
     fn from(config: config::Dmenu) -> Self {
-        let config::Dmenu { menu_length, line_length, menu_prompt } = config;
-        Self { menu_length, line_length, menu_prompt }
+        let config::Dmenu { menu_length, line_length, menu_prompt, extra_arguments } = config;
+        Self { menu_length, line_length, menu_prompt, extra_arguments }
     }
 }
 
@@ -21,12 +22,10 @@ impl ExternalProgram for Dmenu {
     fn program(&self) -> String { "dmenu".to_string() }
 
     fn args(&self, _selection_mode: SelectionMode) -> Vec<String> {
-        vec![
-            "-l".to_owned(),
-            self.menu_length.to_string(),
-            "-p".to_owned(),
-            self.menu_prompt.clone(),
-        ]
+        ["-l".to_owned(), self.menu_length.to_string(), "-p".to_owned(), self.menu_prompt.clone()]
+            .into_iter()
+            .chain(self.extra_arguments.clone())
+            .collect()
     }
 }
 
