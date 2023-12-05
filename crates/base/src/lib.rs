@@ -2,6 +2,7 @@ pub mod config;
 mod entry;
 mod kind;
 pub mod serde;
+pub mod utils;
 mod watcher_state;
 
 use std::{

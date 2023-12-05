@@ -12,6 +12,7 @@ use std::{
     time::Duration,
 };
 
+use clipcat_base::utils::RetryInterval;
 use snafu::ResultExt;
 use x11rb::protocol::Event as X11Event;
 
@@ -26,7 +27,6 @@ use crate::{
 
 const CONTEXT_TOKEN: mio::Token = mio::Token(0);
 const MAX_RETRY_COUNT: usize = 10 * 24 * 60 * 60;
-const RETRY_INTERVAL: Duration = Duration::from_secs(3);
 
 #[derive(Debug)]
 pub struct Listener {
@@ -44,10 +44,10 @@ impl Listener {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
-        tracing::info!("Connect X11 server");
+        tracing::info!("Connecting X11 server");
         let context = Context::new(display_name, clipboard_kind)?;
 
-        tracing::info!("X11 server connected");
+        tracing::info!("Connected to X11 server");
         for observer in &event_observers {
             observer.on_connected(ListenerKind::X11, &context.display_name());
         }
@@ -81,6 +81,10 @@ fn build_thread(
     event_observers: Vec<Arc<dyn EventObserver>>,
 ) -> thread::JoinHandle<Result<(), Error>> {
     let filter = ClipFilter::new();
+    let retry_interval = RetryInterval::new(MAX_RETRY_COUNT, Duration::from_secs(3))
+        .add_phase(10, Duration::from_millis(100))
+        .add_phase(50, Duration::from_millis(500))
+        .add_phase(100, Duration::from_millis(2500));
 
     thread::spawn(move || {
         let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
@@ -150,15 +154,11 @@ fn build_thread(
                         }
                         Ok(_) | Err(Error::NoEvent) => {}
                         Err(err) => {
-                            tracing::warn!(
-                                "{err}, try to re-connect X11 server after {n}ms",
-                                n = RETRY_INTERVAL.as_millis()
-                            );
+                            tracing::warn!("{err}, try to re-connect");
                             if let Err(err) = try_reconnect(
                                 &poll,
                                 &mut context,
-                                MAX_RETRY_COUNT,
-                                RETRY_INTERVAL,
+                                retry_interval.clone(),
                                 &is_running,
                             ) {
                                 notifier.close();
@@ -184,22 +184,22 @@ fn build_thread(
 fn try_reconnect(
     poll: &mio::Poll,
     context: &mut Context,
-    max_retry_count: usize,
-    retry_interval: Duration,
+    retry_interval: RetryInterval,
     is_running: &Arc<AtomicBool>,
 ) -> Result<(), Error> {
     poll.registry()
         .deregister(&mut mio::unix::SourceFd(&context.as_raw_fd()))
         .context(error::DeregisterIoResourceSnafu)?;
 
-    for _ in 0..max_retry_count {
+    let max_retry_count = retry_interval.limit();
+    for interval in retry_interval {
         if let Err(err) = context.reconnect() {
             if !is_running.load(Ordering::Relaxed) {
                 tracing::warn!("Listener is about to quit, no need to re-connect to X11 server");
                 return Err(Error::ListenerIsClosing);
             }
-            tracing::warn!("{err}, try to re-connect after {n}ms", n = retry_interval.as_millis());
-            std::thread::sleep(retry_interval);
+            tracing::warn!("{err}, try to re-connect after {n}ms", n = interval.as_millis());
+            std::thread::sleep(interval);
         } else {
             poll.registry()
                 .register(
