@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardKind};
+use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardContent, ClipboardKind};
 use snafu::ResultExt;
 use time::OffsetDateTime;
 
@@ -121,12 +121,25 @@ where
     pub fn insert(&mut self, data: ClipEntry) -> u64 { self.insert_inner(data) }
 
     fn insert_inner(&mut self, entry: ClipEntry) -> u64 {
-        let id = entry.id();
-        let timestamp = entry.timestamp();
+        // get image information for later use
+        let image_info = match entry.as_ref() {
+            ClipboardContent::Image { width, height, bytes } => {
+                Some((bytes.len(), *width, *height))
+            }
+            ClipboardContent::Plaintext(_) => None,
+        };
+
+        let (id, timestamp) = (entry.id(), entry.timestamp());
         self.current_clips[usize::from(entry.kind())] = Some(id);
         drop(self.clips.insert(id, entry));
         let _unused = self.timestamp_to_id.insert(timestamp, id);
         self.remove_oldest();
+
+        // emit notification before returning
+        if let Some((size, width, height)) = image_info {
+            self.notification.on_image_fetched(size, width, height);
+        }
+
         id
     }
 
