@@ -12,11 +12,14 @@ pub struct Rofi {
     line_length: usize,
     menu_length: usize,
     menu_prompt: String,
+    extra_arguments: Vec<String>,
 }
 
 impl From<config::Rofi> for Rofi {
-    fn from(config::Rofi { menu_length, line_length, menu_prompt }: config::Rofi) -> Self {
-        Self { line_length, menu_length, menu_prompt }
+    fn from(
+        config::Rofi { menu_length, line_length, menu_prompt, extra_arguments }: config::Rofi,
+    ) -> Self {
+        Self { line_length, menu_length, menu_prompt, extra_arguments }
     }
 }
 
@@ -24,7 +27,13 @@ impl ExternalProgram for Rofi {
     fn program(&self) -> String { "rofi".to_string() }
 
     fn args(&self, selection_mode: SelectionMode) -> Vec<String> {
-        let common_args = [
+        match selection_mode {
+            SelectionMode::Single => Vec::new(),
+            SelectionMode::Multiple => vec!["-multi-select".to_owned()],
+        }
+        .into_iter()
+        .chain([
+            "-dmenu".to_owned(),
             "-l".to_owned(),
             self.menu_length.to_string(),
             "-sep".to_owned(),
@@ -33,19 +42,9 @@ impl ExternalProgram for Rofi {
             "i".to_owned(),
             "-p".to_owned(),
             self.menu_prompt.clone(),
-        ];
-        match selection_mode {
-            SelectionMode::Single => {
-                let mut args = vec!["-dmenu".to_owned()];
-                args.extend_from_slice(&common_args);
-                args
-            }
-            SelectionMode::Multiple => {
-                let mut args = vec!["-dmenu".to_owned(), "-multi-select".to_owned()];
-                args.extend_from_slice(&common_args);
-                args
-            }
-        }
+        ])
+        .chain(self.extra_arguments.clone())
+        .collect()
     }
 }
 
@@ -82,8 +81,12 @@ mod tests {
     fn test_args() {
         let menu_length = 30;
         let menu_prompt = clipcat_base::DEFAULT_MENU_PROMPT.to_owned();
-        let config =
-            config::Rofi { line_length: 40, menu_length, menu_prompt: menu_prompt.clone() };
+        let config = config::Rofi {
+            line_length: 40,
+            menu_length,
+            menu_prompt: menu_prompt.clone(),
+            extra_arguments: vec!["-mesg".to_owned(), "Please select a clip".to_owned()],
+        };
         let rofi = Rofi::from(config);
         assert_eq!(
             rofi.args(SelectionMode::Single),
@@ -96,14 +99,16 @@ mod tests {
                 "-format".to_owned(),
                 "i".to_owned(),
                 "-p".to_owned(),
-                menu_prompt.clone()
+                menu_prompt.clone(),
+                "-mesg".to_owned(),
+                "Please select a clip".to_owned()
             ]
         );
         assert_eq!(
             rofi.args(SelectionMode::Multiple),
             vec![
-                "-dmenu".to_owned(),
                 "-multi-select".to_owned(),
+                "-dmenu".to_owned(),
                 "-l".to_owned(),
                 menu_length.to_string(),
                 "-sep".to_owned(),
@@ -111,7 +116,9 @@ mod tests {
                 "-format".to_owned(),
                 "i".to_owned(),
                 "-p".to_owned(),
-                menu_prompt
+                menu_prompt,
+                "-mesg".to_owned(),
+                "Please select a clip".to_owned()
             ]
         );
     }
