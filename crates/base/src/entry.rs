@@ -273,6 +273,10 @@ impl Hash for Entry {
     fn hash<H: Hasher>(&self, state: &mut H) { self.content.hash(state); }
 }
 
+impl AsRef<ClipboardContent> for Entry {
+    fn as_ref(&self) -> &ClipboardContent { &self.content }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Metadata {
     pub id: u64,
