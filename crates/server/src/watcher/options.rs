@@ -1,8 +1,11 @@
-use clipcat_base::{ClipboardContent, ClipboardKind};
+use std::collections::HashSet;
+
+use clipcat_base::{ClipFilter, ClipboardKind};
+use snafu::Snafu;
 
 // SAFETY: user may use bool to enable/disable the functions
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Options {
     pub load_current: bool,
 
@@ -12,25 +15,44 @@ pub struct Options {
 
     pub capture_image: bool,
 
-    pub filter_min_size: usize,
+    pub filter_text_min_length: usize,
 
-    pub filter_max_size: usize,
+    pub filter_text_max_length: usize,
+
+    pub filter_image_max_size: usize,
+
+    pub denied_text_regex_patterns: HashSet<String>,
+
+    pub sensitive_x11_atoms: HashSet<String>,
+}
+
+impl Options {
+    /// # Errors
+    pub fn generate_clip_filter(&self) -> Result<ClipFilter, Error> {
+        let mut filter = ClipFilter::new();
+        filter.set_text_min_length(self.filter_text_min_length);
+        filter.set_text_max_length(self.filter_text_max_length);
+        filter.set_image_max_size(self.filter_image_max_size);
+        filter.deny_image(!self.capture_image);
+        filter.set_regex_patterns(regex::RegexSet::new(&self.denied_text_regex_patterns)?);
+        filter.add_sensitive_atoms(self.sensitive_x11_atoms.clone());
+        Ok(filter)
+    }
 }
 
 impl Default for Options {
     fn default() -> Self {
         Self {
             load_current: true,
-
             enable_clipboard: true,
-
             enable_primary: true,
-
             capture_image: true,
-
-            filter_min_size: 1,
+            filter_text_min_length: 1,
+            filter_text_max_length: 5 * (1 << 20),
             // 5 MiB
-            filter_max_size: 5 * (1 << 20),
+            filter_image_max_size: 5 * (1 << 20),
+            denied_text_regex_patterns: HashSet::new(),
+            sensitive_x11_atoms: HashSet::new(),
         }
     }
 }
@@ -50,22 +72,15 @@ impl Options {
         }
         kinds
     }
+}
 
-    pub(crate) fn generate_content_checker(&self) -> impl Fn(&ClipboardContent) -> bool {
-        let Self { capture_image, filter_max_size, filter_min_size, .. } = *self;
-        move |data: &ClipboardContent| -> bool {
-            let ret = (data.is_plaintext() || (capture_image && data.is_image()))
-                && data.len() > filter_min_size
-                && data.len() <= filter_max_size;
-            if !ret {
-                tracing::info!(
-                    "Clip ({info}) is ignored, because of the configuration (filter_min_size: \
-                     {filter_min_size}, filter_max_size: {filter_max_size}, capture_image: \
-                     {capture_image})",
-                    info = data.basic_information()
-                );
-            }
-            ret
-        }
-    }
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum Error {
+    #[snafu(display("Failed to parse regular expression, error: {error}"))]
+    ParseRegularExpressions { error: regex::Error },
+}
+
+impl From<regex::Error> for Error {
+    fn from(error: regex::Error) -> Self { Self::ParseRegularExpressions { error } }
 }

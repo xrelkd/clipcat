@@ -42,14 +42,18 @@ pub async fn serve_with_shutdown(
     }: Config,
     snippets: &[ClipEntry],
 ) -> Result<()> {
+    let clip_filter =
+        Arc::new(watcher_opts.generate_clip_filter().context(error::GenerateClipFilterSnafu)?);
+
     let (desktop_notification, desktop_notification_worker) =
         notification::DesktopNotification::new(
             desktop_notification_config.icon,
             desktop_notification_config.timeout,
         );
 
-    let clipboard_backend = backend::new_shared(&[Arc::new(desktop_notification.clone())])
-        .context(error::CreateClipboardBackendSnafu)?;
+    let clipboard_backend =
+        backend::new_shared(&clip_filter, &[Arc::new(desktop_notification.clone())])
+            .context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
@@ -94,9 +98,13 @@ pub async fn serve_with_shutdown(
         (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
 
-    let clipboard_watcher =
-        ClipboardWatcher::new(clipboard_backend, watcher_opts, desktop_notification.clone())
-            .context(error::CreateClipboardWatcherSnafu)?;
+    let clipboard_watcher = ClipboardWatcher::new(
+        clipboard_backend,
+        &watcher_opts,
+        clip_filter,
+        desktop_notification.clone(),
+    )
+    .context(error::CreateClipboardWatcherSnafu)?;
 
     let lifecycle_manager = LifecycleManager::<Error>::new();
 

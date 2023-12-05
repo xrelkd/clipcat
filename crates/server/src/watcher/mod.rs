@@ -6,11 +6,14 @@ use std::sync::{
     Arc,
 };
 
-use clipcat_base::{ClipEntry, ClipboardContent, ClipboardKind, ClipboardWatcherState};
+use clipcat_base::{ClipEntry, ClipFilter, ClipboardContent, ClipboardKind, ClipboardWatcherState};
 use snafu::OptionExt;
 use tokio::{sync::broadcast, task};
 
-pub use self::{error::Error, options::Options as ClipboardWatcherOptions};
+pub use self::{
+    error::Error,
+    options::{Error as ClipboardWatcherOptionsError, Options as ClipboardWatcherOptions},
+};
 use crate::{
     backend::{ClipboardBackend, Error as BackendError},
     notification,
@@ -29,12 +32,11 @@ where
 {
     pub fn new(
         backend: Arc<dyn ClipboardBackend>,
-        opts: ClipboardWatcherOptions,
+        opts: &ClipboardWatcherOptions,
+        clip_filter: Arc<ClipFilter>,
         notification: Notification,
     ) -> Result<Self, Error> {
         let enabled_kinds = opts.get_enable_kinds();
-        let check_content = opts.generate_content_checker();
-        let ClipboardWatcherOptions { load_current, .. } = opts;
 
         let (clip_sender, _event_receiver) = broadcast::channel(16);
         let is_watching = Arc::new(AtomicBool::new(true));
@@ -44,6 +46,7 @@ where
             let is_watching = is_watching.clone();
 
             let mut subscriber = backend.subscribe()?;
+            let ClipboardWatcherOptions { load_current, .. } = opts.clone();
 
             async move {
                 let mut current_contents: [ClipboardContent; ClipboardKind::MAX_LENGTH] = [
@@ -60,7 +63,7 @@ where
                         if enable {
                             match backend.load(kind, None).await {
                                 Ok(data) => {
-                                    if check_content(&data) {
+                                    if !clip_filter.filter_clipboard_content(data.as_ref()) {
                                         current_contents[usize::from(kind)] = data.clone();
                                         if let Err(_err) = clip_sender.send(
                                             ClipEntry::from_clipboard_content(data, kind, None),
@@ -90,7 +93,7 @@ where
                     if is_watching.load(Ordering::Relaxed) && enabled_kinds[usize::from(kind)] {
                         match backend.load(kind, Some(mime)).await {
                             Ok(new_content)
-                                if check_content(&new_content)
+                                if !clip_filter.filter_clipboard_content(new_content.as_ref())
                                     && current_contents[usize::from(kind)] != new_content =>
                             {
                                 current_contents[usize::from(kind)] = new_content.clone();

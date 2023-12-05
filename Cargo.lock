@@ -759,6 +759,7 @@ dependencies = [
  "mime",
  "notify-rust",
  "parking_lot",
+ "regex",
  "semver",
  "serde",
  "serde_json",
