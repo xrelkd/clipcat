@@ -628,6 +628,7 @@ dependencies = [
  "image",
  "lazy_static",
  "mime",
+ "regex",
  "semver",
  "serde",
  "snafu",

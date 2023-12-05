@@ -1,5 +1,6 @@
 pub mod config;
 mod entry;
+mod filter;
 mod kind;
 pub mod serde;
 pub mod utils;
@@ -16,6 +17,7 @@ use lazy_static::lazy_static;
 
 pub use self::{
     entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
+    filter::Filter as ClipFilter,
     kind::Kind as ClipboardKind,
     watcher_state::WatcherState as ClipboardWatcherState,
 };
@@ -105,4 +107,8 @@ impl ClipboardContent {
         let size = humansize::format_size(size, humansize::BINARY);
         format!("{content_type}, {size}")
     }
+}
+
+impl AsRef<Self> for ClipboardContent {
+    fn as_ref(&self) -> &Self { self }
 }
