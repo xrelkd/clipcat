@@ -753,6 +753,7 @@ dependencies = [
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
+ "humansize",
  "lazy_static",
  "mime",
  "notify-rust",

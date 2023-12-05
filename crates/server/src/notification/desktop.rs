@@ -17,6 +17,7 @@ enum Event {
     WatcherDisabled,
     X11Connected { connection_info: String },
     WaylandConnected { connection_info: String },
+    ImageFetched { size: usize, width: usize, height: usize },
     Shutdown,
 }
 
@@ -40,6 +41,10 @@ impl Notification {
 
 impl traits::Notification for Notification {
     fn on_started(&self) { drop(self.event_sender.send(Event::DaemonStarted)); }
+
+    fn on_image_fetched(&self, size: usize, width: usize, height: usize) {
+        drop(self.event_sender.send(Event::ImageFetched { size, width, height }));
+    }
 
     fn on_history_cleared(&self) { drop(self.event_sender.send(Event::HistoryCleared)); }
 
@@ -91,19 +96,31 @@ impl Worker {
 
             let mut prepare_to_shutdown = false;
             let body = match maybe_event {
-                Some(Event::DaemonStarted) => format!("Daemon is running. (PID: {pid})"),
+                Some(Event::DaemonStarted) => format!("Daemon is running (PID: {pid})."),
                 Some(Event::HistoryCleared) => "Clipboard history has been cleared.".to_string(),
-                Some(Event::WatcherEnabled) => "Watcher is enabled".to_string(),
-                Some(Event::WatcherDisabled) => "Watcher is disabled".to_string(),
+                Some(Event::WatcherEnabled) => format!(
+                    "{project} is watching clipboard.",
+                    project = clipcat_base::PROJECT_NAME_WITH_INITIAL_CAPITAL
+                ),
+                Some(Event::WatcherDisabled) => format!(
+                    "{project} is not watching clipboard.",
+                    project = clipcat_base::PROJECT_NAME_WITH_INITIAL_CAPITAL
+                ),
                 Some(Event::X11Connected { connection_info }) => {
-                    format!("Connected to X11 server ({connection_info})")
+                    format!("Connected to X11 server ({connection_info}).")
                 }
                 Some(Event::WaylandConnected { connection_info }) => {
-                    format!("Connected to Wayland server ({connection_info})")
+                    format!("Connected to Wayland server ({connection_info}).")
+                }
+                Some(Event::ImageFetched { size, width, height }) => {
+                    format!(
+                        "Fetched a new image.\n(size: {size}, width: {width}, height: {height})",
+                        size = humansize::format_size(size, humansize::BINARY)
+                    )
                 }
                 Some(Event::Shutdown) | None => {
                     prepare_to_shutdown = true;
-                    format!("Daemon is shutting down. (PID: {pid})")
+                    format!("Daemon is shutting down (PID: {pid}).")
                 }
             };
             if let Err(err) = DesktopNotification::new()
