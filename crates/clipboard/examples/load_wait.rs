@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardLoadWait, Error};
 use snafu::ErrorCompat;
@@ -6,7 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 fn main() -> Result<(), Error> {
     init_tracing();
 
-    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Vec::new())?;
+    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Arc::default(), Vec::new())?;
     println!("Waiting for new clipboard event...");
     println!("You can to copy some text from other window...");
     for _ in 0..10 {

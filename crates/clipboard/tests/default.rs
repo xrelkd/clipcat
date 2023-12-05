@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use clipcat_clipboard::{Clipboard, ClipboardKind, Error, X11ListenerError};
 
 mod common;
@@ -18,7 +20,7 @@ impl ClipboardTester for DefaultClipboardTester {
     type Clipboard = Clipboard;
 
     fn new_clipboard(&self) -> Result<Self::Clipboard, Error> {
-        let clipboard = Clipboard::new(self.kind, Vec::new())?;
+        let clipboard = Clipboard::new(self.kind, Arc::default(), Vec::new())?;
         Ok(clipboard)
     }
 }

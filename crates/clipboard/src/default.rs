@@ -5,7 +5,7 @@ use std::sync::{
 
 use arboard::{ClearExtLinux, GetExtLinux, SetExtLinux};
 use bytes::Bytes;
-use clipcat_base::ClipboardContent;
+use clipcat_base::{ClipFilter, ClipboardContent};
 
 use crate::{
     listener::{WaylandListener, X11Listener},
@@ -24,6 +24,7 @@ impl Clipboard {
     /// # Errors
     pub fn new(
         clipboard_kind: ClipboardKind,
+        clip_filter: Arc<ClipFilter>,
         event_observers: Vec<Arc<dyn EventObserver>>,
     ) -> Result<Self, Error> {
         let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
@@ -41,10 +42,16 @@ impl Clipboard {
                         Arc::new(X11Listener::new(
                             Some(display_name),
                             clipboard_kind,
+                            clip_filter,
                             event_observers,
                         )?)
                     }
-                    Err(_) => Arc::new(X11Listener::new(None, clipboard_kind, event_observers)?),
+                    Err(_) => Arc::new(X11Listener::new(
+                        None,
+                        clipboard_kind,
+                        clip_filter,
+                        event_observers,
+                    )?),
                 }
             };
 

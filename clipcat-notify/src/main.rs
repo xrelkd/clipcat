@@ -1,9 +1,9 @@
 mod error;
 
-use std::io::Write;
+use std::{io::Write, sync::Arc};
 
 use clap::{CommandFactory, Parser, Subcommand};
-use clipcat_base::ClipboardKind;
+use clipcat_base::{ClipFilter, ClipboardKind};
 use serde::Serialize;
 use snafu::ResultExt;
 use time::OffsetDateTime;
@@ -62,8 +62,9 @@ impl Cli {
 
                 Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
                     async move {
-                        let backend = clipcat_server::backend::new(&[])
-                            .context(error::InitializeClipboardBackendSnafu)?;
+                        let backend =
+                            clipcat_server::backend::new(&Arc::new(ClipFilter::default()), &[])
+                                .context(error::InitializeClipboardBackendSnafu)?;
                         let mut subscriber =
                             backend.subscribe().context(error::SubscribeClipboardSnafu)?;
 

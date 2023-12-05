@@ -36,6 +36,7 @@ lazy_static = "1"
 mime = "0.3"
 notify-rust = "4"
 parking_lot = "0.12"
+regex = "1"
 semver = "1"
 snafu = "0.7"
 time = { version = "0.3", features = [
