@@ -2,7 +2,6 @@ mod context;
 mod error;
 
 use std::{
-    collections::HashSet,
     os::fd::AsRawFd,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -12,7 +11,7 @@ use std::{
     time::Duration,
 };
 
-use clipcat_base::utils::RetryInterval;
+use clipcat_base::{utils::RetryInterval, ClipFilter};
 use snafu::ResultExt;
 use x11rb::protocol::Event as X11Event;
 
@@ -39,6 +38,7 @@ impl Listener {
     pub fn new(
         display_name: Option<String>,
         clipboard_kind: ClipboardKind,
+        clip_filter: Arc<ClipFilter>,
         event_observers: Vec<Arc<dyn EventObserver>>,
     ) -> Result<Self, crate::Error> {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
@@ -52,7 +52,8 @@ impl Listener {
             observer.on_connected(ListenerKind::X11, &context.display_name());
         }
 
-        let thread = build_thread(is_running.clone(), context, notifier, event_observers);
+        let thread =
+            build_thread(is_running.clone(), context, notifier, clip_filter, event_observers);
 
         Ok(Self { is_running, thread: Some(thread), subscriber })
     }
@@ -78,9 +79,9 @@ fn build_thread(
     is_running: Arc<AtomicBool>,
     mut context: Context,
     notifier: pubsub::Publisher,
+    clip_filter: Arc<ClipFilter>,
     event_observers: Vec<Arc<dyn EventObserver>>,
 ) -> thread::JoinHandle<Result<(), Error>> {
-    let filter = ClipFilter::new();
     let retry_interval = RetryInterval::new(MAX_RETRY_COUNT, Duration::from_secs(3))
         .add_phase(10, Duration::from_millis(100))
         .add_phase(50, Duration::from_millis(500))
@@ -112,7 +113,7 @@ fn build_thread(
                             match context.get_available_formats() {
                                 Ok(mut formats) => {
                                     // filter sensitive content
-                                    if filter.filter_atom(&formats) {
+                                    if clip_filter.filter_sensitive_atoms(formats.iter()) {
                                         tracing::info!("Sensitive content detected, ignore it");
                                         continue;
                                     }
@@ -215,19 +216,4 @@ fn try_reconnect(
     }
     tracing::error!("Could not connect to X11 server");
     Err(Error::RetryLimitReached { value: max_retry_count })
-}
-
-struct ClipFilter {
-    sensitive_atoms: HashSet<String>,
-}
-
-impl ClipFilter {
-    fn new() -> Self {
-        Self { sensitive_atoms: HashSet::from(["x-kde-passwordManagerHint".to_string()]) }
-    }
-
-    #[inline]
-    fn filter_atom(&self, atoms: &[String]) -> bool {
-        atoms.iter().any(|atom| self.sensitive_atoms.contains(atom))
-    }
 }

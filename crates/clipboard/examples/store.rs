@@ -15,7 +15,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing();
-    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Vec::new())?;
+    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Arc::default(), Vec::new())?;
     let data = format!("{:?}", Instant::now());
 
     let lifecycle_manager = LifecycleManager::<clipcat_clipboard::Error>::new();

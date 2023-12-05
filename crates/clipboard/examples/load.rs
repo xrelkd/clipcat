@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use clipcat_base::ClipboardContent;
 use clipcat_clipboard::{Clipboard, ClipboardKind, ClipboardLoad, Error};
 use snafu::ErrorCompat;
 
 fn main() -> Result<(), Error> {
-    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Vec::new())?;
+    let clipboard = Clipboard::new(ClipboardKind::Clipboard, Arc::default(), Vec::new())?;
     match clipboard.load(None) {
         Ok(ClipboardContent::Plaintext(text)) => {
             println!("size: {}", text.len());
