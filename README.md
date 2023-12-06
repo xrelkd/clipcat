@@ -59,11 +59,11 @@
 <details>
     <summary>Install with package manager</summary>
 
-| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                             |
-| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                    |
+| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                                  |
+| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                         |
 
 </details>
 
@@ -83,7 +83,7 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.12.0
+export CLIPCAT_VERSION=v0.12.2
 
 # NOTE: the architecture of your machine,
 # available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
@@ -115,12 +115,12 @@ clipcat-menu version
 With the above tools and packages already installed, you can simply run:
 
 ```bash
-$ git clone --branch=main https://github.com/xrelkd/clipcat.git
-$ cd clipcat
+git clone --branch=main https://github.com/xrelkd/clipcat.git
+cd clipcat
 
-$ cargo install --path clipcatd
-$ cargo install --path clipcatctl
-$ cargo install --path clipcat-menu
+cargo install --path clipcatd
+cargo install --path clipcatctl
+cargo install --path clipcat-menu
 ```
 
 </details>
@@ -170,16 +170,25 @@ A `clipcat` client sends requests to the server for the following operations:
 0. Setup configurations for `clipcat`. Read [configuration](#configuration) section for more details.
 
 ```bash
-$ mkdir -p                       $XDG_CONFIG_HOME/clipcat
-$ clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
-$ clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
-$ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
+mkdir -p                       $XDG_CONFIG_HOME/clipcat
+clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
+clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
+clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 ```
 
 1. Start `clipcatd` for watching clipboard events.
 
 ```bash
-$ clipcatd
+# show the usage, please read the usage before doing any other operations
+clipcatd help
+
+# Start and daemonize clipcatd, clipcatd will run in the background.
+# You can use `pkill clipcatd` to stop it, `SIGTERM` will be sent to clipcatd.
+clipcatd
+
+# Or you can start clipcatd, but keep it in the foreground.
+# You can use press Ctrl+C in your terminal to stop it, `SIGINT` will be sent to clipcatd.
+clipcatd --no-daemon
 ```
 
 2. Copy arbitrary text/image from other process with your mouse or keyboard.
