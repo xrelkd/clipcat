@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     config,
     finder::{external::ExternalProgram, FinderStream, SelectionMode},
@@ -20,6 +22,12 @@ impl ExternalProgram for Custom {
     fn program(&self) -> String { self.program.clone() }
 
     fn args(&self, _seletion_mode: SelectionMode) -> Vec<String> { self.args.clone() }
+
+    fn set_program_path(&mut self, program: PathBuf) {
+        self.program = program.display().to_string();
+    }
+
+    fn set_arguments(&mut self, arguments: &[String]) { self.args = arguments.to_vec(); }
 }
 
 impl FinderStream for Custom {}

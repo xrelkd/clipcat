@@ -68,6 +68,10 @@ impl FinderStream for Rofi {
     fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length }
 
     fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }
+
+    fn set_extra_arguments(&mut self, arguments: &[String]) {
+        self.extra_arguments = arguments.to_vec();
+    }
 }
 
 #[cfg(test)]
