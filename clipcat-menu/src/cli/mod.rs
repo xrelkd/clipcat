@@ -48,7 +48,7 @@ pub struct Cli {
 }
 
 #[allow(variant_size_differences)]
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand)]
 pub enum Commands {
     #[clap(about = "Print the client and server version information")]
     Version {
@@ -78,7 +78,8 @@ pub enum Commands {
 
     #[clap(
         aliases = &["rm", "delete", "del"],
-        about = "Remove selected clip")]
+        about = "Remove selected clip"
+    )]
     Remove,
 
     #[clap(about = "Edit selected clip")]

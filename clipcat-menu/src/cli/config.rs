@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-#[derive(Args, Clone)]
+#[derive(Args)]
 pub struct RofiConfig {
     #[arg(
         name = "rofi-menu-length",
@@ -29,7 +29,7 @@ pub struct RofiConfig {
     pub extra_arguments: Option<String>,
 }
 
-#[derive(Args, Clone)]
+#[derive(Args)]
 pub struct DmenuConfig {
     #[clap(
         name = "dmenu-menu-length",
@@ -56,7 +56,7 @@ pub struct DmenuConfig {
     pub extra_arguments: Option<String>,
 }
 
-#[derive(Args, Clone)]
+#[derive(Args)]
 pub struct CustomFinderConfig {
     #[clap(
         name = "custom-finder-program-path",
