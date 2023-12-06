@@ -254,9 +254,9 @@ load_current = true
 enable_clipboard = true
 # enable watching X11/Wayland primary selection
 enable_primary = true
-# ignore clips which match the X11 `TARGETS`
+# ignore clips which match with one of the X11 `TARGETS`
 sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
-# ignore text clips which matches one of the regular expressions
+# ignore text clips which match with one of the regular expressions
 # the regular expression engine is powered by https://github.com/rust-lang/regex
 denied_text_regex_patterns = []
 # ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not byte
