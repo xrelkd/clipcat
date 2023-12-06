@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 
+use clipcat_base::{ClipboardKind, PROJECT_VERSION};
 use futures::{FutureExt, StreamExt};
 use notify_rust::Notification as DesktopNotification;
 use tokio::sync::mpsc;
@@ -15,8 +16,8 @@ enum Event {
     HistoryCleared,
     WatcherEnabled,
     WatcherDisabled,
-    X11Connected { connection_info: String },
-    WaylandConnected { connection_info: String },
+    X11Connected { clipboard_kind: ClipboardKind, connection_info: String },
+    WaylandConnected { clipboard_kind: ClipboardKind, connection_info: String },
     ImageFetched { size: usize, width: usize, height: usize },
     Shutdown,
 }
@@ -52,24 +53,24 @@ impl traits::Notification for Notification {
 
     fn on_watcher_disabled(&self) { drop(self.event_sender.send(Event::WatcherDisabled)); }
 
-    fn on_x11_connected<C>(&self, connection_info: C)
+    fn on_x11_connected<C>(&self, clipboard_kind: ClipboardKind, connection_info: C)
     where
         C: fmt::Display,
     {
-        drop(
-            self.event_sender
-                .send(Event::X11Connected { connection_info: connection_info.to_string() }),
-        );
+        drop(self.event_sender.send(Event::X11Connected {
+            clipboard_kind,
+            connection_info: connection_info.to_string(),
+        }));
     }
 
-    fn on_wayland_connected<C>(&self, connection_info: C)
+    fn on_wayland_connected<C>(&self, clipboard_kind: ClipboardKind, connection_info: C)
     where
         C: fmt::Display,
     {
-        drop(
-            self.event_sender
-                .send(Event::WaylandConnected { connection_info: connection_info.to_string() }),
-        );
+        drop(self.event_sender.send(Event::WaylandConnected {
+            clipboard_kind,
+            connection_info: connection_info.to_string(),
+        }));
     }
 }
 
@@ -96,7 +97,9 @@ impl Worker {
 
             let mut prepare_to_shutdown = false;
             let body = match maybe_event {
-                Some(Event::DaemonStarted) => format!("Daemon is running (PID: {pid})."),
+                Some(Event::DaemonStarted) => {
+                    format!("Daemon is running.\n(version: {PROJECT_VERSION}, PID: {pid})")
+                }
                 Some(Event::HistoryCleared) => "Clipboard history has been cleared.".to_string(),
                 Some(Event::WatcherEnabled) => format!(
                     "{project} is watching clipboard.",
@@ -106,11 +109,17 @@ impl Worker {
                     "{project} is not watching clipboard.",
                     project = clipcat_base::PROJECT_NAME_WITH_INITIAL_CAPITAL
                 ),
-                Some(Event::X11Connected { connection_info }) => {
-                    format!("Connected to X11 server ({connection_info}).")
+                Some(Event::X11Connected { connection_info, clipboard_kind }) => {
+                    format!(
+                        "Connected to X11 server.\n(clipboard kind: {clipboard_kind}, \
+                         {connection_info})"
+                    )
                 }
-                Some(Event::WaylandConnected { connection_info }) => {
-                    format!("Connected to Wayland server ({connection_info}).")
+                Some(Event::WaylandConnected { connection_info, clipboard_kind }) => {
+                    format!(
+                        "Connected to Wayland server.\n(clipboard kind: {clipboard_kind}, \
+                         {connection_info})"
+                    )
                 }
                 Some(Event::ImageFetched { size, width, height }) => {
                     format!(
@@ -120,7 +129,7 @@ impl Worker {
                 }
                 Some(Event::Shutdown) | None => {
                     prepare_to_shutdown = true;
-                    format!("Daemon is shutting down (PID: {pid}).")
+                    format!("Daemon is shutting down.\n(version: {PROJECT_VERSION}, PID: {pid})")
                 }
             };
             if let Err(err) = DesktopNotification::new()
@@ -142,13 +151,18 @@ impl Worker {
 }
 
 impl clipcat_clipboard::EventObserver for Notification {
-    fn on_connected(&self, backend_kind: clipcat_clipboard::ListenerKind, connection_info: &str) {
+    fn on_connected(
+        &self,
+        backend_kind: clipcat_clipboard::ListenerKind,
+        clipboard_kind: ClipboardKind,
+        connection_info: &str,
+    ) {
         match backend_kind {
             clipcat_clipboard::ListenerKind::X11 => {
-                traits::Notification::on_x11_connected(self, connection_info);
+                traits::Notification::on_x11_connected(self, clipboard_kind, connection_info);
             }
             clipcat_clipboard::ListenerKind::Wayland => {
-                traits::Notification::on_wayland_connected(self, connection_info);
+                traits::Notification::on_wayland_connected(self, clipboard_kind, connection_info);
             }
         }
     }

@@ -44,12 +44,12 @@ impl Listener {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
-        tracing::info!("Connecting X11 server");
+        tracing::info!("Connecting X11 server (clipboard kind: {clipboard_kind})");
         let context = Context::new(display_name, clipboard_kind)?;
 
-        tracing::info!("Connected to X11 server");
+        tracing::info!("Connected to X11 server (clipboard kind: {clipboard_kind})");
         for observer in &event_observers {
-            observer.on_connected(ListenerKind::X11, &context.display_name());
+            observer.on_connected(ListenerKind::X11, clipboard_kind, &context.display_name());
         }
 
         let thread =
@@ -69,7 +69,10 @@ impl Drop for Listener {
     fn drop(&mut self) {
         self.is_running.store(false, Ordering::Release);
 
-        tracing::info!("Reap thread which listening to X11 server");
+        tracing::info!(
+            "Reap thread which listening to X11 server (clipboard kind: {kind})",
+            kind = self.subscriber.clipboard_kind()
+        );
         drop(self.thread.take().map(thread::JoinHandle::join));
     }
 }
@@ -166,7 +169,11 @@ fn build_thread(
                                 return Err(err);
                             }
                             for observer in &event_observers {
-                                observer.on_connected(ListenerKind::X11, &context.display_name());
+                                observer.on_connected(
+                                    ListenerKind::X11,
+                                    context.clipboard_kind(),
+                                    &context.display_name(),
+                                );
                             }
                         }
                     };
@@ -196,10 +203,18 @@ fn try_reconnect(
     for interval in retry_interval {
         if let Err(err) = context.reconnect() {
             if !is_running.load(Ordering::Relaxed) {
-                tracing::warn!("Listener is about to quit, no need to re-connect to X11 server");
+                tracing::warn!(
+                    "Listener is about to quit, no need to re-connect to X11 server (clipboard \
+                     kind: {kind})",
+                    kind = context.clipboard_kind()
+                );
                 return Err(Error::ListenerIsClosing);
             }
-            tracing::warn!("{err}, try to re-connect after {n}ms", n = interval.as_millis());
+            tracing::warn!(
+                "{err}, try to re-connect after {n}ms (clipboard kind: {kind})",
+                n = interval.as_millis(),
+                kind = context.clipboard_kind()
+            );
             std::thread::sleep(interval);
         } else {
             poll.registry()
@@ -210,10 +225,16 @@ fn try_reconnect(
                 )
                 .context(error::RegisterIoResourceSnafu)?;
 
-            tracing::info!("Re-connected to X11 server!");
+            tracing::info!(
+                "Re-connected to X11 server! (clipboard kind: {kind})",
+                kind = context.clipboard_kind()
+            );
             return Ok(());
         }
     }
-    tracing::error!("Could not connect to X11 server");
+    tracing::error!(
+        "Could not connect to X11 server (clipboard kind: {kind})",
+        kind = context.clipboard_kind()
+    );
     Err(Error::RetryLimitReached { value: max_retry_count })
 }
