@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use clipcat_base::ClipboardKind;
+use clipcat_base::{ClipboardKind, PROJECT_VERSION};
 use futures::{FutureExt, StreamExt};
 use notify_rust::Notification as DesktopNotification;
 use tokio::sync::mpsc;
@@ -97,7 +97,9 @@ impl Worker {
 
             let mut prepare_to_shutdown = false;
             let body = match maybe_event {
-                Some(Event::DaemonStarted) => format!("Daemon is running (PID: {pid})."),
+                Some(Event::DaemonStarted) => {
+                    format!("Daemon is running.\n(version: {PROJECT_VERSION}, PID: {pid})")
+                }
                 Some(Event::HistoryCleared) => "Clipboard history has been cleared.".to_string(),
                 Some(Event::WatcherEnabled) => format!(
                     "{project} is watching clipboard.",
@@ -127,7 +129,7 @@ impl Worker {
                 }
                 Some(Event::Shutdown) | None => {
                     prepare_to_shutdown = true;
-                    format!("Daemon is shutting down (PID: {pid}).")
+                    format!("Daemon is shutting down.\n(version: {PROJECT_VERSION}, PID: {pid})")
                 }
             };
             if let Err(err) = DesktopNotification::new()
