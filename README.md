@@ -57,7 +57,7 @@
 ## Installation
 
 <details>
-<summary>Install with package manager</summary>
+    <summary>Install with package manager</summary>
 
 | Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                             |
 | ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -216,7 +216,7 @@ $ clipcatd
 | `clipcat-menu` | `$XDG_CONFIG_HOME/clipcat/clipcat-menu.toml` |
 
 <details>
-<summary>Configuration for <b>clipcatd</b></summary>
+    <summary>Configuration for <b>clipcatd</b></summary>
 
 ```toml
 # run as a traditional UNIX daemon
@@ -245,12 +245,19 @@ load_current = true
 enable_clipboard = true
 # enable watching X11/Wayland primary selection
 enable_primary = true
+# ignore clips which match the X11 `TARGETS`
+sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
+# ignore text clips which matches one of the regular expressions
+# the regular expression engine is powered by https://github.com/rust-lang/regex
+denied_text_regex_patterns = []
+# ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not byte
+filter_text_min_length = 1
+# ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not byte
+filter_text_max_length = 20000000
 # enable capturing image or not
 capture_image = true
-# ignore clips with a size <= `filter_min_size`, in bytes
-filter_min_size = 1
-# ignore clips with a size > `filter_max_size`, in bytes
-filter_max_size = 5242880
+# ignore image clips with a size > `filter_image_max_size`, in byte
+filter_image_max_size = 5242880
 
 [grpc]
 # enable gRPC over http
@@ -272,7 +279,7 @@ enable = true
 # if your desktop notification server supports showing a icon
 # If not provided, the value `accessories-clipboard` will be applied
 icon = "/path/to/the/icon"
-# timeout duration in milliseconds, desktop notification
+# timeout duration in milliseconds
 # This sets the time from the time the notification is displayed until it is
 # closed again by the notification server
 timeout_ms = 2000
@@ -329,7 +336,7 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 </details>
 
 <details>
-<summary>Configuration for <b>clipcatctl</b></summary>
+    <summary>Configuration for <b>clipcatctl</b></summary>
 
 ```toml
 # server endpoint
@@ -354,7 +361,7 @@ level = "INFO"
 </details>
 
 <details>
-<summary>Configuration for <b>clipcat-menu</b></summary>
+    <summary>Configuration for <b>clipcat-menu</b></summary>
 
 ```toml
 # server endpoint
@@ -386,6 +393,8 @@ line_length = 100
 menu_length = 30
 # prompt of menu
 menu_prompt = "Clipcat"
+# extra arguments to pass to `rofi`
+extra_arguments = ["-mesg", "Please select a clip"]
 
 # options for "dmenu"
 [dmenu]
@@ -395,6 +404,19 @@ line_length = 100
 menu_length = 30
 # prompt of menu
 menu_prompt = "Clipcat"
+# extra arguments to pass to `dmenu`
+extra_arguments = [
+  "-fn",
+  "SauceCodePro Nerd Font Mono-12",
+  "-nb",
+  "#282828",
+  "-nf",
+  "#ebdbb2",
+  "-sb",
+  "#d3869b",
+  "-sf",
+  "#282828",
+]
 
 # customize your finder
 [custom_finder]
@@ -409,7 +431,7 @@ args = []
 ## Integration
 
 <details>
-<summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
+    <summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
 
 For a `zsh` user, it will be useful to integrate `clipcat` with `zsh`.
 
@@ -428,7 +450,7 @@ fi
 </details>
 
 <details>
-<summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
+    <summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
 
 For a `i3` window manager user, it will be useful to integrate `clipcat` with `i3`.
 
@@ -445,6 +467,37 @@ bindsym $mod+o exec $launcher-clipboard-remove
 ```
 
 **Note**: You can use `rofi` or `dmenu` as the default finder.
+
+</details>
+
+<details>
+    <summary>Starting <b>clipcatd</b> with <a href="https://systemd.io/" target="_blank">systemd</a></summary>
+
+Put the following snippet in `$XDG_CONFIG_HOME/systemd/user/clipcat.service`:
+
+```
+[Unit]
+Description=Clipcat Daemon
+PartOf=graphical-session.target
+
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+# NOTE: We assume that your `clipcatd` is placed at `/usr/bin/clipcatd`.
+ExecStart=/usr/bin/clipcatd --no-daemon --replace
+Restart=on-failure
+Type=simple
+```
+
+Enable and start `clipcat` with the following commands:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable clipcat.service
+systemctl --user start clipcat.service
+systemctl --user status clipcat.service
+```
 
 </details>
 
