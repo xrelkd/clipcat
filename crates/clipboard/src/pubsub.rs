@@ -62,3 +62,9 @@ impl ClipboardWait for Subscriber {
         result
     }
 }
+
+impl Subscriber {
+    #[inline]
+    #[must_use]
+    pub const fn clipboard_kind(&self) -> ClipboardKind { self.kind }
+}
