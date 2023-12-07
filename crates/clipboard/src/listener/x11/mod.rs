@@ -90,100 +90,105 @@ fn build_thread(
         .add_phase(50, Duration::from_millis(500))
         .add_phase(100, Duration::from_millis(2500));
 
-    thread::spawn(move || {
-        let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
-        let mut events = mio::Events::with_capacity(1024);
+    thread::Builder::new()
+        .name(format!("{kind}-listener", kind = context.clipboard_kind()))
+        .spawn(move || {
+            let mut poll = mio::Poll::new().context(InitializeMioPollSnafu)?;
+            let mut events = mio::Events::with_capacity(1024);
 
-        poll.registry()
-            .register(
-                &mut mio::unix::SourceFd(&context.as_raw_fd()),
-                CONTEXT_TOKEN,
-                mio::Interest::READABLE,
-            )
-            .context(error::RegisterIoResourceSnafu)?;
+            poll.registry()
+                .register(
+                    &mut mio::unix::SourceFd(&context.as_raw_fd()),
+                    CONTEXT_TOKEN,
+                    mio::Interest::READABLE,
+                )
+                .context(error::RegisterIoResourceSnafu)?;
 
-        while is_running.load(Ordering::Relaxed) {
-            tracing::trace!("Wait for readiness events");
+            while is_running.load(Ordering::Relaxed) {
+                tracing::trace!("Wait for readiness events");
 
-            if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
-                tracing::error!("Error occurred while polling for readiness event, error: {err}");
-            }
+                if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
+                    tracing::error!(
+                        "Error occurred while polling for readiness event, error: {err}"
+                    );
+                }
 
-            for event in &events {
-                if event.token() == CONTEXT_TOKEN {
-                    match context.poll_for_event() {
-                        Ok(X11Event::XfixesSelectionNotify(_event)) => {
-                            match context.get_available_formats() {
-                                Ok(mut formats) => {
-                                    // filter sensitive content
-                                    if clip_filter.filter_sensitive_atoms(formats.iter()) {
-                                        tracing::info!("Sensitive content detected, ignore it");
-                                        continue;
+                for event in &events {
+                    if event.token() == CONTEXT_TOKEN {
+                        match context.poll_for_event() {
+                            Ok(X11Event::XfixesSelectionNotify(_event)) => {
+                                match context.get_available_formats() {
+                                    Ok(mut formats) => {
+                                        // filter sensitive content
+                                        if clip_filter.filter_sensitive_atoms(formats.iter()) {
+                                            tracing::info!("Sensitive content detected, ignore it");
+                                            continue;
+                                        }
+
+                                        // sort available formats by type, some applications provide
+                                        // image in `text/html` format, we prefer to use `image`
+                                        formats.sort_unstable_by_key(|format| {
+                                            if format.starts_with("image/png") {
+                                                1
+                                            } else if format.starts_with("image") {
+                                                2
+                                            } else if format.starts_with("text") {
+                                                3
+                                            } else if format == "UTF8_STRING" {
+                                                4
+                                            } else {
+                                                u32::MAX
+                                            }
+                                        });
+
+                                        for format in formats {
+                                            if format == "UTF8_STRING" {
+                                                notifier.notify_all(mime::TEXT_PLAIN_UTF_8);
+                                                break;
+                                            }
+                                            if let Ok(mime) = format.parse() {
+                                                notifier.notify_all(mime);
+                                                break;
+                                            }
+                                        }
                                     }
-
-                                    // sort available formats by type, some applications provide
-                                    // image in `text/html` format, we prefer to use `image`
-                                    formats.sort_unstable_by_key(|format| {
-                                        if format.starts_with("image/png") {
-                                            1
-                                        } else if format.starts_with("image") {
-                                            2
-                                        } else if format.starts_with("text") {
-                                            3
-                                        } else if format == "UTF8_STRING" {
-                                            4
-                                        } else {
-                                            u32::MAX
-                                        }
-                                    });
-
-                                    for format in formats {
-                                        if format == "UTF8_STRING" {
-                                            notifier.notify_all(mime::TEXT_PLAIN_UTF_8);
-                                            break;
-                                        }
-                                        if let Ok(mime) = format.parse() {
-                                            notifier.notify_all(mime);
-                                            break;
-                                        }
+                                    Err(err) => {
+                                        tracing::warn!(
+                                            "Clipboard is changed but we could not get available \
+                                             formats, error: {err}"
+                                        );
                                     }
                                 }
-                                Err(err) => {
-                                    tracing::warn!(
-                                        "Clipboard is changed but we could not get available \
-                                         formats, error: {err}"
+                            }
+                            Ok(_) | Err(Error::NoEvent) => {}
+                            Err(err) => {
+                                tracing::warn!("{err}, try to re-connect");
+                                if let Err(err) = try_reconnect(
+                                    &poll,
+                                    &mut context,
+                                    retry_interval.clone(),
+                                    &is_running,
+                                ) {
+                                    notifier.close();
+                                    return Err(err);
+                                }
+                                for observer in &event_observers {
+                                    observer.on_connected(
+                                        ListenerKind::X11,
+                                        context.clipboard_kind(),
+                                        &context.display_name(),
                                     );
                                 }
                             }
-                        }
-                        Ok(_) | Err(Error::NoEvent) => {}
-                        Err(err) => {
-                            tracing::warn!("{err}, try to re-connect");
-                            if let Err(err) = try_reconnect(
-                                &poll,
-                                &mut context,
-                                retry_interval.clone(),
-                                &is_running,
-                            ) {
-                                notifier.close();
-                                return Err(err);
-                            }
-                            for observer in &event_observers {
-                                observer.on_connected(
-                                    ListenerKind::X11,
-                                    context.clipboard_kind(),
-                                    &context.display_name(),
-                                );
-                            }
-                        }
-                    };
+                        };
+                    }
                 }
             }
-        }
 
-        notifier.close();
-        Ok(())
-    })
+            notifier.close();
+            Ok(())
+        })
+        .expect("build thread for listening X11 clipboard")
 }
 
 // SAFETY: the function is complex because of `tracing`

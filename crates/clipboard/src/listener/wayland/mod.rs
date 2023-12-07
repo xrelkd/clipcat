@@ -74,39 +74,46 @@ fn build_thread(
     clipboard_type: wl_clipboard_rs::paste::ClipboardType,
     notifier: pubsub::Publisher,
 ) -> thread::JoinHandle<Result<(), Error>> {
-    thread::spawn(move || {
-        while is_running.load(Ordering::Relaxed) {
-            tracing::trace!("Wait for readiness events");
+    // FIXME: re-implement this with event-driven mechanism,
+    // polling is not a good enough
+    thread::Builder::new()
+        .name(format!("{clipboard_type:?}-listener"))
+        .spawn(move || {
+            while is_running.load(Ordering::Relaxed) {
+                tracing::trace!("Wait for readiness events");
 
-            match wl_clipboard_get_contents(clipboard_type, Seat::Unspecified, MimeType::Any) {
-                Ok((_pipe, mime_type)) => {
-                    if let Ok(mime) = mime_type.parse() {
-                        notifier.notify_all(mime);
+                match wl_clipboard_get_contents(clipboard_type, Seat::Unspecified, MimeType::Any) {
+                    Ok((_pipe, mime_type)) => {
+                        if let Ok(mime) = mime_type.parse() {
+                            notifier.notify_all(mime);
+                        }
+                        continue;
                     }
-                    continue;
+                    Err(
+                        WaylandError::NoSeats
+                        | WaylandError::ClipboardEmpty
+                        | WaylandError::NoMimeType,
+                    ) => {
+                        tracing::trace!("The clipboard is empty, sleep for a while");
+                    }
+                    Err(WaylandError::MissingProtocol { name, version }) => {
+                        tracing::error!(
+                            "A required Wayland protocol (name: {name}, version: {version}) is \
+                             not supported by the compositor"
+                        );
+                    }
+                    Err(err) => {
+                        tracing::warn!(
+                            "Error occurs while listening to clipboard of Wayland, error: {err}"
+                        );
+                    }
                 }
-                Err(
-                    WaylandError::NoSeats | WaylandError::ClipboardEmpty | WaylandError::NoMimeType,
-                ) => {
-                    tracing::trace!("The clipboard is empty, sleep for a while");
-                }
-                Err(WaylandError::MissingProtocol { name, version }) => {
-                    tracing::error!(
-                        "A required Wayland protocol (name: {name}, version: {version}) is not \
-                         supported by the compositor"
-                    );
-                }
-                Err(err) => {
-                    tracing::warn!(
-                        "Error occurs while listening to clipboard of Wayland, error: {err}"
-                    );
-                }
+                // sleep for a while there is no content or error occurred
+                thread::sleep(POLLING_INTERVAL);
             }
-            // sleep for a while there is no content or error occurred
-            thread::sleep(POLLING_INTERVAL);
-        }
 
-        notifier.close();
-        Ok(())
-    })
+            notifier.close();
+            Ok(())
+        })
+        .expect("build thread for listening X11 clipboard")
 }
