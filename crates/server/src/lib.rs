@@ -54,6 +54,7 @@ pub async fn serve_with_shutdown(
         notification::DesktopNotification::new(
             desktop_notification_config.icon,
             desktop_notification_config.timeout,
+            desktop_notification_config.long_plaintext_length,
         );
 
     let clipboard_backend =

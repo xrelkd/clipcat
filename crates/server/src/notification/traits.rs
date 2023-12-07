@@ -7,6 +7,8 @@ pub trait Notification: Send + Sync {
 
     fn on_image_fetched(&self, _size: usize, _width: usize, _height: usize) {}
 
+    fn on_plaintext_fetched(&self, _character_count: usize) {}
+
     fn on_history_cleared(&self) {}
 
     fn on_watcher_enabled(&self) {}

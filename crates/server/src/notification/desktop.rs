@@ -19,6 +19,7 @@ enum Event {
     X11Connected { clipboard_kind: ClipboardKind, connection_info: String },
     WaylandConnected { clipboard_kind: ClipboardKind, connection_info: String },
     ImageFetched { size: usize, width: usize, height: usize },
+    PlaintextFetched { character_count: usize },
     Shutdown,
 }
 
@@ -28,14 +29,23 @@ pub struct Notification {
 }
 
 impl Notification {
-    pub fn new<IconPath>(icon: IconPath, timeout: Duration) -> (Self, Worker)
+    pub fn new<IconPath>(
+        icon: IconPath,
+        timeout: Duration,
+        long_plaintext_length: usize,
+    ) -> (Self, Worker)
     where
         IconPath: AsRef<Path>,
     {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         (
             Self { event_sender },
-            Worker { event_receiver, icon: icon.as_ref().to_path_buf(), timeout },
+            Worker {
+                event_receiver,
+                icon: icon.as_ref().to_path_buf(),
+                timeout,
+                long_plaintext_length,
+            },
         )
     }
 }
@@ -45,6 +55,10 @@ impl traits::Notification for Notification {
 
     fn on_image_fetched(&self, size: usize, width: usize, height: usize) {
         drop(self.event_sender.send(Event::ImageFetched { size, width, height }));
+    }
+
+    fn on_plaintext_fetched(&self, character_count: usize) {
+        drop(self.event_sender.send(Event::PlaintextFetched { character_count }));
     }
 
     fn on_history_cleared(&self) { drop(self.event_sender.send(Event::HistoryCleared)); }
@@ -80,13 +94,15 @@ pub struct Worker {
     icon: PathBuf,
 
     timeout: Duration,
+
+    long_plaintext_length: usize,
 }
 
 impl Worker {
     #[allow(clippy::redundant_pub_crate)]
     pub async fn serve(self, shutdown_signal: sigfinn::Shutdown) {
         let mut shutdown_signal = shutdown_signal.into_stream();
-        let Self { mut event_receiver, ref icon, timeout } = self;
+        let Self { mut event_receiver, ref icon, timeout, long_plaintext_length } = self;
         let pid = std::process::id();
 
         loop {
@@ -126,6 +142,13 @@ impl Worker {
                         "Fetched a new image.\n(size: {size}, width: {width}, height: {height})",
                         size = humansize::format_size(size, humansize::BINARY)
                     )
+                }
+                Some(Event::PlaintextFetched { character_count }) => {
+                    if character_count >= long_plaintext_length && long_plaintext_length > 0 {
+                        format!("Fetched a long plaintext.\n(size: {character_count})")
+                    } else {
+                        continue;
+                    }
                 }
                 Some(Event::Shutdown) | None => {
                     prepare_to_shutdown = true;
