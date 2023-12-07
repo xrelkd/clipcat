@@ -5,14 +5,9 @@ on:
     branches:
       - main
       - develop
-      - ci/*
-      - feat/*
-      - feature/*
-      - hotfix/*
       - release/*
     tags:
       - v*
-  pull_request:
 
 env:
   CI: 1

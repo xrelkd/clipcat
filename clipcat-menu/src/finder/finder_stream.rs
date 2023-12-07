@@ -27,6 +27,8 @@ pub trait FinderStream: Send + Sync {
             .collect()
     }
 
+    fn set_extra_arguments(&mut self, _arguments: &[String]) {}
+
     fn set_line_length(&mut self, _line_length: usize) {}
 
     fn set_menu_length(&mut self, _menu_length: usize) {}

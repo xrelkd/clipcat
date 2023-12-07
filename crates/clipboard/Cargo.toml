@@ -16,7 +16,10 @@ autoexamples = false
 [dependencies]
 tracing = "0.1"
 
-arboard = "3"
+arboard = { version = "3", default-features = false, features = [
+  "image-data",
+  "wayland-data-control",
+] }
 
 bytes       = "1"
 mime        = "0.3"

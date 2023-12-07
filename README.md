@@ -57,13 +57,13 @@
 ## Installation
 
 <details>
-<summary>Install with package manager</summary>
+    <summary>Install with package manager</summary>
 
-| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                             |
-| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat'` or <br> `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                    |
+| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                                  |
+| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                         |
 
 </details>
 
@@ -83,7 +83,7 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.12.0
+export CLIPCAT_VERSION=v0.13.0
 
 # NOTE: the architecture of your machine,
 # available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
@@ -115,12 +115,12 @@ clipcat-menu version
 With the above tools and packages already installed, you can simply run:
 
 ```bash
-$ git clone --branch=main https://github.com/xrelkd/clipcat.git
-$ cd clipcat
+git clone --branch=main https://github.com/xrelkd/clipcat.git
+cd clipcat
 
-$ cargo install --path clipcatd
-$ cargo install --path clipcatctl
-$ cargo install --path clipcat-menu
+cargo install --path clipcatd
+cargo install --path clipcatctl
+cargo install --path clipcat-menu
 ```
 
 </details>
@@ -170,16 +170,25 @@ A `clipcat` client sends requests to the server for the following operations:
 0. Setup configurations for `clipcat`. Read [configuration](#configuration) section for more details.
 
 ```bash
-$ mkdir -p                       $XDG_CONFIG_HOME/clipcat
-$ clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
-$ clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
-$ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
+mkdir -p                       $XDG_CONFIG_HOME/clipcat
+clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
+clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
+clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 ```
 
 1. Start `clipcatd` for watching clipboard events.
 
 ```bash
-$ clipcatd
+# show the usage, please read the usage before doing any other operations
+clipcatd help
+
+# Start and daemonize clipcatd, clipcatd will run in the background.
+# You can use `pkill clipcatd` to stop it, `SIGTERM` will be sent to clipcatd.
+clipcatd
+
+# Or you can start clipcatd, but keep it in the foreground.
+# You can use press Ctrl+C in your terminal to stop it, `SIGINT` will be sent to clipcatd.
+clipcatd --no-daemon
 ```
 
 2. Copy arbitrary text/image from other process with your mouse or keyboard.
@@ -216,18 +225,23 @@ $ clipcatd
 | `clipcat-menu` | `$XDG_CONFIG_HOME/clipcat/clipcat-menu.toml` |
 
 <details>
-<summary>Configuration for <b>clipcatd</b></summary>
+    <summary>Configuration for <b>clipcatd</b></summary>
 
 ```toml
 # run as a traditional UNIX daemon
 daemonize = true
 # maximum number of clip history
 max_history = 50
-# file path of clip history
+# file path of clip history,
+# if you omit this value, clipcatd will persist history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
+# file path of PID file,
+# if you omit this value, clipcatd will place the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`
+pid_file = "/run/user/<user-id>/clipcatd.pid"
 
 [log]
-# emit log message to a log file. Delete this line to disable emitting to a log file
+# emit log message to a log file.
+# if you omit this value, clipcatd will disable emitting to a log file
 file_path = "/path/to/log/file"
 # emit log message to journald
 emit_journald = true
@@ -245,12 +259,19 @@ load_current = true
 enable_clipboard = true
 # enable watching X11/Wayland primary selection
 enable_primary = true
+# ignore clips which match with one of the X11 `TARGETS`
+sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
+# ignore text clips which match with one of the regular expressions
+# the regular expression engine is powered by https://github.com/rust-lang/regex
+denied_text_regex_patterns = []
+# ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not in byte
+filter_text_min_length = 1
+# ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not in byte
+filter_text_max_length = 20000000
 # enable capturing image or not
 capture_image = true
-# ignore clips with a size <= `filter_min_size`, in bytes
-filter_min_size = 1
-# ignore clips with a size > `filter_max_size`, in bytes
-filter_max_size = 5242880
+# ignore image clips with a size > `filter_image_max_size`, in byte
+filter_image_max_size = 5242880
 
 [grpc]
 # enable gRPC over http
@@ -262,20 +283,25 @@ host = "127.0.0.1"
 # port number for gRPC
 port = 45045
 # path of unix domain socket
+# if you omit this value, clipcatd will place the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [desktop_notification]
 # enable desktop notification
 enable = true
-# path of a icon
-# The given icon will be displayed on desktop notification,
+# path of a icon, the given icon will be displayed on desktop notification,
 # if your desktop notification server supports showing a icon
-# If not provided, the value `accessories-clipboard` will be applied
+# if not provided, the value `accessories-clipboard` will be applied
 icon = "/path/to/the/icon"
-# timeout duration in milliseconds, desktop notification
-# This sets the time from the time the notification is displayed until it is
+# timeout duration in milliseconds
+# this sets the time from the time the notification is displayed until it is
 # closed again by the notification server
 timeout_ms = 2000
+# define the length of a long plaintext,
+# if the length of a plaintext is >= `long_plaintext_length`,
+# desktop notification will be emitted
+# if this value is 0, no desktop desktop notification will be emitted when fetched plaintext
+long_plaintext_length = 2000
 
 # snippets, only UTF-8 text is supported.
 [[snippets]]
@@ -329,7 +355,7 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 </details>
 
 <details>
-<summary>Configuration for <b>clipcatctl</b></summary>
+    <summary>Configuration for <b>clipcatctl</b></summary>
 
 ```toml
 # server endpoint
@@ -354,7 +380,7 @@ level = "INFO"
 </details>
 
 <details>
-<summary>Configuration for <b>clipcat-menu</b></summary>
+    <summary>Configuration for <b>clipcat-menu</b></summary>
 
 ```toml
 # server endpoint
@@ -386,6 +412,8 @@ line_length = 100
 menu_length = 30
 # prompt of menu
 menu_prompt = "Clipcat"
+# extra arguments to pass to `rofi`
+extra_arguments = ["-mesg", "Please select a clip"]
 
 # options for "dmenu"
 [dmenu]
@@ -395,6 +423,19 @@ line_length = 100
 menu_length = 30
 # prompt of menu
 menu_prompt = "Clipcat"
+# extra arguments to pass to `dmenu`
+extra_arguments = [
+  "-fn",
+  "SauceCodePro Nerd Font Mono-12",
+  "-nb",
+  "#282828",
+  "-nf",
+  "#ebdbb2",
+  "-sb",
+  "#d3869b",
+  "-sf",
+  "#282828",
+]
 
 # customize your finder
 [custom_finder]
@@ -409,7 +450,7 @@ args = []
 ## Integration
 
 <details>
-<summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
+    <summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
 
 For a `zsh` user, it will be useful to integrate `clipcat` with `zsh`.
 
@@ -428,7 +469,7 @@ fi
 </details>
 
 <details>
-<summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
+    <summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
 
 For a `i3` window manager user, it will be useful to integrate `clipcat` with `i3`.
 
@@ -445,6 +486,83 @@ bindsym $mod+o exec $launcher-clipboard-remove
 ```
 
 **Note**: You can use `rofi` or `dmenu` as the default finder.
+
+</details>
+
+<details>
+    <summary>Integrating with <a href="http://leftwm.org/" target="_blank">LeftWM</a></summary>
+
+For a `leftwm` user, it will be useful to integrate `clipcat` with `leftwm`.
+
+Add the following keybindings in your `leftwm` configuration file (`$XDG_CONFIG_HOME/leftwm/config.ron`):
+
+```ron
+(
+    /* other configurations */
+    keybind: [
+        /* select clip from clipboard */
+        (command: Execute, value: "clipcat-menu insert", modifier: ["modkey"], key: "p"),
+        (command: Execute, value: "clipcat-menu remove", modifier: ["modkey"], key: "o"),
+        /* other configurations */
+    ],
+    /* other configurations */
+)
+```
+
+**Note**: You can use `rofi` or `dmenu` as the default finder.
+
+Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
+
+```bash
+# other configurations
+
+# start clipcatd
+clipcatd
+
+# other configurations
+```
+
+Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/down`:
+
+```bash
+# other configurations
+
+# terminate clipcatd
+pkill clipcatd
+
+# other configurations
+```
+
+</details>
+
+<details>
+    <summary>Starting <b>clipcatd</b> with <a href="https://systemd.io/" target="_blank">systemd</a></summary>
+
+Put the following snippet in `$XDG_CONFIG_HOME/systemd/user/clipcat.service`:
+
+```
+[Unit]
+Description=Clipcat Daemon
+PartOf=graphical-session.target
+
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+# NOTE: We assume that your `clipcatd` is placed at `/usr/bin/clipcatd`.
+ExecStart=/usr/bin/clipcatd --no-daemon --replace
+Restart=on-failure
+Type=simple
+```
+
+Enable and start `clipcat` with the following commands:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable clipcat.service
+systemctl --user start clipcat.service
+systemctl --user status clipcat.service
+```
 
 </details>
 

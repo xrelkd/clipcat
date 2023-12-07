@@ -55,7 +55,10 @@ impl Context {
     }
 
     #[inline]
-    const fn clipboard_kind(&self) -> xproto::Atom {
+    pub const fn clipboard_kind(&self) -> ClipboardKind { self.clipboard_kind }
+
+    #[inline]
+    const fn clipboard_kind_atom(&self) -> xproto::Atom {
         match self.clipboard_kind {
             ClipboardKind::Clipboard => self.atom_cache.clipboard_selection,
             ClipboardKind::Primary => self.atom_cache.primary_selection,
@@ -94,7 +97,7 @@ impl Context {
             self.connection
                 .xfixes_select_selection_input(
                     self.window,
-                    self.clipboard_kind(),
+                    self.clipboard_kind_atom(),
                     xfixes::SelectionEventMask::SET_SELECTION_OWNER
                         | xfixes::SelectionEventMask::SELECTION_WINDOW_DESTROY
                         | xfixes::SelectionEventMask::SELECTION_CLIENT_CLOSE,
@@ -117,7 +120,7 @@ impl Context {
             self.connection
                 .convert_selection(
                     self.window,
-                    self.clipboard_kind(),
+                    self.clipboard_kind_atom(),
                     self.atom_cache.targets,
                     self.atom_cache.clipcat_clipboard,
                     xproto::Time::CURRENT_TIME,

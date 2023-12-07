@@ -3,7 +3,7 @@ mod error;
 mod external;
 mod finder_stream;
 
-use std::{fmt, str::FromStr};
+use std::{fmt, path::PathBuf, str::FromStr};
 
 use clipcat_base::ClipEntryMetadata;
 use serde::{Deserialize, Serialize};
@@ -174,6 +174,27 @@ impl FinderRunner {
     pub fn set_menu_length(&mut self, menu_length: usize) {
         if let Some(external) = self.external.as_mut() {
             external.set_menu_length(menu_length);
+        }
+    }
+
+    #[inline]
+    pub fn set_program_path(&mut self, program_path: PathBuf) {
+        if let Some(external) = self.external.as_mut() {
+            external.set_program_path(program_path);
+        }
+    }
+
+    #[inline]
+    pub fn set_arguments(&mut self, arguments: &[String]) {
+        if let Some(external) = self.external.as_mut() {
+            external.set_arguments(arguments);
+        }
+    }
+
+    #[inline]
+    pub fn set_extra_arguments(&mut self, arguments: &[String]) {
+        if let Some(external) = self.external.as_mut() {
+            external.set_extra_arguments(arguments);
         }
     }
 }

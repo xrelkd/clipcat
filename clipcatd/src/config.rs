@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
     time::Duration,
@@ -52,14 +53,23 @@ pub struct WatcherConfig {
     #[serde(default)]
     pub enable_primary: bool,
 
+    #[serde(default = "WatcherConfig::default_sensitive_x11_atoms")]
+    pub sensitive_x11_atoms: HashSet<String>,
+
+    #[serde(default = "WatcherConfig::default_filter_text_min_length")]
+    pub filter_text_min_length: usize,
+
+    #[serde(default = "WatcherConfig::default_filter_text_max_length")]
+    pub filter_text_max_length: usize,
+
+    #[serde(default)]
+    pub denied_text_regex_patterns: HashSet<String>,
+
     #[serde(default)]
     pub capture_image: bool,
 
-    #[serde(default = "WatcherConfig::default_filter_min_size")]
-    pub filter_min_size: usize,
-
-    #[serde(default = "WatcherConfig::default_filter_max_size")]
-    pub filter_max_size: usize,
+    #[serde(default = "WatcherConfig::default_filter_image_max_size")]
+    pub filter_image_max_size: usize,
 }
 
 impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
@@ -69,8 +79,11 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             enable_clipboard,
             enable_primary,
             capture_image,
-            filter_min_size,
-            filter_max_size,
+            filter_text_min_length,
+            filter_text_max_length,
+            denied_text_regex_patterns,
+            filter_image_max_size,
+            sensitive_x11_atoms,
         }: WatcherConfig,
     ) -> Self {
         Self {
@@ -78,18 +91,27 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             enable_clipboard,
             enable_primary,
             capture_image,
-            filter_min_size,
-            filter_max_size,
+            filter_text_min_length,
+            filter_text_max_length,
+            filter_image_max_size,
+            denied_text_regex_patterns,
+            sensitive_x11_atoms,
         }
     }
 }
 
 impl WatcherConfig {
-    pub const fn default_filter_min_size() -> usize { 1 }
+    pub const fn default_filter_text_min_length() -> usize { 1 }
 
-    pub const fn default_filter_max_size() -> usize {
+    pub const fn default_filter_text_max_length() -> usize { 20_000_000 }
+
+    pub const fn default_filter_image_max_size() -> usize {
         // 5 MiB
         5 * (1 << 20)
+    }
+
+    pub fn default_sensitive_x11_atoms() -> HashSet<String> {
+        HashSet::from(["x-kde-passwordManagerHint".to_string()])
     }
 }
 
@@ -216,8 +238,11 @@ impl Default for WatcherConfig {
             enable_clipboard: true,
             enable_primary: true,
             capture_image: true,
-            filter_min_size: Self::default_filter_min_size(),
-            filter_max_size: Self::default_filter_max_size(),
+            filter_text_min_length: Self::default_filter_text_min_length(),
+            filter_text_max_length: Self::default_filter_text_max_length(),
+            denied_text_regex_patterns: HashSet::new(),
+            filter_image_max_size: Self::default_filter_image_max_size(),
+            sensitive_x11_atoms: Self::default_sensitive_x11_atoms(),
         }
     }
 }
@@ -303,6 +328,9 @@ pub struct DesktopNotificationConfig {
 
     #[serde(default = "DesktopNotificationConfig::default_timeout_ms")]
     pub timeout_ms: u64,
+
+    #[serde(default = "DesktopNotificationConfig::default_long_plaintext_length")]
+    pub long_plaintext_length: usize,
 }
 
 impl DesktopNotificationConfig {
@@ -311,6 +339,8 @@ impl DesktopNotificationConfig {
     pub fn default_icon() -> String { String::from("accessories-clipboard") }
 
     pub const fn default_timeout_ms() -> u64 { 2000 }
+
+    pub const fn default_long_plaintext_length() -> usize { 2000 }
 
     pub fn search_icon(&self) -> PathBuf {
         let icon_path = PathBuf::from(&self.icon);
@@ -348,6 +378,7 @@ impl Default for DesktopNotificationConfig {
             enable: Self::default_enable(),
             icon: Self::default_icon(),
             timeout_ms: Self::default_timeout_ms(),
+            long_plaintext_length: Self::default_long_plaintext_length(),
         }
     }
 }
@@ -355,9 +386,9 @@ impl Default for DesktopNotificationConfig {
 impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotificationConfig {
     fn from(config: DesktopNotificationConfig) -> Self {
         let icon = config.search_icon();
-        let DesktopNotificationConfig { enable, timeout_ms, .. } = config;
+        let DesktopNotificationConfig { enable, timeout_ms, long_plaintext_length, .. } = config;
 
-        Self { enable, icon, timeout: Duration::from_millis(timeout_ms) }
+        Self { enable, icon, timeout: Duration::from_millis(timeout_ms), long_plaintext_length }
     }
 }
 

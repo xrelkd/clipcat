@@ -62,5 +62,11 @@ pub trait LoadWait: Load + Subscribe {
 impl<C: Load + Subscribe + ?Sized> LoadWait for C {}
 
 pub trait EventObserver: Send + Sync {
-    fn on_connected(&self, _backend_kind: ListenerKind, _connection_info: &str) {}
+    fn on_connected(
+        &self,
+        _backend_kind: ListenerKind,
+        _clipboard_kind: ClipboardKind,
+        _connection_info: &str,
+    ) {
+    }
 }

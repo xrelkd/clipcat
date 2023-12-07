@@ -1,3 +1,5 @@
+mod config;
+
 use std::{io::Write, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
@@ -15,13 +17,16 @@ use crate::{
 
 const PREVIEW_LENGTH: usize = 80;
 
-#[derive(Debug, Parser)]
-#[clap(name = clipcat_base::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
+#[derive(Parser)]
+#[command(name = clipcat_base::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
 pub struct Cli {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     commands: Option<Commands>,
 
-    #[clap(
+    #[arg(long = "log-level", env = "CLIPCAT_MENU_LOG_LEVEL", help = "Specify a log level")]
+    log_level: Option<tracing::Level>,
+
+    #[arg(
         long = "config",
         short = 'c',
         env = "CLIPCAT_MENU_CONFIG_FILE_PATH",
@@ -29,31 +34,21 @@ pub struct Cli {
     )]
     config_file: Option<PathBuf>,
 
-    #[clap(long, short = 'f', env = "CLIPCAT_MENU_FINDER", help = "Specify a finder")]
+    #[arg(long, short = 'f', env = "CLIPCAT_MENU_FINDER", help = "Specify a finder")]
     finder: Option<FinderType>,
 
-    #[clap(
-        long,
-        short = 'm',
-        env = "CLIPCAT_MENU_MENU_LENGTH",
-        help = "Specify the menu length of finder"
-    )]
-    menu_length: Option<usize>,
+    #[command(flatten)]
+    rofi_config: config::RofiConfig,
 
-    #[clap(
-        long,
-        short = 'l',
-        env = "CLIPCAT_MENU_LINE_LENGTH",
-        help = "Specify the length of a line showing on finder"
-    )]
-    line_length: Option<usize>,
+    #[command(flatten)]
+    dmenu_config: config::DmenuConfig,
 
-    #[clap(long = "log-level", env = "CLIPCAT_MENU_LOG_LEVEL", help = "Specify a log level")]
-    log_level: Option<tracing::Level>,
+    #[command(flatten)]
+    custom_finder_config: config::CustomFinderConfig,
 }
 
 #[allow(variant_size_differences)]
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand)]
 pub enum Commands {
     #[clap(about = "Print the client and server version information")]
     Version {
@@ -83,7 +78,8 @@ pub enum Commands {
 
     #[clap(
         aliases = &["rm", "delete", "del"],
-        about = "Remove selected clip")]
+        about = "Remove selected clip"
+    )]
     Remove,
 
     #[clap(about = "Edit selected clip")]
@@ -99,7 +95,15 @@ impl Default for Cli {
 
 impl Cli {
     pub fn run(self) -> Result<(), Error> {
-        let Self { commands, config_file, finder, menu_length, line_length, log_level } = self;
+        let Self {
+            commands,
+            log_level,
+            config_file,
+            finder,
+            rofi_config,
+            dmenu_config,
+            custom_finder_config,
+        } = self;
 
         match commands {
             Some(Commands::Version { client }) if client => {
@@ -137,22 +141,8 @@ impl Cli {
 
         config.log.registry();
 
-        let finder = {
-            if let Some(finder) = finder {
-                config.finder = finder;
-            }
-
-            let mut finder = FinderRunner::from_config(&config);
-            if let Some(line_length) = line_length {
-                finder.set_line_length(line_length);
-            }
-
-            if let Some(menu_length) = menu_length {
-                finder.set_menu_length(menu_length);
-            }
-            finder
-        };
-
+        let finder =
+            build_finder(finder, rofi_config, dmenu_config, custom_finder_config, &mut config);
         let fut = async move {
             let client = Client::new(config.server_endpoint).await?;
             let clips = client.list(PREVIEW_LENGTH).await?;
@@ -175,7 +165,7 @@ impl Cli {
                     let ids: Vec<_> = selections.into_iter().map(|(_, clip)| clip.id).collect();
                     let removed_ids = client.batch_remove(&ids).await?;
                     for id in removed_ids {
-                        tracing::info!("Removing clip (id: {:016x})", id);
+                        tracing::info!("Removing clip (id: {id:016x})");
                     }
                 }
                 Some(Commands::Edit { editor }) => {
@@ -252,4 +242,77 @@ async fn print_version(client: &Client) {
         .write_all(Cli::command().render_long_version().as_bytes())
         .expect("Failed to write to stdout");
     std::io::stdout().write_all(info.as_bytes()).expect("Failed to write to stdout");
+}
+
+fn build_finder(
+    finder: Option<FinderType>,
+    rofi_config: config::RofiConfig,
+    dmenu_config: config::DmenuConfig,
+    custom_finder_config: config::CustomFinderConfig,
+    config: &mut Config,
+) -> FinderRunner {
+    if let Some(finder) = finder {
+        config.finder = finder;
+    }
+
+    let mut finder = FinderRunner::from_config(config);
+    match config.finder {
+        FinderType::Rofi => {
+            if let Some(line_length) = rofi_config.line_length {
+                finder.set_line_length(line_length);
+            }
+
+            if let Some(menu_length) = rofi_config.menu_length {
+                finder.set_menu_length(menu_length);
+            }
+
+            if let Some(args) = rofi_config.extra_arguments {
+                finder.set_extra_arguments(
+                    &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
+                );
+            }
+        }
+        FinderType::Dmenu => {
+            if let Some(line_length) = dmenu_config.line_length {
+                finder.set_line_length(line_length);
+            }
+
+            if let Some(menu_length) = dmenu_config.menu_length {
+                finder.set_menu_length(menu_length);
+            }
+
+            if let Some(args) = dmenu_config.extra_arguments {
+                finder.set_extra_arguments(
+                    &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
+                );
+            }
+        }
+        FinderType::Custom => {
+            if let Some(path) = custom_finder_config.program_path {
+                finder.set_program_path(path);
+            }
+
+            if let Some(args) = &custom_finder_config.arguments {
+                finder.set_arguments(&args.split(',').map(ToString::to_string).collect::<Vec<_>>());
+            }
+        }
+        _ => {}
+    }
+
+    finder
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::Parser;
+
+    use crate::cli::{Cli, Commands};
+
+    #[test]
+    fn test_command_simple() {
+        match Cli::parse_from(["program_name", "version"]).commands {
+            Some(Commands::Version { .. }) => (),
+            _ => panic!(),
+        }
+    }
 }

@@ -1,7 +1,9 @@
 pub mod config;
 mod entry;
+mod filter;
 mod kind;
 pub mod serde;
+pub mod utils;
 mod watcher_state;
 
 use std::{
@@ -15,6 +17,7 @@ use lazy_static::lazy_static;
 
 pub use self::{
     entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
+    filter::Filter as ClipFilter,
     kind::Kind as ClipboardKind,
     watcher_state::WatcherState as ClipboardWatcherState,
 };
@@ -33,6 +36,7 @@ lazy_static! {
 }
 
 pub const PROJECT_NAME: &str = "clipcat";
+pub const PROJECT_NAME_WITH_INITIAL_CAPITAL: &str = "Clipcat";
 pub const NOTIFICATION_SUMMARY: &str = "Clipcat - Clipboard Manager";
 
 pub const DAEMON_PROGRAM_NAME: &str = "clipcatd";
@@ -103,4 +107,8 @@ impl ClipboardContent {
         let size = humansize::format_size(size, humansize::BINARY);
         format!("{content_type}, {size}")
     }
+}
+
+impl AsRef<Self> for ClipboardContent {
+    fn as_ref(&self) -> &Self { self }
 }

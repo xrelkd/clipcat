@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use clipcat_base::{ClipboardContent, ClipboardKind};
+use clipcat_base::{ClipFilter, ClipboardContent, ClipboardKind};
 use clipcat_clipboard::{Clipboard, ClipboardLoad, ClipboardStore, ClipboardSubscribe};
 use snafu::ResultExt;
 use tokio::task;
@@ -15,10 +15,13 @@ pub struct Backend {
 
 impl Backend {
     /// # Errors
-    pub fn new(event_observers: &[Arc<dyn clipcat_clipboard::EventObserver>]) -> Result<Self> {
+    pub fn new(
+        clip_filter: &Arc<ClipFilter>,
+        event_observers: &[Arc<dyn clipcat_clipboard::EventObserver>],
+    ) -> Result<Self> {
         let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
         for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
-            match Clipboard::new(kind, event_observers.to_vec())
+            match Clipboard::new(kind, clip_filter.clone(), event_observers.to_vec())
                 .context(error::InitializeClipboardSnafu)
             {
                 Ok(clipboard) => clipboards.push(Arc::new(clipboard)),

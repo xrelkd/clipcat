@@ -117,6 +117,7 @@ dependencies = [
  "parking_lot",
  "thiserror",
  "winapi",
+ "wl-clipboard-rs",
  "x11rb",
 ]
 
@@ -550,9 +551,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.10"
+version = "4.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41fffed7514f420abec6d183b1d3acfd9099c79c3a10a06ade4f8203f1411272"
+checksum = "bfaff671f6b22ca62406885ece523383b9b64022e341e53e009a62ebc47a45f2"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -560,9 +561,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.9"
+version = "4.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63361bae7eef3771745f02d8d892bec2fee5f6e34af316ba556e7f97a7069ff1"
+checksum = "a216b506622bb1d316cd51328dce24e07bdff4a6128a47c7e7fad11878d5adbb"
 dependencies = [
  "anstream",
  "anstyle",
@@ -576,7 +577,7 @@ version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bffe91f06a11b4b9420f62103854e90867812cd5d01557f853c5ee8e791b12ae"
 dependencies = [
- "clap 4.4.10",
+ "clap 4.4.11",
 ]
 
 [[package]]
@@ -619,7 +620,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "bytes",
  "directories",
@@ -628,6 +629,7 @@ dependencies = [
  "image",
  "lazy_static",
  "mime",
+ "regex",
  "semver",
  "serde",
  "snafu",
@@ -636,7 +638,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-cli"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "serde",
  "serde_with",
@@ -647,7 +649,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -665,7 +667,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "arboard",
  "bytes",
@@ -684,7 +686,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "clipcat-base",
  "snafu",
@@ -693,9 +695,9 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
- "clap 4.4.10",
+ "clap 4.4.11",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -715,9 +717,9 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
- "clap 4.4.10",
+ "clap 4.4.11",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -731,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -745,7 +747,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -753,10 +755,12 @@ dependencies = [
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
+ "humansize",
  "lazy_static",
  "mime",
  "notify-rust",
  "parking_lot",
+ "regex",
  "semver",
  "serde",
  "serde_json",
@@ -771,10 +775,10 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
  "bytes",
- "clap 4.4.10",
+ "clap 4.4.11",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -796,9 +800,9 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.12.2"
+version = "0.13.0"
 dependencies = [
- "clap 4.4.10",
+ "clap 4.4.11",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -2107,9 +2111,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.9"
+version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dce281c5e46beae905d4de1870d8b1509a9142b62eedf18b443b011ca8343d0"
+checksum = "8f3d0b296e374a4e6f3c7b0a1f5a51d748a0d34c85e7dc48fc3fa9a87657fe09"
 dependencies = [
  "libc",
  "log",

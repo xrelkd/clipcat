@@ -431,9 +431,10 @@ where
 
 #[inline]
 fn print_watcher_state(state: ClipboardWatcherState) {
+    let project_name = clipcat_base::PROJECT_NAME_WITH_INITIAL_CAPITAL;
     let msg = match state {
-        ClipboardWatcherState::Enabled => "Clipboard watcher is running",
-        ClipboardWatcherState::Disabled => "Clipboard watcher is not running",
+        ClipboardWatcherState::Enabled => format!("{project_name} is watching clipboard."),
+        ClipboardWatcherState::Disabled => format!("{project_name} is not watching clipboard."),
     };
     println!("{msg}");
 }

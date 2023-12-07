@@ -4,7 +4,7 @@ mod fzf;
 mod rofi;
 mod skim;
 
-use std::process::Stdio;
+use std::{path::PathBuf, process::Stdio};
 
 use tokio::process::Command;
 
@@ -26,4 +26,8 @@ pub trait ExternalProgram: FinderStream + Send + Sync {
             .stdout(Stdio::piped())
             .spawn()
     }
+
+    fn set_program_path(&mut self, _program_path: PathBuf) {}
+
+    fn set_arguments(&mut self, _arguments: &[String]) {}
 }

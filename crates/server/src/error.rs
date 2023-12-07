@@ -25,6 +25,9 @@ pub enum Error {
     #[snafu(display("Could not clear HistoryManager, error: {source}"))]
     ClearHistoryManager { source: crate::history::Error },
 
-    #[snafu(display("Could not create ClipboardWatcher, error: {source}"))]
-    CreateClipboardWatcher { source: crate::watcher::Error },
+    #[snafu(display("Could not serve ClipboardWatcherWorker, error: {source}"))]
+    ServeClipboardWatcherWorker { source: crate::watcher::Error },
+
+    #[snafu(display("Could not generate clip filter, error: {source}"))]
+    GenerateClipFilter { source: crate::watcher::ClipboardWatcherOptionsError },
 }

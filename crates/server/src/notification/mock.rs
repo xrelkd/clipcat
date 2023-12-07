@@ -1,6 +1,6 @@
 use crate::notification::traits;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Notification {}
 
 impl traits::Notification for Notification {}
