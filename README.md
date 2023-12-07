@@ -83,7 +83,7 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.12.2
+export CLIPCAT_VERSION=v0.13.0
 
 # NOTE: the architecture of your machine,
 # available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
@@ -232,11 +232,16 @@ clipcatd --no-daemon
 daemonize = true
 # maximum number of clip history
 max_history = 50
-# file path of clip history
+# file path of clip history,
+# if you omit this value, clipcatd will persist history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
+# file path of PID file,
+# if you omit this value, clipcatd will place the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`
+pid_file = "/run/user/<user-id>/clipcatd.pid"
 
 [log]
-# emit log message to a log file. Delete this line to disable emitting to a log file
+# emit log message to a log file.
+# if you omit this value, clipcatd will disable emitting to a log file
 file_path = "/path/to/log/file"
 # emit log message to journald
 emit_journald = true
@@ -259,9 +264,9 @@ sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
 # ignore text clips which match with one of the regular expressions
 # the regular expression engine is powered by https://github.com/rust-lang/regex
 denied_text_regex_patterns = []
-# ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not byte
+# ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not in byte
 filter_text_min_length = 1
-# ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not byte
+# ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not in byte
 filter_text_max_length = 20000000
 # enable capturing image or not
 capture_image = true
@@ -278,20 +283,25 @@ host = "127.0.0.1"
 # port number for gRPC
 port = 45045
 # path of unix domain socket
+# if you omit this value, clipcatd will place the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [desktop_notification]
 # enable desktop notification
 enable = true
-# path of a icon
-# The given icon will be displayed on desktop notification,
+# path of a icon, the given icon will be displayed on desktop notification,
 # if your desktop notification server supports showing a icon
-# If not provided, the value `accessories-clipboard` will be applied
+# if not provided, the value `accessories-clipboard` will be applied
 icon = "/path/to/the/icon"
 # timeout duration in milliseconds
-# This sets the time from the time the notification is displayed until it is
+# this sets the time from the time the notification is displayed until it is
 # closed again by the notification server
 timeout_ms = 2000
+# define the length of a long plaintext,
+# if the length of a plaintext is >= `long_plaintext_length`,
+# desktop notification will be emitted
+# if this value is 0, no desktop desktop notification will be emitted when fetched plaintext
+long_plaintext_length = 2000
 
 # snippets, only UTF-8 text is supported.
 [[snippets]]
@@ -476,6 +486,52 @@ bindsym $mod+o exec $launcher-clipboard-remove
 ```
 
 **Note**: You can use `rofi` or `dmenu` as the default finder.
+
+</details>
+
+<details>
+    <summary>Integrating with <a href="http://leftwm.org/" target="_blank">LeftWM</a></summary>
+
+For a `leftwm` user, it will be useful to integrate `clipcat` with `leftwm`.
+
+Add the following keybindings in your `leftwm` configuration file (`$XDG_CONFIG_HOME/leftwm/config.ron`):
+
+```ron
+(
+    /* other configurations */
+    keybind: [
+        /* select clip from clipboard */
+        (command: Execute, value: "clipcat-menu insert", modifier: ["modkey"], key: "p"),
+        (command: Execute, value: "clipcat-menu remove", modifier: ["modkey"], key: "o"),
+        /* other configurations */
+    ],
+    /* other configurations */
+)
+```
+
+**Note**: You can use `rofi` or `dmenu` as the default finder.
+
+Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
+
+```bash
+# other configurations
+
+# start clipcatd
+clipcatd
+
+# other configurations
+```
+
+Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/down`:
+
+```bash
+# other configurations
+
+# terminate clipcatd
+pkill clipcatd
+
+# other configurations
+```
 
 </details>
 
