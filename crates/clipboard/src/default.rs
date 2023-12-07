@@ -1,6 +1,9 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
 };
 
 use arboard::{ClearExtLinux, GetExtLinux, SetExtLinux};
@@ -119,22 +122,23 @@ impl ClipboardStore for Clipboard {
         let clipboard_kind = self.clipboard_kind;
         let clear_on_drop = self.clear_on_drop.clone();
 
-        let _join_handle = std::thread::spawn(move || {
-            clear_on_drop.store(true, Ordering::Relaxed);
+        let _join_handle =
+            thread::Builder::new().name(format!("{clipboard_kind:?}-setter")).spawn(move || {
+                clear_on_drop.store(true, Ordering::Relaxed);
 
-            let _result = match content {
-                ClipboardContent::Plaintext(text) => {
-                    arboard.set().clipboard(clipboard_kind).wait().text(text)
-                }
-                ClipboardContent::Image { width, height, bytes } => arboard
-                    .set()
-                    .clipboard(clipboard_kind)
-                    .wait()
-                    .image(arboard::ImageData { width, height, bytes: bytes.to_vec().into() }),
-            };
+                let _result = match content {
+                    ClipboardContent::Plaintext(text) => {
+                        arboard.set().clipboard(clipboard_kind).wait().text(text)
+                    }
+                    ClipboardContent::Image { width, height, bytes } => arboard
+                        .set()
+                        .clipboard(clipboard_kind)
+                        .wait()
+                        .image(arboard::ImageData { width, height, bytes: bytes.to_vec().into() }),
+                };
 
-            clear_on_drop.store(false, Ordering::Relaxed);
-        });
+                clear_on_drop.store(false, Ordering::Relaxed);
+            });
         Ok(())
     }
 
