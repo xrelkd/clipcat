@@ -121,25 +121,21 @@ where
     pub fn insert(&mut self, data: ClipEntry) -> u64 { self.insert_inner(data) }
 
     fn insert_inner(&mut self, entry: ClipEntry) -> u64 {
-        // get image information for later use
-        let image_info = match entry.as_ref() {
+        // emit notification
+        match entry.as_ref() {
             ClipboardContent::Image { width, height, bytes } => {
-                Some((bytes.len(), *width, *height))
+                self.notification.on_image_fetched(bytes.len(), *width, *height);
             }
-            ClipboardContent::Plaintext(_) => None,
-        };
+            ClipboardContent::Plaintext(text) => {
+                self.notification.on_plaintext_fetched(text.chars().count());
+            }
+        }
 
         let (id, timestamp) = (entry.id(), entry.timestamp());
         self.current_clips[usize::from(entry.kind())] = Some(id);
         drop(self.clips.insert(id, entry));
         let _unused = self.timestamp_to_id.insert(timestamp, id);
         self.remove_oldest();
-
-        // emit notification before returning
-        if let Some((size, width, height)) = image_info {
-            self.notification.on_image_fetched(size, width, height);
-        }
-
         id
     }
 

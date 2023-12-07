@@ -24,4 +24,6 @@ pub struct DesktopNotificationConfig {
     pub icon: PathBuf,
 
     pub timeout: Duration,
+
+    pub long_plaintext_length: usize,
 }

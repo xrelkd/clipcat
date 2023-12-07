@@ -328,6 +328,9 @@ pub struct DesktopNotificationConfig {
 
     #[serde(default = "DesktopNotificationConfig::default_timeout_ms")]
     pub timeout_ms: u64,
+
+    #[serde(default = "DesktopNotificationConfig::default_long_plaintext_length")]
+    pub long_plaintext_length: usize,
 }
 
 impl DesktopNotificationConfig {
@@ -336,6 +339,8 @@ impl DesktopNotificationConfig {
     pub fn default_icon() -> String { String::from("accessories-clipboard") }
 
     pub const fn default_timeout_ms() -> u64 { 2000 }
+
+    pub const fn default_long_plaintext_length() -> usize { 2000 }
 
     pub fn search_icon(&self) -> PathBuf {
         let icon_path = PathBuf::from(&self.icon);
@@ -373,6 +378,7 @@ impl Default for DesktopNotificationConfig {
             enable: Self::default_enable(),
             icon: Self::default_icon(),
             timeout_ms: Self::default_timeout_ms(),
+            long_plaintext_length: Self::default_long_plaintext_length(),
         }
     }
 }
@@ -380,9 +386,9 @@ impl Default for DesktopNotificationConfig {
 impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotificationConfig {
     fn from(config: DesktopNotificationConfig) -> Self {
         let icon = config.search_icon();
-        let DesktopNotificationConfig { enable, timeout_ms, .. } = config;
+        let DesktopNotificationConfig { enable, timeout_ms, long_plaintext_length, .. } = config;
 
-        Self { enable, icon, timeout: Duration::from_millis(timeout_ms) }
+        Self { enable, icon, timeout: Duration::from_millis(timeout_ms), long_plaintext_length }
     }
 }
 

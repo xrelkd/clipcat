@@ -24,13 +24,18 @@ use tokio_stream::wrappers::UnixListenerStream;
 pub use self::{
     config::Config,
     error::{Error, Result},
-    watcher::{ClipboardWatcherOptions, Toggle as ClipboardWatcherToggle},
+    watcher::ClipboardWatcherOptions,
 };
-use self::{history::HistoryManager, manager::ClipboardManager, watcher::ClipboardWatcher};
+use self::{
+    history::HistoryManager,
+    manager::ClipboardManager,
+    watcher::{ClipboardWatcher, ClipboardWatcherToggle, ClipboardWatcherWorker},
+};
 
 /// # Errors
 ///
 /// This function will return an error if the server fails to start.
+#[allow(clippy::too_many_lines)]
 pub async fn serve_with_shutdown(
     Config {
         grpc_listen_address,
@@ -49,6 +54,7 @@ pub async fn serve_with_shutdown(
         notification::DesktopNotification::new(
             desktop_notification_config.icon,
             desktop_notification_config.timeout,
+            desktop_notification_config.long_plaintext_length,
         );
 
     let clipboard_backend =
@@ -98,13 +104,12 @@ pub async fn serve_with_shutdown(
         (Arc::new(Mutex::new(clipboard_manager)), history_manager)
     };
 
-    let clipboard_watcher = ClipboardWatcher::new(
+    let (clipboard_watcher, clipboard_watcher_worker) = ClipboardWatcher::new(
         clipboard_backend,
-        &watcher_opts,
+        watcher_opts.clone(),
         clip_filter,
         desktop_notification.clone(),
-    )
-    .context(error::CreateClipboardWatcherSnafu)?;
+    );
 
     let lifecycle_manager = LifecycleManager::<Error>::new();
 
@@ -137,7 +142,11 @@ pub async fn serve_with_shutdown(
         );
     }
 
-    let handle = lifecycle_manager.handle();
+    let handle = lifecycle_manager.spawn(
+        "Clipboard Watcher worker",
+        create_clipboard_watcher_worker_future(clipboard_watcher_worker),
+    );
+
     let _handle = lifecycle_manager.spawn(
         "Clipboard worker",
         create_clipboard_worker_future(
@@ -218,6 +227,26 @@ fn create_desktop_notification_worker_future(
             let _result = worker.serve(signal).await;
             tracing::info!("Desktop notification worker is shut down gracefully");
             ExitStatus::Success
+        }
+        .boxed()
+    }
+}
+
+fn create_clipboard_watcher_worker_future(
+    worker: ClipboardWatcherWorker,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
+    move |signal| {
+        async move {
+            tracing::info!("Clipboard Watcher worker is started");
+            let result =
+                worker.serve(signal).await.context(error::ServeClipboardWatcherWorkerSnafu);
+            match result {
+                Ok(()) => {
+                    tracing::info!("Clipboard Watcher worker is shut down gracefully");
+                    ExitStatus::Success
+                }
+                Err(err) => ExitStatus::Failure(err),
+            }
         }
         .boxed()
     }
