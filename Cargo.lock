@@ -756,6 +756,7 @@ dependencies = [
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
+ "hex",
  "humansize",
  "lazy_static",
  "mime",
