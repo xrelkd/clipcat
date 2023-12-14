@@ -6,6 +6,7 @@ use std::{
 };
 
 use image::ImageEncoder as _;
+use sha2::{Digest, Sha256};
 use snafu::{ResultExt, Snafu};
 use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
@@ -20,6 +21,8 @@ pub struct Entry {
     clipboard_kind: ClipboardKind,
 
     timestamp: OffsetDateTime,
+
+    sha256_digest: Vec<u8>,
 }
 
 impl Entry {
@@ -61,11 +64,13 @@ impl Entry {
             return Err(Error::FormatNotAvailable);
         };
 
+        let sha256_digest = compute_sha256_digest(&content);
         Ok(Self {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
             timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
+            sha256_digest,
         })
     }
 
@@ -81,11 +86,13 @@ impl Entry {
         clipboard_kind: ClipboardKind,
         timestamp: Option<OffsetDateTime>,
     ) -> Self {
+        let sha256_digest = compute_sha256_digest(&content);
         Self {
             id: Self::compute_id(&content),
             content,
             clipboard_kind,
             timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
+            sha256_digest,
         }
     }
 
@@ -239,15 +246,20 @@ impl Entry {
             preview: self.printable_data(preview_length),
         }
     }
+
+    pub fn sha256_digest(&self) -> &[u8] { &self.sha256_digest }
 }
 
 impl Default for Entry {
     fn default() -> Self {
+        let content = ClipboardContent::Plaintext(String::new());
+        let sha256_digest = compute_sha256_digest(&content);
         Self {
             id: 0,
-            content: ClipboardContent::Plaintext(String::new()),
+            content,
             clipboard_kind: ClipboardKind::Clipboard,
             timestamp: OffsetDateTime::now_utc(),
+            sha256_digest,
         }
     }
 }
@@ -316,6 +328,17 @@ fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, E
         .context(ConvertImageSnafu {})?;
 
     Ok(png_bytes)
+}
+
+fn compute_sha256_digest(content: &ClipboardContent) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    match content {
+        ClipboardContent::Plaintext(text) => hasher.update(text.as_bytes()),
+        ClipboardContent::Image { width, height, bytes } => {
+            hasher.update(encode_as_png(*width, *height, bytes).unwrap_or_default());
+        }
+    }
+    hasher.finalize().to_vec()
 }
 
 #[derive(Debug, Snafu)]

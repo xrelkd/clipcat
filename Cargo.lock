@@ -118,7 +118,7 @@ dependencies = [
  "thiserror",
  "winapi",
  "wl-clipboard-rs",
- "x11rb",
+ "x11rb 0.12.0",
 ]
 
 [[package]]
@@ -620,7 +620,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "bytes",
  "directories",
@@ -632,13 +632,14 @@ dependencies = [
  "regex",
  "semver",
  "serde",
+ "sha2",
  "snafu",
  "time",
 ]
 
 [[package]]
 name = "clipcat-cli"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "serde",
  "serde_with",
@@ -649,7 +650,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -667,7 +668,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "arboard",
  "bytes",
@@ -681,12 +682,12 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "wl-clipboard-rs",
- "x11rb",
+ "x11rb 0.13.0",
 ]
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "clipcat-base",
  "snafu",
@@ -695,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "clap 4.4.11",
  "clap_complete",
@@ -717,7 +718,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "clap 4.4.11",
  "clap_complete",
@@ -733,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -747,7 +748,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -755,6 +756,7 @@ dependencies = [
  "clipcat-clipboard",
  "clipcat-proto",
  "futures",
+ "hex",
  "humansize",
  "lazy_static",
  "mime",
@@ -775,7 +777,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "bytes",
  "clap 4.4.11",
@@ -800,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.13.0"
+version = "0.14.0"
 dependencies = [
  "clap 4.4.11",
  "clap_complete",
@@ -1581,6 +1583,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gethostname"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0176e0459c2e4a1fe232f984bca6890e681076abb9934f6cea7c326f3fc47818"
+dependencies = [
+ "libc",
+ "windows-targets 0.48.5",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1935,9 +1947,9 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
-version = "0.2.150"
+version = "0.2.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89d92a4743f9a61002fae18374ed11e7973f530cb3a3255fb354818118b2203c"
+checksum = "302d7ab3130588088d277783b1e2d2e10c9e9e4a16dd9050e6ec93fb3e7048f4"
 
 [[package]]
 name = "libloading"
@@ -2862,6 +2874,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha2"
+version = "0.10.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "793db75ad2bcafc3ffa7c68b215fee268f537982cd901d132f89c6343f3a3dc8"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
+]
+
+[[package]]
 name = "sharded-slab"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3184,9 +3207,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.34.0"
+version = "1.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0c014766411e834f7af5b8f4cf46257aab4036ca95e9d2c144a10f59ad6f5b9"
+checksum = "841d45b238a16291a4e1584e61820b8ae57d696cc5015c459c229ccc6990cc1c"
 dependencies = [
  "backtrace",
  "bytes",
@@ -3926,11 +3949,22 @@ version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1641b26d4dec61337c35a1b1aaf9e3cba8f46f0b43636c609ab0291a648040a"
 dependencies = [
- "gethostname",
+ "gethostname 0.3.0",
  "nix 0.26.4",
  "winapi",
  "winapi-wsapoll",
- "x11rb-protocol",
+ "x11rb-protocol 0.12.0",
+]
+
+[[package]]
+name = "x11rb"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8f25ead8c7e4cba123243a6367da5d3990e0d3affa708ea19dce96356bd9f1a"
+dependencies = [
+ "gethostname 0.4.3",
+ "rustix 0.38.25",
+ "x11rb-protocol 0.13.0",
 ]
 
 [[package]]
@@ -3941,6 +3975,12 @@ checksum = "82d6c3f9a0fb6701fab8f6cea9b0c0bd5d6876f1f89f7fada07e558077c344bc"
 dependencies = [
  "nix 0.26.4",
 ]
+
+[[package]]
+name = "x11rb-protocol"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e63e71c4b8bd9ffec2c963173a4dc4cbde9ee96961d4fcb4429db9929b606c34"
 
 [[package]]
 name = "xdg-home"
