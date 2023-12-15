@@ -1,6 +1,5 @@
 use std::{
     cmp::Ordering,
-    collections::hash_map::DefaultHasher,
     fmt,
     hash::{Hash, Hasher},
 };
@@ -14,8 +13,6 @@ use crate::{ClipboardContent, ClipboardKind};
 
 #[derive(Clone, Debug, Eq)]
 pub struct Entry {
-    id: u64,
-
     content: ClipboardContent,
 
     clipboard_kind: ClipboardKind,
@@ -65,13 +62,9 @@ impl Entry {
         };
 
         let sha256_digest = compute_sha256_digest(&content);
-        Ok(Self {
-            id: Self::compute_id(&content),
-            content,
-            clipboard_kind,
-            timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
-            sha256_digest,
-        })
+        let timestamp = timestamp.unwrap_or_else(OffsetDateTime::now_utc);
+
+        Ok(Self { content, clipboard_kind, timestamp, sha256_digest })
     }
 
     #[inline]
@@ -88,7 +81,6 @@ impl Entry {
     ) -> Self {
         let sha256_digest = compute_sha256_digest(&content);
         Self {
-            id: Self::compute_id(&content),
             content,
             clipboard_kind,
             timestamp: timestamp.unwrap_or_else(OffsetDateTime::now_utc),
@@ -98,15 +90,7 @@ impl Entry {
 
     #[inline]
     #[must_use]
-    pub fn compute_id(data: &ClipboardContent) -> u64 {
-        let mut s = DefaultHasher::new();
-        data.hash(&mut s);
-        s.finish()
-    }
-
-    #[inline]
-    #[must_use]
-    pub const fn id(&self) -> u64 { self.id }
+    pub fn id(&self) -> u64 { self.content.id() }
 
     #[inline]
     #[must_use]
@@ -121,14 +105,12 @@ impl Entry {
 
     #[inline]
     #[must_use]
-    pub const fn is_utf8_string(&self) -> bool {
-        matches!(self.content, ClipboardContent::Plaintext(_))
-    }
+    pub const fn is_utf8_string(&self) -> bool { self.content.is_plaintext() }
 
     #[inline]
     #[must_use]
     pub fn as_utf8_string(&self) -> String {
-        if let ClipboardContent::Plaintext(text) = &self.content {
+        if let ClipboardContent::Plaintext(ref text) = self.content {
             text.clone()
         } else {
             String::new()
@@ -137,24 +119,18 @@ impl Entry {
 
     #[must_use]
     pub fn basic_information(&self) -> String {
-        let (content_type, size) = match &self.content {
-            ClipboardContent::Plaintext(text) => (mime::TEXT_PLAIN_UTF_8, text.len()),
-            ClipboardContent::Image { width: _, height: _, bytes } => {
-                (mime::IMAGE_PNG, bytes.len())
-            }
-        };
-
         let timestamp = self
             .timestamp
             .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
             .format(&Rfc3339)
             .unwrap_or_default();
-        let size = humansize::format_size(size, humansize::BINARY);
+        let size = humansize::format_size(self.content.len(), humansize::BINARY);
+        let content_type = self.content.mime();
         format!("[{content_type} {size} {timestamp}]")
     }
 
     #[must_use]
-    pub fn printable_data(&self, line_length: Option<usize>) -> String {
+    pub fn preview_information(&self, line_length: Option<usize>) -> String {
         fn truncate(s: &str, max_chars: usize) -> &str {
             match s.char_indices().nth(max_chars) {
                 None => s,
@@ -196,9 +172,6 @@ impl Entry {
         self.timestamp = OffsetDateTime::now_utc();
     }
 
-    #[must_use]
-    pub fn to_clipboard_content(&self) -> ClipboardContent { self.content.clone() }
-
     #[inline]
     #[must_use]
     pub fn is_empty(&self) -> bool { self.content.is_empty() }
@@ -229,21 +202,16 @@ impl Entry {
 
     #[inline]
     #[must_use]
-    pub const fn mime(&self) -> mime::Mime {
-        match self.content {
-            ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
-            ClipboardContent::Image { .. } => mime::IMAGE_PNG,
-        }
-    }
+    pub const fn mime(&self) -> mime::Mime { self.content.mime() }
 
     #[inline]
     pub fn metadata(&self, preview_length: Option<usize>) -> Metadata {
         Metadata {
-            id: self.id,
+            id: self.id(),
             kind: self.clipboard_kind,
             timestamp: self.timestamp,
             mime: self.mime(),
-            preview: self.printable_data(preview_length),
+            preview: self.preview_information(preview_length),
         }
     }
 
@@ -255,7 +223,6 @@ impl Default for Entry {
         let content = ClipboardContent::Plaintext(String::new());
         let sha256_digest = compute_sha256_digest(&content);
         Self {
-            id: 0,
             content,
             clipboard_kind: ClipboardKind::Clipboard,
             timestamp: OffsetDateTime::now_utc(),
