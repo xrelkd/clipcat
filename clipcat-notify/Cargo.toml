@@ -12,8 +12,6 @@ categories.workspace = true
 keywords.workspace   = true
 
 [dependencies]
-mimalloc = "0.1"
-
 serde      = { version = "1", features = ["derive"] }
 serde_json = "1"
 
