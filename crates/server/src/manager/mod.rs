@@ -211,7 +211,7 @@ where
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark(clipboard_kind);
             self.backend
-                .store(clipboard_kind, clip.to_clipboard_content())
+                .store(clipboard_kind, clip.as_ref().clone())
                 .await
                 .context(error::StoreClipboardContentSnafu)?;
         }
