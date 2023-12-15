@@ -10,11 +10,11 @@ use crate::history::Error;
 pub trait Driver: Send + Sync {
     async fn load(&mut self) -> Result<Vec<ClipEntry>, Error>;
 
-    async fn save(&mut self, data: &[ClipEntry]) -> Result<(), Error>;
+    async fn save(&mut self, clip_entry: &[ClipEntry]) -> Result<(), Error>;
 
     async fn clear(&mut self) -> Result<(), Error>;
 
-    async fn put(&mut self, data: &ClipEntry) -> Result<(), Error>;
+    async fn put(&mut self, clip_entry: &ClipEntry) -> Result<(), Error>;
 
     async fn shrink_to(&mut self, min_capacity: usize) -> Result<(), Error>;
 

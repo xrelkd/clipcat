@@ -13,6 +13,8 @@ pub struct Options {
 
     pub enable_primary: bool,
 
+    pub enable_secondary: bool,
+
     pub capture_image: bool,
 
     pub filter_text_min_length: usize,
@@ -38,6 +40,21 @@ impl Options {
         filter.add_sensitive_atoms(self.sensitive_x11_atoms.clone());
         Ok(filter)
     }
+
+    #[must_use]
+    pub fn clipboard_kinds(&self) -> Vec<ClipboardKind> {
+        let mut kinds = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
+        if self.enable_clipboard {
+            kinds.push(ClipboardKind::Clipboard);
+        }
+        if self.enable_primary {
+            kinds.push(ClipboardKind::Primary);
+        }
+        if self.enable_secondary {
+            kinds.push(ClipboardKind::Secondary);
+        }
+        kinds
+    }
 }
 
 impl Default for Options {
@@ -46,6 +63,7 @@ impl Default for Options {
             load_current: true,
             enable_clipboard: true,
             enable_primary: true,
+            enable_secondary: false,
             capture_image: true,
             filter_text_min_length: 1,
             filter_text_max_length: 5 * (1 << 20),

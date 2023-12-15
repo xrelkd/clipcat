@@ -11,20 +11,36 @@ use crate::backend::{error, traits, Error, Result, Subscriber};
 #[derive(Clone)]
 pub struct Backend {
     clipboards: Vec<Arc<Clipboard>>,
+
+    supported_clipboard_kinds: Vec<ClipboardKind>,
 }
 
 impl Backend {
     /// # Errors
-    pub fn new(
+    pub fn new<I>(
+        kinds: I,
         clip_filter: &Arc<ClipFilter>,
         event_observers: &[Arc<dyn clipcat_clipboard::EventObserver>],
-    ) -> Result<Self> {
-        let mut clipboards = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
-        for kind in [ClipboardKind::Clipboard, ClipboardKind::Primary, ClipboardKind::Secondary] {
+    ) -> Result<Self>
+    where
+        I: IntoIterator<Item = ClipboardKind>,
+    {
+        let kinds = {
+            let mut kinds = kinds.into_iter().collect::<Vec<_>>();
+            kinds.sort_unstable();
+            kinds.dedup();
+            kinds
+        };
+        let mut clipboards = Vec::with_capacity(kinds.len());
+        let mut supported_clipboard_kinds = Vec::with_capacity(kinds.len());
+        for kind in kinds {
             match Clipboard::new(kind, clip_filter.clone(), event_observers.to_vec())
                 .context(error::InitializeClipboardSnafu)
             {
-                Ok(clipboard) => clipboards.push(Arc::new(clipboard)),
+                Ok(clipboard) => {
+                    clipboards.push(Arc::new(clipboard));
+                    supported_clipboard_kinds.push(kind);
+                }
                 Err(err) => {
                     if kind == ClipboardKind::Clipboard {
                         return Err(err);
@@ -34,7 +50,7 @@ impl Backend {
             }
         }
 
-        Ok(Self { clipboards })
+        Ok(Self { clipboards, supported_clipboard_kinds })
     }
 
     #[inline]
@@ -94,6 +110,6 @@ impl traits::Backend for Backend {
 
     #[inline]
     fn supported_clipboard_kinds(&self) -> Vec<ClipboardKind> {
-        (0..self.clipboards.len()).map(ClipboardKind::from).collect()
+        self.supported_clipboard_kinds.clone()
     }
 }

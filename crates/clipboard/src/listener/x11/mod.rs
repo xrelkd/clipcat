@@ -108,6 +108,9 @@ fn build_thread(
                 tracing::trace!("Wait for readiness events");
 
                 if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(200))) {
+                    if err.kind() == std::io::ErrorKind::Interrupted {
+                        continue;
+                    }
                     tracing::error!(
                         "Error occurred while polling for readiness event, error: {err}"
                     );
@@ -125,31 +128,8 @@ fn build_thread(
                                             continue;
                                         }
 
-                                        // sort available formats by type, some applications provide
-                                        // image in `text/html` format, we prefer to use `image`
-                                        formats.sort_unstable_by_key(|format| {
-                                            if format.starts_with("image/png") {
-                                                1
-                                            } else if format.starts_with("image") {
-                                                2
-                                            } else if format.starts_with("text") {
-                                                3
-                                            } else if format == "UTF8_STRING" {
-                                                4
-                                            } else {
-                                                u32::MAX
-                                            }
-                                        });
-
-                                        for format in formats {
-                                            if format == "UTF8_STRING" {
-                                                notifier.notify_all(mime::TEXT_PLAIN_UTF_8);
-                                                break;
-                                            }
-                                            if let Ok(mime) = format.parse() {
-                                                notifier.notify_all(mime);
-                                                break;
-                                            }
+                                        if let Some(mime) = extract_mime(&mut formats) {
+                                            notifier.notify_all(mime);
                                         }
                                     }
                                     Err(err) => {
@@ -242,4 +222,38 @@ fn try_reconnect(
         kind = context.clipboard_kind()
     );
     Err(Error::RetryLimitReached { value: max_retry_count })
+}
+
+#[inline]
+fn extract_mime(formats: &mut Vec<String>) -> Option<mime::Mime> {
+    // sort available formats by type, some applications provide
+    // image in `text/html` format, we prefer to use `image`
+    formats.sort_unstable_by_key(|format| -> u8 {
+        if format.starts_with("image/png") {
+            1
+        } else if format.starts_with("image") {
+            2
+        } else if format.starts_with("text") {
+            3
+        } else if format == "UTF8_STRING" {
+            4
+        } else {
+            u8::MAX
+        }
+    });
+
+    for format in formats.iter() {
+        if format == "UTF8_STRING" {
+            return Some(mime::TEXT_PLAIN_UTF_8);
+        }
+        if let Ok(mime) = format.parse() {
+            return Some(mime);
+        }
+    }
+
+    if !formats.is_empty() {
+        tracing::warn!("Unable to extract MIME type from {formats:?}");
+    }
+
+    None
 }

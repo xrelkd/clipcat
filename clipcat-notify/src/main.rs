@@ -4,12 +4,16 @@ use std::{io::Write, sync::Arc};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipFilter, ClipboardKind};
+use mimalloc::MiMalloc;
 use serde::Serialize;
 use snafu::ResultExt;
 use time::OffsetDateTime;
 use tokio::runtime::Runtime;
 
 use self::error::Error;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 #[derive(Parser)]
 #[clap(name = clipcat_base::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
@@ -56,15 +60,33 @@ impl Cli {
                 let enable_primary = !self.no_primary;
                 let enable_secondary = !self.no_secondary;
 
-                if !enable_clipboard && !enable_primary && !enable_secondary {
-                    return Err(Error::ListenToNothing);
-                }
+                let clipboard_kinds = {
+                    let mut clipboard_kinds = Vec::with_capacity(ClipboardKind::MAX_LENGTH);
+                    if enable_clipboard {
+                        clipboard_kinds.push(ClipboardKind::Clipboard);
+                    }
+                    if enable_primary {
+                        clipboard_kinds.push(ClipboardKind::Primary);
+                    }
+                    if enable_secondary {
+                        clipboard_kinds.push(ClipboardKind::Secondary);
+                    }
+
+                    if clipboard_kinds.is_empty() {
+                        return Err(Error::ListenToNothing);
+                    }
+
+                    clipboard_kinds
+                };
 
                 Runtime::new().context(error::InitializeTokioRuntimeSnafu)?.block_on(
                     async move {
-                        let backend =
-                            clipcat_server::backend::new(&Arc::new(ClipFilter::default()), &[])
-                                .context(error::InitializeClipboardBackendSnafu)?;
+                        let backend = clipcat_server::backend::new(
+                            clipboard_kinds,
+                            &Arc::new(ClipFilter::default()),
+                            &[],
+                        )
+                        .context(error::InitializeClipboardBackendSnafu)?;
                         let mut subscriber =
                             backend.subscribe().context(error::SubscribeClipboardSnafu)?;
 

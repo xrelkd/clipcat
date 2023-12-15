@@ -10,7 +10,7 @@ use std::{
 };
 
 use wl_clipboard_rs::paste::{
-    get_contents as wl_clipboard_get_contents, Error as WaylandError, MimeType, Seat,
+    get_mime_types as wl_clipboard_get_mime_types, Error as WaylandError, Seat,
 };
 
 pub use self::error::Error;
@@ -82,10 +82,23 @@ fn build_thread(
             while is_running.load(Ordering::Relaxed) {
                 tracing::trace!("Wait for readiness events");
 
-                match wl_clipboard_get_contents(clipboard_type, Seat::Unspecified, MimeType::Any) {
-                    Ok((_pipe, mime_type)) => {
-                        if let Ok(mime) = mime_type.parse() {
-                            notifier.notify_all(mime);
+                match wl_clipboard_get_mime_types(clipboard_type, Seat::Unspecified) {
+                    Ok(mime_types) => {
+                        let mut mime_types = mime_types.into_iter().collect::<Vec<_>>();
+                        mime_types.sort_unstable_by_key(|format| {
+                            if format.starts_with("image") {
+                                1
+                            } else if format.starts_with("text") {
+                                2
+                            } else {
+                                u8::MAX
+                            }
+                        });
+                        for mime_type in mime_types {
+                            if let Ok(mime) = mime_type.parse() {
+                                notifier.notify_all(mime);
+                                break;
+                            }
                         }
                         continue;
                     }

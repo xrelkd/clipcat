@@ -211,7 +211,7 @@ where
         if let Some(clip) = self.clips.get_mut(&id) {
             clip.mark(clipboard_kind);
             self.backend
-                .store(clipboard_kind, clip.to_clipboard_content())
+                .store(clipboard_kind, clip.as_ref().clone())
                 .await
                 .context(error::StoreClipboardContentSnafu)?;
         }
@@ -230,9 +230,9 @@ mod tests {
     use clipcat_base::{ClipEntry, ClipboardKind};
 
     use crate::{
-        backend::MockClipboardBackend,
+        backend::LocalClipboardBackend,
         manager::{ClipboardManager, DEFAULT_CAPACITY},
-        notification::MockNotification,
+        notification::DummyNotification,
     };
 
     fn create_clips(n: usize) -> Vec<ClipEntry> {
@@ -241,8 +241,8 @@ mod tests {
 
     #[test]
     fn test_construction() {
-        let notification = MockNotification::default();
-        let backend = Arc::new(MockClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
         let mgr = ClipboardManager::new(backend, notification);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
@@ -251,7 +251,7 @@ mod tests {
         assert!(mgr.get_current_clip(ClipboardKind::Primary).is_none());
 
         let cap = 20;
-        let backend = Arc::new(MockClipboardBackend::new());
+        let backend = Arc::new(LocalClipboardBackend::new());
         let mgr = ClipboardManager::with_capacity(backend, cap, notification);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
@@ -262,8 +262,8 @@ mod tests {
 
     #[test]
     fn test_capacity() {
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let cap = 10;
         let mut mgr = ClipboardManager::with_capacity(backend, cap, notification);
         assert_eq!(mgr.len(), 0);
@@ -297,8 +297,8 @@ mod tests {
     fn test_insert() {
         let n = 20;
         let clips = create_clips(n);
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let mut mgr = ClipboardManager::new(backend, notification);
         for clip in &clips {
             let _ = mgr.insert(clip.clone());
@@ -318,8 +318,8 @@ mod tests {
     fn test_import() {
         let n = 10;
         let mut clips = create_clips(n);
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let mut mgr = ClipboardManager::with_capacity(backend, 20, notification);
 
         mgr.import(&clips);
@@ -343,8 +343,8 @@ mod tests {
         let data1 = "ABCDEFG";
         let data2 = "АБВГД";
         let clip = ClipEntry::new(data1.as_bytes(), &MIME, ClipboardKind::Clipboard, None).unwrap();
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let mut mgr = ClipboardManager::new(backend, notification);
         let old_id = mgr.insert(clip);
         assert_eq!(mgr.len(), 1);
@@ -361,8 +361,8 @@ mod tests {
 
     #[test]
     fn test_remove() {
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let mut mgr = ClipboardManager::new(backend, notification);
         assert_eq!(mgr.len(), 0);
         assert!(!mgr.remove(43));
@@ -385,8 +385,8 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let backend = Arc::new(MockClipboardBackend::new());
-        let notification = MockNotification::default();
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
         let n = 20;
         let clips = create_clips(n);
         let mut mgr = ClipboardManager::new(backend, notification);

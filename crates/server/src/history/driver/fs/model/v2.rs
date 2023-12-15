@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use clipcat_base::ClipEntry;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -14,7 +16,7 @@ impl FileHeader {
     pub const SCHEMA_VERSION: u64 = 2;
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Serialize)]
 pub struct ClipboardValue {
     pub timestamp: OffsetDateTime,
 
@@ -40,4 +42,16 @@ impl From<ClipEntry> for ClipboardValue {
             }
         }
     }
+}
+
+impl PartialOrd for ClipboardValue {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for ClipboardValue {
+    fn cmp(&self, other: &Self) -> Ordering { other.timestamp.cmp(&self.timestamp) }
+}
+
+impl PartialEq for ClipboardValue {
+    fn eq(&self, other: &Self) -> bool { self.data == other.data }
 }
