@@ -1,13 +1,13 @@
 use async_trait::async_trait;
 use clipcat_base::ClipboardContent;
-use clipcat_clipboard::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, MockClipboard};
+use clipcat_clipboard::{ClipboardLoad, ClipboardStore, ClipboardSubscribe, LocalClipboard};
 use snafu::ResultExt;
 use tokio::task;
 
 use crate::backend::{error, traits, ClipboardKind, Error, Result, Subscriber};
 
 #[derive(Clone, Debug, Default)]
-pub struct Backend(MockClipboard);
+pub struct Backend(LocalClipboard);
 
 impl Backend {
     #[must_use]
