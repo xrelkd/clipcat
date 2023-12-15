@@ -53,6 +53,9 @@ pub struct WatcherConfig {
     #[serde(default)]
     pub enable_primary: bool,
 
+    #[serde(default = "WatcherConfig::default_enable_secondary")]
+    pub enable_secondary: bool,
+
     #[serde(default = "WatcherConfig::default_sensitive_x11_atoms")]
     pub sensitive_x11_atoms: HashSet<String>,
 
@@ -78,6 +81,7 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             load_current,
             enable_clipboard,
             enable_primary,
+            enable_secondary,
             capture_image,
             filter_text_min_length,
             filter_text_max_length,
@@ -90,6 +94,7 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             load_current,
             enable_clipboard,
             enable_primary,
+            enable_secondary,
             capture_image,
             filter_text_min_length,
             filter_text_max_length,
@@ -109,6 +114,8 @@ impl WatcherConfig {
         // 5 MiB
         5 * (1 << 20)
     }
+
+    pub const fn default_enable_secondary() -> bool { false }
 
     pub fn default_sensitive_x11_atoms() -> HashSet<String> {
         HashSet::from(["x-kde-passwordManagerHint".to_string()])
@@ -237,6 +244,7 @@ impl Default for WatcherConfig {
             load_current: true,
             enable_clipboard: true,
             enable_primary: true,
+            enable_secondary: Self::default_enable_secondary(),
             capture_image: true,
             filter_text_min_length: Self::default_filter_text_min_length(),
             filter_text_max_length: Self::default_filter_text_max_length(),
