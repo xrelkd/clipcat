@@ -17,17 +17,25 @@ pub use self::{
 };
 
 /// # Errors
-pub fn new(
+pub fn new<I>(
+    kinds: I,
     clip_filter: &Arc<ClipFilter>,
     event_observers: &[Arc<dyn EventObserver>],
-) -> Result<Box<dyn traits::Backend>> {
-    Ok(Box::new(DefaultClipboardBackend::new(clip_filter, event_observers)?))
+) -> Result<Box<dyn traits::Backend>>
+where
+    I: IntoIterator<Item = ClipboardKind>,
+{
+    Ok(Box::new(DefaultClipboardBackend::new(kinds, clip_filter, event_observers)?))
 }
 
 /// # Errors
-pub fn new_shared(
+pub fn new_shared<I>(
+    kinds: I,
     clip_filter: &Arc<ClipFilter>,
     event_observers: &[Arc<dyn EventObserver>],
-) -> Result<Arc<dyn traits::Backend>> {
-    Ok(Arc::new(DefaultClipboardBackend::new(clip_filter, event_observers)?))
+) -> Result<Arc<dyn traits::Backend>>
+where
+    I: IntoIterator<Item = ClipboardKind>,
+{
+    Ok(Arc::new(DefaultClipboardBackend::new(kinds, clip_filter, event_observers)?))
 }
