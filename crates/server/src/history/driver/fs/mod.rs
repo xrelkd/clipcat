@@ -38,35 +38,34 @@ impl FileSystemDriver {
             .await
             .context(error::CreateDirectorySnafu { file_path: file_path.clone() })?;
 
-        let header_content = tokio::fs::read(&header_file_path)
-            .await
-            .context(error::ReadFileSnafu { file_path: header_file_path.clone() })?;
-        if let Ok(model::v2::FileHeader { schema, last_update }) =
-            serde_json::from_slice::<model::v2::FileHeader>(&header_content)
-        {
-            tracing::info!(
-                "Open `{}`, schema: {schema}, last update: {last_update}",
-                header_file_path.display(),
-                last_update = last_update
-                    .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
-                    .format(&Rfc3339)
-                    .unwrap_or_default()
-            );
+        if let Ok(header_content) = tokio::fs::read(&header_file_path).await {
+            if let Ok(model::v2::FileHeader { schema, last_update }) =
+                serde_json::from_slice::<model::v2::FileHeader>(&header_content)
+            {
+                tracing::info!(
+                    "Open `{}`, schema: {schema}, last update: {last_update}",
+                    header_file_path.display(),
+                    last_update = last_update
+                        .to_offset(UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC))
+                        .format(&Rfc3339)
+                        .unwrap_or_default()
+                );
 
-            let clips = match schema {
-                schema if schema > CURRENT_SCHEMA => {
-                    return Err(Error::NewerSchema { new: schema, current: CURRENT_SCHEMA })
-                }
-                model::v1::FileHeader::SCHEMA_VERSION => {
-                    tracing::info!("Clip history schema `{schema}` is out-of-date");
-                    Some(migrate::v1::load(&clips_file_path).await?)
-                }
-                _ => None,
-            };
+                let clips = match schema {
+                    schema if schema > CURRENT_SCHEMA => {
+                        return Err(Error::NewerSchema { new: schema, current: CURRENT_SCHEMA })
+                    }
+                    model::v1::FileHeader::SCHEMA_VERSION => {
+                        tracing::info!("Clip history schema `{schema}` is out-of-date");
+                        Some(migrate::v1::load(&clips_file_path).await?)
+                    }
+                    _ => None,
+                };
 
-            if let Some(clips) = clips {
-                migrate::v2::migrate_to(&file_path, &header_file_path, &clips_file_path, clips)
-                    .await?;
+                if let Some(clips) = clips {
+                    migrate::v2::migrate_to(&file_path, &header_file_path, &clips_file_path, clips)
+                        .await?;
+                }
             }
         }
 
