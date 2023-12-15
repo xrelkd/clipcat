@@ -12,8 +12,6 @@ categories.workspace = true
 keywords.workspace   = true
 
 [dependencies]
-mimalloc = "0.1"
-
 tracing            = "0.1"
 tracing-journald   = "0.3"
 tracing-subscriber = "0.3"
