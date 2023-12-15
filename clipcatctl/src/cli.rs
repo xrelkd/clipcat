@@ -263,7 +263,7 @@ impl Cli {
                 }
                 Some(Commands::Get { id }) => {
                     let data = if let Some(id) = id {
-                        client.get(id).await?.printable_data(None)
+                        client.get(id).await?.preview_information(None)
                     } else {
                         client
                             .list(PREVIEW_LENGTH)
