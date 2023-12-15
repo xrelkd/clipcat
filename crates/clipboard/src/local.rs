@@ -55,11 +55,7 @@ impl ClipboardLoad for Clipboard {
         match maybe_data {
             Ok(content) => {
                 if let Some(mime) = mime {
-                    let content_mime = match content {
-                        ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
-                        ClipboardContent::Image { .. } => mime::IMAGE_PNG,
-                    };
-                    (content_mime == mime).then_some(content).ok_or(Error::Empty)
+                    (content.mime() == mime).then_some(content).ok_or(Error::Empty)
                 } else {
                     Ok(content)
                 }
@@ -72,10 +68,7 @@ impl ClipboardLoad for Clipboard {
 impl ClipboardStore for Clipboard {
     #[inline]
     fn store(&self, content: ClipboardContent) -> Result<(), Error> {
-        let mime = match content {
-            ClipboardContent::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
-            ClipboardContent::Image { .. } => mime::IMAGE_PNG,
-        };
+        let mime = content.mime();
         match self.data.write() {
             Ok(mut data) => {
                 *data = Some(content);
