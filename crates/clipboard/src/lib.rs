@@ -1,7 +1,7 @@
 mod default;
 mod error;
 mod listener;
-mod mock;
+mod local;
 mod pubsub;
 mod traits;
 
@@ -11,7 +11,7 @@ pub use self::{
     default::Clipboard,
     error::Error,
     listener::{WaylandListenerError, X11ListenerError},
-    mock::Clipboard as MockClipboard,
+    local::Clipboard as LocalClipboard,
     pubsub::Subscriber,
     traits::{
         EventObserver, Load as ClipboardLoad, LoadExt as ClipboardLoadExt,

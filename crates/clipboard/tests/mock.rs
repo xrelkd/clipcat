@@ -1,26 +1,26 @@
-use clipcat_clipboard::{Error, MockClipboard};
+use clipcat_clipboard::{Error, LocalClipboard};
 
 mod common;
 
 use self::common::ClipboardTester;
 
 #[derive(Debug)]
-pub struct MockClipboardTester;
+pub struct LocalClipboardTester;
 
-impl Default for MockClipboardTester {
+impl Default for LocalClipboardTester {
     fn default() -> Self { Self::new() }
 }
 
-impl MockClipboardTester {
+impl LocalClipboardTester {
     #[must_use]
     pub const fn new() -> Self { Self }
 }
 
-impl ClipboardTester for MockClipboardTester {
-    type Clipboard = MockClipboard;
+impl ClipboardTester for LocalClipboardTester {
+    type Clipboard = LocalClipboard;
 
-    fn new_clipboard(&self) -> Result<Self::Clipboard, Error> { Ok(MockClipboard::new()) }
+    fn new_clipboard(&self) -> Result<Self::Clipboard, Error> { Ok(LocalClipboard::new()) }
 }
 
 #[test]
-fn test_mock() -> Result<(), Error> { MockClipboardTester::new().run() }
+fn test_local() -> Result<(), Error> { LocalClipboardTester::new().run() }
