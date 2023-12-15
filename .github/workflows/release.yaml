@@ -48,7 +48,7 @@ jobs:
       - name: Install Dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt install -y protobuf-compiler
+          sudo apt install -y protobuf-compiler musl-tools
 
       - name: Install Rust Toolchain Components
         uses: actions-rs/toolchain@v1
