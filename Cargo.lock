@@ -822,6 +822,7 @@ dependencies = [
  "serde",
  "simdutf8",
  "snafu",
+ "time",
  "tokio",
  "toml",
  "tracing",

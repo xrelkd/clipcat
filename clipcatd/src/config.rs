@@ -8,6 +8,7 @@ use std::{
 use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
+use time::OffsetDateTime;
 
 const DEFAULT_ICON_NAME: &str = "accessories-clipboard";
 
@@ -213,7 +214,7 @@ impl SnippetConfig {
                 &data,
                 &mime::TEXT_PLAIN_UTF_8,
                 clipcat_base::ClipboardKind::Clipboard,
-                None,
+                Some(OffsetDateTime::UNIX_EPOCH),
             )
             .ok()
         } else {
