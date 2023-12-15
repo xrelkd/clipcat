@@ -57,9 +57,12 @@ pub async fn serve_with_shutdown(
             desktop_notification_config.long_plaintext_length,
         );
 
-    let clipboard_backend =
-        backend::new_shared(&clip_filter, &[Arc::new(desktop_notification.clone())])
-            .context(error::CreateClipboardBackendSnafu)?;
+    let clipboard_backend = backend::new_shared(
+        watcher_opts.clipboard_kinds(),
+        &clip_filter,
+        &[Arc::new(desktop_notification.clone())],
+    )
+    .context(error::CreateClipboardBackendSnafu)?;
 
     let (clipboard_manager, history_manager) = {
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
