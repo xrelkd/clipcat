@@ -26,6 +26,9 @@ pub enum Error {
     #[snafu(display("Failed to read file {}, error: {source}", file_path.display()))]
     ReadFile { source: std::io::Error, file_path: PathBuf },
 
+    #[snafu(display("Failed to read directory {}, error: {source}", dir_path.display()))]
+    ReadDirectory { source: std::io::Error, dir_path: PathBuf },
+
     #[snafu(display("Failed to serialize clip, error: {source}"))]
     SeriailizeClip { source: bincode::Error },
 
