@@ -7,6 +7,8 @@ pub mod utils;
 mod watcher_state;
 
 use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
     net::{IpAddr, Ipv4Addr},
     path::PathBuf,
 };
@@ -99,13 +101,27 @@ impl ClipboardContent {
     #[inline]
     pub const fn is_image(&self) -> bool { matches!(&self, Self::Image { .. }) }
 
+    #[inline]
+    pub const fn mime(&self) -> mime::Mime {
+        match self {
+            Self::Plaintext(_) => mime::TEXT_PLAIN_UTF_8,
+            Self::Image { .. } => mime::IMAGE_PNG,
+        }
+    }
+
+    #[inline]
     pub fn basic_information(&self) -> String {
-        let (content_type, size) = match &self {
-            Self::Plaintext(text) => (mime::TEXT_PLAIN_UTF_8, text.len()),
-            Self::Image { width: _, height: _, bytes } => (mime::IMAGE_PNG, bytes.len()),
-        };
-        let size = humansize::format_size(size, humansize::BINARY);
+        let content_type = self.mime();
+        let size = humansize::format_size(self.len(), humansize::BINARY);
         format!("{content_type}, {size}")
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn id(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
     }
 }
 
