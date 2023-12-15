@@ -4,12 +4,16 @@ use std::{io::Write, sync::Arc};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipFilter, ClipboardKind};
+use mimalloc::MiMalloc;
 use serde::Serialize;
 use snafu::ResultExt;
 use time::OffsetDateTime;
 use tokio::runtime::Runtime;
 
 use self::error::Error;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 #[derive(Parser)]
 #[clap(name = clipcat_base::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
