@@ -686,6 +686,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipcat-dbus-variant"
+version = "0.15.0"
+dependencies = [
+ "clipcat-base",
+ "mime",
+ "serde",
+ "time",
+ "zvariant",
+]
+
+[[package]]
 name = "clipcat-external-editor"
 version = "0.15.0"
 dependencies = [
@@ -754,6 +765,7 @@ dependencies = [
  "bincode",
  "clipcat-base",
  "clipcat-clipboard",
+ "clipcat-dbus-variant",
  "clipcat-proto",
  "futures",
  "hex",
@@ -773,6 +785,8 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "tracing",
+ "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -3220,6 +3234,7 @@ dependencies = [
  "signal-hook-registry",
  "socket2 0.5.5",
  "tokio-macros",
+ "tracing",
  "windows-sys 0.48.0",
 ]
 
@@ -4025,6 +4040,7 @@ dependencies = [
  "serde_repr",
  "sha1",
  "static_assertions",
+ "tokio",
  "tracing",
  "uds_windows",
  "winapi",

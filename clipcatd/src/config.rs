@@ -35,6 +35,9 @@ pub struct Config {
     pub grpc: GrpcConfig,
 
     #[serde(default)]
+    pub dbus: DBusConfig,
+
+    #[serde(default)]
     pub desktop_notification: DesktopNotificationConfig,
 
     #[serde(default)]
@@ -158,6 +161,21 @@ impl GrpcConfig {
     pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
 }
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct DBusConfig {
+    #[serde(default = "DBusConfig::default_enable")]
+    pub enable: bool,
+}
+
+impl DBusConfig {
+    #[inline]
+    pub const fn default_enable() -> bool { true }
+}
+
+impl Default for DBusConfig {
+    fn default() -> Self { Self { enable: Self::default_enable() } }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SnippetConfig {
     name: String,
@@ -235,6 +253,7 @@ impl Default for Config {
             grpc: GrpcConfig::default(),
             desktop_notification: DesktopNotificationConfig::default(),
             snippets: Vec::new(),
+            dbus: DBusConfig::default(),
         }
     }
 }
@@ -401,21 +420,29 @@ impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotifica
     }
 }
 
+impl From<DBusConfig> for clipcat_server::config::DBusConfig {
+    fn from(DBusConfig { enable }: DBusConfig) -> Self { Self { enable } }
+}
+
 impl From<Config> for clipcat_server::Config {
     fn from(
-        Config { grpc, max_history, history_file_path, watcher, desktop_notification, .. }: Config,
+        Config {
+            grpc, max_history, history_file_path, watcher, desktop_notification, dbus, ..
+        }: Config,
     ) -> Self {
         let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
         let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
         let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
         let desktop_notification =
             clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
+        let dbus = clipcat_server::config::DBusConfig::from(dbus);
         Self {
             grpc_listen_address,
             grpc_local_socket,
             max_history,
             history_file_path,
             watcher,
+            dbus,
             desktop_notification,
         }
     }

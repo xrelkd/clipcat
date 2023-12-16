@@ -21,6 +21,7 @@ members = [
   "crates/cli",
   "crates/client",
   "crates/clipboard",
+  "crates/dbus-variant",
   "crates/external-editor",
   "crates/proto",
   "crates/server",

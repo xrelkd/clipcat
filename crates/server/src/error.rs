@@ -28,6 +28,13 @@ pub enum Error {
     #[snafu(display("Could not serve ClipboardWatcherWorker, error: {source}"))]
     ServeClipboardWatcherWorker { source: crate::watcher::Error },
 
+    #[snafu(display("Error occurs while starting dbus service, error: {source}"))]
+    StartDBusService { source: zbus::Error },
+
     #[snafu(display("Could not generate clip filter, error: {source}"))]
     GenerateClipFilter { source: crate::watcher::ClipboardWatcherOptionsError },
+}
+
+impl From<zbus::Error> for Error {
+    fn from(source: zbus::Error) -> Self { Self::StartDBusService { source } }
 }

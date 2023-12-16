@@ -14,6 +14,8 @@ pub struct Config {
 
     pub watcher: ClipboardWatcherOptions,
 
+    pub dbus: DBusConfig,
+
     pub desktop_notification: DesktopNotificationConfig,
 }
 
@@ -26,4 +28,9 @@ pub struct DesktopNotificationConfig {
     pub timeout: Duration,
 
     pub long_plaintext_length: usize,
+}
+
+#[derive(Clone, Debug)]
+pub struct DBusConfig {
+    pub enable: bool,
 }

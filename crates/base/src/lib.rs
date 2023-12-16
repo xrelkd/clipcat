@@ -26,6 +26,8 @@ pub use self::{
 
 pub const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub const DBUS_DEFAULT_SERVICE_NAME: &str = "org.clipcat.clipcat";
+
 lazy_static! {
     pub static ref PROJECT_SEMVER: semver::Version = semver::Version::parse(PROJECT_VERSION)
         .unwrap_or(semver::Version {

@@ -31,6 +31,9 @@ tokio-stream = { version = "0.1", features = ["net"] }
 
 tonic = { version = "0.10", features = ["gzip"] }
 
+zbus     = { version = "3", default-features = false, features = ["tokio"] }
+zvariant = "3"
+
 hex = "0.4"
 humansize = "2"
 lazy_static = "1"
@@ -47,9 +50,10 @@ time = { version = "0.3", features = [
   "serde",
 ] }
 
-clipcat-base      = { path = "../base" }
-clipcat-clipboard = { path = "../clipboard" }
-clipcat-proto     = { path = "../proto" }
+clipcat-base         = { path = "../base" }
+clipcat-clipboard    = { path = "../clipboard" }
+clipcat-dbus-variant = { path = "../dbus-variant" }
+clipcat-proto        = { path = "../proto" }
 
 [lints]
 workspace = true
