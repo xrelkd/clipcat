@@ -5,22 +5,22 @@ mod common;
 use self::common::ClipboardTester;
 
 #[derive(Debug)]
-pub struct LocalClipboardTester;
+pub struct Tester;
 
-impl Default for LocalClipboardTester {
+impl Default for Tester {
     fn default() -> Self { Self::new() }
 }
 
-impl LocalClipboardTester {
+impl Tester {
     #[must_use]
     pub const fn new() -> Self { Self }
 }
 
-impl ClipboardTester for LocalClipboardTester {
+impl ClipboardTester for Tester {
     type Clipboard = LocalClipboard;
 
     fn new_clipboard(&self) -> Result<Self::Clipboard, Error> { Ok(LocalClipboard::new()) }
 }
 
 #[test]
-fn test_local() -> Result<(), Error> { LocalClipboardTester::new().run() }
+fn test_local() -> Result<(), Error> { Tester::new().run() }

@@ -7,16 +7,16 @@ mod common;
 use self::common::ClipboardTester;
 
 #[derive(Debug)]
-pub struct DefaultClipboardTester {
+pub struct Tester {
     kind: ClipboardKind,
 }
 
-impl DefaultClipboardTester {
+impl Tester {
     #[must_use]
     pub const fn new(kind: ClipboardKind) -> Self { Self { kind } }
 }
 
-impl ClipboardTester for DefaultClipboardTester {
+impl ClipboardTester for Tester {
     type Clipboard = Clipboard;
 
     fn new_clipboard(&self) -> Result<Self::Clipboard, Error> {
@@ -27,7 +27,7 @@ impl ClipboardTester for DefaultClipboardTester {
 
 #[test]
 fn test_x11_clipboard() -> Result<(), Error> {
-    match DefaultClipboardTester::new(ClipboardKind::Clipboard).run() {
+    match Tester::new(ClipboardKind::Clipboard).run() {
         Err(Error::X11Listener { error: X11ListenerError::Connect { .. } }) => {
             eprintln!("Could not connect to X11 server, skip the further test cases");
             Ok(())
@@ -38,7 +38,7 @@ fn test_x11_clipboard() -> Result<(), Error> {
 
 #[test]
 fn test_x11_primary() -> Result<(), Error> {
-    match DefaultClipboardTester::new(ClipboardKind::Primary).run() {
+    match Tester::new(ClipboardKind::Primary).run() {
         Err(Error::X11Listener { error: X11ListenerError::Connect { .. } }) => {
             eprintln!("Could not connect to X11 server, skip the further test cases");
             Ok(())
