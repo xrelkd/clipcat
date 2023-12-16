@@ -149,7 +149,7 @@ fn build_thread(
                                     retry_interval.clone(),
                                     &is_running,
                                 ) {
-                                    notifier.close();
+                                    drop(notifier);
                                     return Err(err);
                                 }
                                 for observer in &event_observers {
@@ -165,7 +165,7 @@ fn build_thread(
                 }
             }
 
-            notifier.close();
+            drop(notifier);
             Ok(())
         })
         .expect("build thread for listening X11 clipboard")

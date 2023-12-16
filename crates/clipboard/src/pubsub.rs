@@ -28,16 +28,14 @@ impl Publisher {
         *lock.lock() = (State::Running, Some(mime));
         let _unused = condvar.notify_all();
     }
+}
 
-    pub fn close(&self) {
+impl Drop for Publisher {
+    fn drop(&mut self) {
         let (lock, condvar) = &*self.0;
         *lock.lock() = (State::Stopped, None);
         let _unused = condvar.notify_all();
     }
-}
-
-impl Drop for Publisher {
-    fn drop(&mut self) { self.close(); }
 }
 
 #[derive(Clone, Debug)]

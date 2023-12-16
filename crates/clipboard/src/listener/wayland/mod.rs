@@ -125,8 +125,8 @@ fn build_thread(
                 thread::sleep(POLLING_INTERVAL);
             }
 
-            notifier.close();
+            drop(notifier);
             Ok(())
         })
-        .expect("build thread for listening X11 clipboard")
+        .expect("build thread for listening Wayland clipboard")
 }
