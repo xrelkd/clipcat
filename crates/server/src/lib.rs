@@ -1,5 +1,6 @@
 pub mod backend;
 pub mod config;
+mod dbus;
 mod error;
 mod grpc;
 mod history;
@@ -44,6 +45,7 @@ pub async fn serve_with_shutdown(
         history_file_path,
         watcher: watcher_opts,
         desktop_notification: desktop_notification_config,
+        dbus,
     }: Config,
     snippets: &[ClipEntry],
 ) -> Result<()> {
@@ -145,6 +147,13 @@ pub async fn serve_with_shutdown(
         );
     }
 
+    if dbus.enable {
+        let _handle = lifecycle_manager.spawn(
+            "DBus",
+            create_dbus_service_future(clipboard_watcher.get_toggle(), clipboard_manager.clone()),
+        );
+    }
+
     let handle = lifecycle_manager.spawn(
         "Clipboard Watcher worker",
         create_clipboard_watcher_worker_future(clipboard_watcher_worker),
@@ -212,6 +221,51 @@ fn create_grpc_local_socket_server_future(
                     );
                     drop(tokio::fs::remove_file(local_socket).await);
                     tracing::info!("gRPC local socket server is shut down gracefully");
+                    ExitStatus::Success
+                }
+                Err(err) => ExitStatus::Failure(err),
+            }
+        }
+        .boxed()
+    }
+}
+
+fn create_dbus_service_future(
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
+    move |signal| {
+        async move {
+            async fn run_dbus(
+                clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+                clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+                signal: Shutdown,
+            ) -> Result<()> {
+                tracing::info!(
+                    "Provide Clipcat dbus service at {}",
+                    clipcat_base::DBUS_DEFAULT_SERVICE_NAME
+                );
+
+                let system = dbus::SystemService::new();
+                let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
+                let manager = dbus::ManagerService::new(clipboard_manager);
+                let _conn = zbus::ConnectionBuilder::session()?
+                    .name(clipcat_base::DBUS_DEFAULT_SERVICE_NAME)?
+                    .serve_at("/system", system)?
+                    .serve_at("/watcher", watcher)?
+                    .serve_at("/manager", manager)?
+                    .build()
+                    .await?;
+
+                tracing::info!("DBus service is created");
+                signal.await;
+
+                Ok(())
+            }
+
+            match run_dbus(clipboard_watcher_toggle, clipboard_manager, signal).await {
+                Ok(()) => {
+                    tracing::info!("DBus service is shut down gracefully");
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
