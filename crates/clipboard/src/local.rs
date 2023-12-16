@@ -36,10 +36,6 @@ impl Clipboard {
     }
 }
 
-impl Drop for Clipboard {
-    fn drop(&mut self) { self.publisher.close(); }
-}
-
 impl ClipboardSubscribe for Clipboard {
     type Subscriber = Subscriber;
 
