@@ -125,6 +125,13 @@ pub async fn serve_with_shutdown(
         );
     }
 
+    if dbus.enable {
+        let _handle = lifecycle_manager.spawn(
+            "D-Bus",
+            create_dbus_service_future(clipboard_watcher.get_toggle(), clipboard_manager.clone()),
+        );
+    }
+
     if let Some(grpc_listen_address) = grpc_listen_address {
         let _handle = lifecycle_manager.spawn(
             "gRPC HTTP server",
@@ -144,13 +151,6 @@ pub async fn serve_with_shutdown(
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
-        );
-    }
-
-    if dbus.enable {
-        let _handle = lifecycle_manager.spawn(
-            "DBus",
-            create_dbus_service_future(clipboard_watcher.get_toggle(), clipboard_manager.clone()),
         );
     }
 
@@ -243,17 +243,17 @@ fn create_dbus_service_future(
             ) -> Result<()> {
                 tracing::info!(
                     "Provide Clipcat dbus service at {}",
-                    clipcat_base::DBUS_DEFAULT_SERVICE_NAME
+                    clipcat_base::DBUS_SERVICE_NAME
                 );
 
                 let system = dbus::SystemService::new();
                 let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
                 let manager = dbus::ManagerService::new(clipboard_manager);
                 let _conn = zbus::ConnectionBuilder::session()?
-                    .name(clipcat_base::DBUS_DEFAULT_SERVICE_NAME)?
-                    .serve_at("/system", system)?
-                    .serve_at("/watcher", watcher)?
-                    .serve_at("/manager", manager)?
+                    .name(clipcat_base::DBUS_SERVICE_NAME)?
+                    .serve_at(clipcat_base::DBUS_SYSTEM_OBJECT_PATH, system)?
+                    .serve_at(clipcat_base::DBUS_WATCHER_OBJECT_PATH, watcher)?
+                    .serve_at(clipcat_base::DBUS_MANAGER_OBJECT_PATH, manager)?
                     .build()
                     .await?;
 
