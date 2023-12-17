@@ -1,6 +1,6 @@
 [package]
 name                 = "clipcat-dbus-variant"
-description          = "Clipcat DBus variant"
+description          = "Clipcat D-Bus variant"
 version.workspace    = true
 authors.workspace    = true
 homepage.workspace   = true

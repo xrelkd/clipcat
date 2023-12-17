@@ -125,6 +125,17 @@ pub async fn serve_with_shutdown(
         );
     }
 
+    if dbus.enable {
+        let _handle = lifecycle_manager.spawn(
+            "D-Bus",
+            create_dbus_service_future(
+                clipboard_watcher.get_toggle(),
+                clipboard_manager.clone(),
+                dbus.identifier,
+            ),
+        );
+    }
+
     if let Some(grpc_listen_address) = grpc_listen_address {
         let _handle = lifecycle_manager.spawn(
             "gRPC HTTP server",
@@ -144,13 +155,6 @@ pub async fn serve_with_shutdown(
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
-        );
-    }
-
-    if dbus.enable {
-        let _handle = lifecycle_manager.spawn(
-            "DBus",
-            create_dbus_service_future(clipboard_watcher.get_toggle(), clipboard_manager.clone()),
         );
     }
 
@@ -233,39 +237,14 @@ fn create_grpc_local_socket_server_future(
 fn create_dbus_service_future(
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+    identifier: Option<String>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
-            async fn run_dbus(
-                clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
-                clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
-                signal: Shutdown,
-            ) -> Result<()> {
-                tracing::info!(
-                    "Provide Clipcat dbus service at {}",
-                    clipcat_base::DBUS_DEFAULT_SERVICE_NAME
-                );
-
-                let system = dbus::SystemService::new();
-                let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
-                let manager = dbus::ManagerService::new(clipboard_manager);
-                let _conn = zbus::ConnectionBuilder::session()?
-                    .name(clipcat_base::DBUS_DEFAULT_SERVICE_NAME)?
-                    .serve_at("/system", system)?
-                    .serve_at("/watcher", watcher)?
-                    .serve_at("/manager", manager)?
-                    .build()
-                    .await?;
-
-                tracing::info!("DBus service is created");
-                signal.await;
-
-                Ok(())
-            }
-
-            match run_dbus(clipboard_watcher_toggle, clipboard_manager, signal).await {
+            match serve_dbus(clipboard_watcher_toggle, clipboard_manager, identifier, signal).await
+            {
                 Ok(()) => {
-                    tracing::info!("DBus service is shut down gracefully");
+                    tracing::info!("D-Bus service is shut down gracefully");
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
@@ -421,6 +400,36 @@ async fn serve_worker(
         }
         tracing::info!("Clips are stored in `{path}`", path = history_manager.path().display());
     }
+
+    Ok(())
+}
+
+async fn serve_dbus(
+    clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
+    clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+    identifier: Option<String>,
+    signal: Shutdown,
+) -> Result<()> {
+    let dbus_service_name = identifier.map_or_else(
+        || clipcat_base::DBUS_SERVICE_NAME.to_string(),
+        |identifier| format!("{}.{identifier}", clipcat_base::DBUS_SERVICE_NAME),
+    );
+
+    tracing::info!("Provide Clipcat D-Bus service at {dbus_service_name}");
+
+    let system = dbus::SystemService::new();
+    let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
+    let manager = dbus::ManagerService::new(clipboard_manager);
+    let _conn = zbus::ConnectionBuilder::session()?
+        .name(dbus_service_name)?
+        .serve_at(clipcat_base::DBUS_SYSTEM_OBJECT_PATH, system)?
+        .serve_at(clipcat_base::DBUS_WATCHER_OBJECT_PATH, watcher)?
+        .serve_at(clipcat_base::DBUS_MANAGER_OBJECT_PATH, manager)?
+        .build()
+        .await?;
+
+    tracing::info!("D-Bus service is created");
+    signal.await;
 
     Ok(())
 }
