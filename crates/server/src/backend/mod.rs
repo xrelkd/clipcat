@@ -28,7 +28,10 @@ where
     DefaultClipboardBackend::new(kinds, clip_filter, event_observers).map_or_else::<Result<
         Box<dyn traits::Backend>,
     >, _, _>(
-        |_| Ok(Box::new(LocalClipboardBackend::new())),
+        |err| {
+            tracing::warn!("{err}");
+            Ok(Box::new(LocalClipboardBackend::new()))
+        },
         |backend| Ok(Box::new(backend)),
     )
 }
@@ -45,7 +48,10 @@ where
     DefaultClipboardBackend::new(kinds, clip_filter, event_observers).map_or_else::<Result<
         Arc<dyn traits::Backend>,
     >, _, _>(
-        |_| Ok(Arc::new(LocalClipboardBackend::new())),
+        |err| {
+            tracing::warn!("{err}");
+            Ok(Arc::new(LocalClipboardBackend::new()))
+        },
         |backend| Ok(Arc::new(backend)),
     )
 }
