@@ -33,4 +33,6 @@ pub struct DesktopNotificationConfig {
 #[derive(Clone, Debug)]
 pub struct DBusConfig {
     pub enable: bool,
+
+    pub identifier: Option<String>,
 }
