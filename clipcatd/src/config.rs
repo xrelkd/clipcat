@@ -165,6 +165,8 @@ impl GrpcConfig {
 pub struct DBusConfig {
     #[serde(default = "DBusConfig::default_enable")]
     pub enable: bool,
+
+    pub identifier: Option<String>,
 }
 
 impl DBusConfig {
@@ -173,7 +175,7 @@ impl DBusConfig {
 }
 
 impl Default for DBusConfig {
-    fn default() -> Self { Self { enable: Self::default_enable() } }
+    fn default() -> Self { Self { enable: Self::default_enable(), identifier: None } }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -421,7 +423,7 @@ impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotifica
 }
 
 impl From<DBusConfig> for clipcat_server::config::DBusConfig {
-    fn from(DBusConfig { enable }: DBusConfig) -> Self { Self { enable } }
+    fn from(DBusConfig { enable, identifier }: DBusConfig) -> Self { Self { enable, identifier } }
 }
 
 impl From<Config> for clipcat_server::Config {
