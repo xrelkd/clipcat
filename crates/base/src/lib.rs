@@ -26,7 +26,11 @@ pub use self::{
 
 pub const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub const DBUS_DEFAULT_SERVICE_NAME: &str = "org.clipcat.clipcat";
+pub const DBUS_SERVICE_NAME: &str = "org.clipcat.clipcat";
+pub const DBUS_OBJECT_PATH_PREFIX: &str = "/org/clipcat/clipcat";
+pub const DBUS_SYSTEM_OBJECT_PATH: &str = "/org/clipcat/clipcat/system";
+pub const DBUS_WATCHER_OBJECT_PATH: &str = "/org/clipcat/clipcat/watcher";
+pub const DBUS_MANAGER_OBJECT_PATH: &str = "/org/clipcat/clipcat/manager";
 
 lazy_static! {
     pub static ref PROJECT_SEMVER: semver::Version = semver::Version::parse(PROJECT_VERSION)
