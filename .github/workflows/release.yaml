@@ -87,7 +87,7 @@ jobs:
         run: ./dev-support/bin/create-package
         shell: bash
 
-      - name: Prepare Debian Package
+      - name: Prepare DEB Package
         env:
           TARGET: ${{ matrix.target }}
           REF: ${{ github.ref }}
@@ -98,16 +98,40 @@ jobs:
         if: ${{ matrix.arch == 'amd64' }}
         shell: bash
 
-      - name: Create Debian Package
-        id: debian-package
+      - name: Create DEB Package
+        id: deb-package
         uses: jiro4989/build-deb-action@v3
         if: ${{ matrix.arch == 'amd64' }}
         with:
           package: ${{ env.PACKAGE_NAME }}
-          package_root: debian
+          package_root: .debpkg
           maintainer: ${{ env.MAINTAINER }}
           version: ${{ github.ref }}
           arch: ${{ matrix.arch }}
+          desc: ${{ env.PACKAGE_DESCRIPTION }}
+
+      - name: Prepare RPM Package
+        env:
+          TARGET: ${{ matrix.target }}
+          REF: ${{ github.ref }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
+        run: ./dev-support/bin/prepare-rpm-package
+        if: ${{ matrix.arch == 'amd64' }}
+        shell: bash
+
+      - name: Create RPM Package
+        id: rpm-package
+        uses: jiro4989/build-rpm-action@v2
+        if: ${{ matrix.arch == 'amd64' }}
+        with:
+          summary: ${{ env.PACKAGE_DESCRIPTION }}
+          package: ${{ env.PACKAGE_NAME }}
+          package_root: .rpmpkg
+          maintainer: ${{ env.MAINTAINER }}
+          version: ${{ github.ref }}
+          arch: "x86_64"
           desc: ${{ env.PACKAGE_DESCRIPTION }}
 
       - name: Publish Package Archive
@@ -120,12 +144,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Debian Package
+      - name: Publish DEB Package
         uses: softprops/action-gh-release@v1
         if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch == 'amd64' }}
         with:
           draft: false
-          files: ${{ steps.debian-package.outputs.file_name }}
+          files: ${{ steps.deb-package.outputs.file_name }}
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish RPM Package
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch == 'amd64' }}
+        with:
+          draft: false
+          files: ${{ steps.rpm-package.outputs.file_name }}
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
