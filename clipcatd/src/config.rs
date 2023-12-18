@@ -49,9 +49,6 @@ pub struct Config {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
     #[serde(default)]
-    pub load_current: bool,
-
-    #[serde(default)]
     pub enable_clipboard: bool,
 
     #[serde(default)]
@@ -82,7 +79,6 @@ pub struct WatcherConfig {
 impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
     fn from(
         WatcherConfig {
-            load_current,
             enable_clipboard,
             enable_primary,
             enable_secondary,
@@ -95,7 +91,6 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
         }: WatcherConfig,
     ) -> Self {
         Self {
-            load_current,
             enable_clipboard,
             enable_primary,
             enable_secondary,
@@ -263,7 +258,6 @@ impl Default for Config {
 impl Default for WatcherConfig {
     fn default() -> Self {
         Self {
-            load_current: true,
             enable_clipboard: true,
             enable_primary: true,
             enable_secondary: Self::default_enable_secondary(),
