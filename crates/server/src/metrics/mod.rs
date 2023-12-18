@@ -1,7 +1,6 @@
 pub mod dbus;
 pub mod grpc;
 
-use async_trait::async_trait;
 use clipcat_metrics::error;
 use snafu::ResultExt;
 
@@ -31,9 +30,8 @@ impl Metrics {
     }
 }
 
-#[async_trait]
 impl clipcat_metrics::Metrics for Metrics {
-    async fn gather(&self) -> Vec<prometheus::proto::MetricFamily> { self.registry.gather() }
+    fn gather(&self) -> Vec<prometheus::proto::MetricFamily> { self.registry.gather() }
 }
 
 #[cfg(test)]
