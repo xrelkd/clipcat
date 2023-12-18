@@ -27,7 +27,7 @@ where
 {
     let mut buffer = BytesMut::new().writer();
     ENCODER
-        .encode(&metrics.gather().await, &mut buffer)
+        .encode(&metrics.gather(), &mut buffer)
         .expect("`Writer<BytesMut>` should not encounter io error; qed");
 
     let mut res = Response::new(Body::from(buffer.into_inner().freeze()));
