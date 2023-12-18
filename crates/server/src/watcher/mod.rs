@@ -73,46 +73,38 @@ impl Worker {
     #[allow(clippy::redundant_pub_crate)]
     pub async fn serve(self, shutdown_signal: sigfinn::Shutdown) -> Result<(), Error> {
         let enabled_kinds = self.opts.get_enable_kinds();
-        let Self {
-            backend,
-            is_watching,
-            clip_sender,
-            clip_filter,
-            opts: ClipboardWatcherOptions { load_current, .. },
-        } = self;
+        let Self { backend, is_watching, clip_sender, clip_filter, .. } = self;
         let mut subscriber = backend.subscribe()?;
         let mut shutdown_signal = shutdown_signal.into_stream();
         let mut current_contents: [ClipboardContent; ClipboardKind::MAX_LENGTH] =
             [ClipboardContent::default(), ClipboardContent::default(), ClipboardContent::default()];
 
-        if load_current {
-            for (kind, enable) in enabled_kinds
-                .iter()
-                .enumerate()
-                .map(|(kind, &enable)| (ClipboardKind::from(kind), enable))
-            {
-                if enable {
-                    match backend.load(kind, None).await {
-                        Ok(data) => {
-                            if !clip_filter.filter_clipboard_content(data.as_ref()) {
-                                current_contents[usize::from(kind)] = data.clone();
-                                if let Err(_err) = clip_sender
-                                    .send(ClipEntry::from_clipboard_content(data, kind, None))
-                                {
-                                    tracing::info!("ClipEntry receiver is closed.");
-                                    return Err(Error::SendClipEntry);
-                                }
+        for (kind, enable) in enabled_kinds
+            .iter()
+            .enumerate()
+            .map(|(kind, &enable)| (ClipboardKind::from(kind), enable))
+        {
+            if enable {
+                match backend.load(kind, None).await {
+                    Ok(data) => {
+                        if !clip_filter.filter_clipboard_content(data.as_ref()) {
+                            current_contents[usize::from(kind)] = data.clone();
+                            if let Err(_err) = clip_sender
+                                .send(ClipEntry::from_clipboard_content(data, kind, None))
+                            {
+                                tracing::info!("ClipEntry receiver is closed.");
+                                return Err(Error::SendClipEntry);
                             }
                         }
-                        Err(
-                            BackendError::EmptyClipboard
-                            | BackendError::MatchMime { .. }
-                            | BackendError::UnknownContentType
-                            | BackendError::UnsupportedClipboardKind { .. },
-                        ) => continue,
-                        Err(error) => {
-                            tracing::error!("Failed to load clipboard, error: {error}");
-                        }
+                    }
+                    Err(
+                        BackendError::EmptyClipboard
+                        | BackendError::MatchMime { .. }
+                        | BackendError::UnknownContentType
+                        | BackendError::UnsupportedClipboardKind { .. },
+                    ) => continue,
+                    Err(error) => {
+                        tracing::error!("Failed to load clipboard, error: {error}");
                     }
                 }
             }
