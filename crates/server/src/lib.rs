@@ -5,6 +5,7 @@ mod error;
 mod grpc;
 mod history;
 mod manager;
+mod metrics;
 mod notification;
 mod watcher;
 
@@ -30,6 +31,7 @@ pub use self::{
 use self::{
     history::HistoryManager,
     manager::ClipboardManager,
+    metrics::Metrics,
     watcher::{ClipboardWatcher, ClipboardWatcherToggle, ClipboardWatcherWorker},
 };
 
@@ -46,6 +48,7 @@ pub async fn serve_with_shutdown(
         watcher: watcher_opts,
         desktop_notification: desktop_notification_config,
         dbus,
+        metrics: metrics_config,
     }: Config,
     snippets: &[ClipEntry],
 ) -> Result<()> {
@@ -158,6 +161,15 @@ pub async fn serve_with_shutdown(
         );
     }
 
+    if metrics_config.enable {
+        let metrics = Metrics::new()?;
+
+        let _handle = lifecycle_manager.spawn(
+            "Metrics server",
+            create_metrics_server_future(metrics_config.listen_address, metrics),
+        );
+    }
+
     let handle = lifecycle_manager.spawn(
         "Clipboard Watcher worker",
         create_clipboard_watcher_worker_future(clipboard_watcher_worker),
@@ -208,11 +220,18 @@ fn create_grpc_local_socket_server_future(
             };
 
             let result = tonic::transport::Server::builder()
-                .add_service(SystemServer::new(grpc::SystemService::new()))
-                .add_service(WatcherServer::new(grpc::WatcherService::new(
-                    clipboard_watcher_toggle,
-                )))
-                .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
+                .add_service(SystemServer::with_interceptor(
+                    grpc::SystemService::new(),
+                    grpc::interceptor,
+                ))
+                .add_service(WatcherServer::with_interceptor(
+                    grpc::WatcherService::new(clipboard_watcher_toggle),
+                    grpc::interceptor,
+                ))
+                .add_service(ManagerServer::with_interceptor(
+                    grpc::ManagerService::new(clipboard_manager),
+                    grpc::interceptor,
+                ))
                 .serve_with_incoming_shutdown(uds_stream, signal)
                 .await
                 .context(error::StartTonicServerSnafu);
@@ -298,11 +317,18 @@ fn create_grpc_http_server_future(
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
             let result = tonic::transport::Server::builder()
-                .add_service(SystemServer::new(grpc::SystemService::new()))
-                .add_service(WatcherServer::new(grpc::WatcherService::new(
-                    clipboard_watcher_toggle,
-                )))
-                .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
+                .add_service(SystemServer::with_interceptor(
+                    grpc::SystemService::new(),
+                    grpc::interceptor,
+                ))
+                .add_service(WatcherServer::with_interceptor(
+                    grpc::WatcherService::new(clipboard_watcher_toggle),
+                    grpc::interceptor,
+                ))
+                .add_service(ManagerServer::with_interceptor(
+                    grpc::ManagerService::new(clipboard_manager),
+                    grpc::interceptor,
+                ))
                 .serve_with_shutdown(listen_address, signal)
                 .await
                 .context(error::StartTonicServerSnafu);
@@ -341,6 +367,30 @@ fn create_clipboard_worker_future(
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
+            }
+        }
+        .boxed()
+    }
+}
+
+fn create_metrics_server_future<Metrics>(
+    listen_address: SocketAddr,
+    metrics: Metrics,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>>
+where
+    Metrics: clipcat_metrics::Metrics + 'static,
+{
+    move |signal| {
+        async move {
+            tracing::info!("Listen metrics endpoint on {listen_address}");
+            let result =
+                clipcat_metrics::start_metrics_server(listen_address, metrics, signal).await;
+            match result {
+                Ok(()) => {
+                    tracing::info!("Metrics server is shut down gracefully");
+                    ExitStatus::Success
+                }
+                Err(err) => ExitStatus::Failure(Error::from(err)),
             }
         }
         .boxed()

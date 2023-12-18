@@ -17,6 +17,15 @@ pub struct Config {
     pub dbus: DBusConfig,
 
     pub desktop_notification: DesktopNotificationConfig,
+
+    pub metrics: MetricsConfig,
+}
+
+#[derive(Clone, Debug)]
+pub struct DBusConfig {
+    pub enable: bool,
+
+    pub identifier: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -31,8 +40,8 @@ pub struct DesktopNotificationConfig {
 }
 
 #[derive(Clone, Debug)]
-pub struct DBusConfig {
+pub struct MetricsConfig {
     pub enable: bool,
 
-    pub identifier: Option<String>,
+    pub listen_address: SocketAddr,
 }
