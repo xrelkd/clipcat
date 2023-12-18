@@ -8,6 +8,8 @@ pub struct Config {
 
     pub grpc_local_socket: Option<PathBuf>,
 
+    pub grpc_access_token: Option<String>,
+
     pub max_history: usize,
 
     pub history_file_path: PathBuf,

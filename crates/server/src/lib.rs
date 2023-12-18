@@ -43,6 +43,7 @@ pub async fn serve_with_shutdown(
     Config {
         grpc_listen_address,
         grpc_local_socket,
+        grpc_access_token,
         max_history,
         history_file_path,
         watcher: watcher_opts,
@@ -144,6 +145,7 @@ pub async fn serve_with_shutdown(
             "gRPC HTTP server",
             create_grpc_http_server_future(
                 grpc_listen_address,
+                grpc_access_token.clone(),
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
@@ -155,6 +157,7 @@ pub async fn serve_with_shutdown(
             "gRPC local socket server",
             create_grpc_local_socket_server_future(
                 grpc_local_socket,
+                grpc_access_token,
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
@@ -197,6 +200,7 @@ pub async fn serve_with_shutdown(
 
 fn create_grpc_local_socket_server_future(
     local_socket: PathBuf,
+    grpc_access_token: Option<String>,
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -219,18 +223,19 @@ fn create_grpc_local_socket_server_future(
                 Err(err) => return ExitStatus::Failure(err),
             };
 
+            let interceptor = grpc::Interceptor::new(grpc_access_token);
             let result = tonic::transport::Server::builder()
                 .add_service(SystemServer::with_interceptor(
                     grpc::SystemService::new(),
-                    grpc::interceptor,
+                    interceptor.clone(),
                 ))
                 .add_service(WatcherServer::with_interceptor(
                     grpc::WatcherService::new(clipboard_watcher_toggle),
-                    grpc::interceptor,
+                    interceptor.clone(),
                 ))
                 .add_service(ManagerServer::with_interceptor(
                     grpc::ManagerService::new(clipboard_manager),
-                    grpc::interceptor,
+                    interceptor,
                 ))
                 .serve_with_incoming_shutdown(uds_stream, signal)
                 .await
@@ -309,6 +314,7 @@ fn create_clipboard_watcher_worker_future(
 
 fn create_grpc_http_server_future(
     listen_address: SocketAddr,
+    grpc_access_token: Option<String>,
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -316,18 +322,19 @@ fn create_grpc_http_server_future(
         async move {
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
+            let interceptor = grpc::Interceptor::new(grpc_access_token);
             let result = tonic::transport::Server::builder()
                 .add_service(SystemServer::with_interceptor(
                     grpc::SystemService::new(),
-                    grpc::interceptor,
+                    interceptor.clone(),
                 ))
                 .add_service(WatcherServer::with_interceptor(
                     grpc::WatcherService::new(clipboard_watcher_toggle),
-                    grpc::interceptor,
+                    interceptor.clone(),
                 ))
                 .add_service(ManagerServer::with_interceptor(
                     grpc::ManagerService::new(clipboard_manager),
-                    grpc::interceptor,
+                    interceptor,
                 ))
                 .serve_with_shutdown(listen_address, signal)
                 .await
