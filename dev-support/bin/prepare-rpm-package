@@ -4,7 +4,7 @@ set -euxo pipefail
 
 PACKAGE_NAME="clipcat"
 VERSION=$(basename "$REF")
-DIST=$(pwd)/.debpkg
+DIST=$(pwd)/.rpmpkg
 
 echo "Packaging $PACKAGE_NAME $VERSION for $TARGET..."
 
@@ -13,7 +13,7 @@ RUSTFLAGS="$TARGET_RUSTFLAGS" cargo build --target "$TARGET" --release
 
 mkdir -p "$DIST/usr/bin"
 mkdir -p "$DIST/usr/share/bash-completion/completions/"
-mkdir -p "$DIST/usr/share/zsh/vendor-completions/"
+mkdir -p "$DIST/usr/share/zsh/site-functions/"
 mkdir -p "$DIST/usr/share/fish/vendor_completions.d/"
 
 for cmd in clipcatd clipcatctl clipcat-menu clipcat-notify; do
@@ -22,8 +22,8 @@ for cmd in clipcatd clipcatctl clipcat-menu clipcat-notify; do
     "$DIST/usr/bin/${cmd}" completions bash >"$DIST/usr/share/bash-completion/completions/${cmd}"
     chmod 644 "$DIST/usr/share/bash-completion/completions/${cmd}"
 
-    "$DIST/usr/bin/${cmd}" completions zsh >"$DIST/usr/share/zsh/vendor-completions/_${cmd}"
-    chmod 644 "$DIST/usr/share/zsh/vendor-completions/_${cmd}"
+    "$DIST/usr/bin/${cmd}" completions zsh >"$DIST/usr/share/zsh/site-functions/_${cmd}"
+    chmod 644 "$DIST/usr/share/zsh/site-functions/_${cmd}"
 
     "$DIST/usr/bin/${cmd}" completions fish >"$DIST/usr/share/fish/vendor_completions.d/${cmd}.fish"
     chmod 644 "$DIST/usr/share/fish/vendor_completions.d/${cmd}.fish"
