@@ -25,10 +25,10 @@ cp \
 cd "$DIST"
 echo "Creating release archive..."
 case "$OS" in
-    ubuntu-latest | macos-latest)
-        ARCHIVE="$DIST/$PACKAGE_NAME-$VERSION-$TARGET.tar.gz"
-        tar czvf "$ARCHIVE" -- *
-        echo "::set-output name=archive::$ARCHIVE"
-        ;;
+ubuntu-latest | macos-latest)
+    ARCHIVE="$DIST/$PACKAGE_NAME-$VERSION-$TARGET.tar.gz"
+    tar czvf "$ARCHIVE" -- *
+    echo "archive=$ARCHIVE" >>"$GITHUB_OUTPUT"
+    ;;
 
 esac
