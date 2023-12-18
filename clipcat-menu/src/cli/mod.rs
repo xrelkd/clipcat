@@ -144,7 +144,10 @@ impl Cli {
         let finder =
             build_finder(finder, rofi_config, dmenu_config, custom_finder_config, &mut config);
         let fut = async move {
-            let client = Client::new(config.server_endpoint).await?;
+            let client = {
+                let access_token = config.access_token();
+                Client::new(config.server_endpoint, access_token).await?
+            };
             let clips = client.list(PREVIEW_LENGTH).await?;
 
             match commands {
