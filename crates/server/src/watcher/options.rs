@@ -7,8 +7,6 @@ use snafu::Snafu;
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug)]
 pub struct Options {
-    pub load_current: bool,
-
     pub enable_clipboard: bool,
 
     pub enable_primary: bool,
@@ -60,7 +58,6 @@ impl Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
-            load_current: true,
             enable_clipboard: true,
             enable_primary: true,
             enable_secondary: false,
