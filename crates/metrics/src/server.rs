@@ -57,8 +57,7 @@ where
     Metrics: Clone + traits::Metrics + Send + 'static,
     ShutdownSignal: Future<Output = ()> + Send + 'static,
 {
-    let middleware_stack =
-        tower::ServiceBuilder::new().layer(tower_http::compression::CompressionLayer::new());
+    let middleware_stack = tower::ServiceBuilder::new();
 
     let router = Router::new()
         .merge(metrics_index(metrics))
