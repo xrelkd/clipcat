@@ -8,6 +8,8 @@ pub struct Config {
 
     pub grpc_local_socket: Option<PathBuf>,
 
+    pub grpc_access_token: Option<String>,
+
     pub max_history: usize,
 
     pub history_file_path: PathBuf,
@@ -17,6 +19,15 @@ pub struct Config {
     pub dbus: DBusConfig,
 
     pub desktop_notification: DesktopNotificationConfig,
+
+    pub metrics: MetricsConfig,
+}
+
+#[derive(Clone, Debug)]
+pub struct DBusConfig {
+    pub enable: bool,
+
+    pub identifier: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -31,8 +42,8 @@ pub struct DesktopNotificationConfig {
 }
 
 #[derive(Clone, Debug)]
-pub struct DBusConfig {
+pub struct MetricsConfig {
     pub enable: bool,
 
-    pub identifier: Option<String>,
+    pub listen_address: SocketAddr,
 }

@@ -5,6 +5,7 @@ mod error;
 mod grpc;
 mod history;
 mod manager;
+mod metrics;
 mod notification;
 mod watcher;
 
@@ -30,6 +31,7 @@ pub use self::{
 use self::{
     history::HistoryManager,
     manager::ClipboardManager,
+    metrics::Metrics,
     watcher::{ClipboardWatcher, ClipboardWatcherToggle, ClipboardWatcherWorker},
 };
 
@@ -41,11 +43,13 @@ pub async fn serve_with_shutdown(
     Config {
         grpc_listen_address,
         grpc_local_socket,
+        grpc_access_token,
         max_history,
         history_file_path,
         watcher: watcher_opts,
         desktop_notification: desktop_notification_config,
         dbus,
+        metrics: metrics_config,
     }: Config,
     snippets: &[ClipEntry],
 ) -> Result<()> {
@@ -141,6 +145,7 @@ pub async fn serve_with_shutdown(
             "gRPC HTTP server",
             create_grpc_http_server_future(
                 grpc_listen_address,
+                grpc_access_token.clone(),
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
@@ -152,9 +157,19 @@ pub async fn serve_with_shutdown(
             "gRPC local socket server",
             create_grpc_local_socket_server_future(
                 grpc_local_socket,
+                grpc_access_token,
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
             ),
+        );
+    }
+
+    if metrics_config.enable {
+        let metrics = Metrics::new()?;
+
+        let _handle = lifecycle_manager.spawn(
+            "Metrics server",
+            create_metrics_server_future(metrics_config.listen_address, metrics),
         );
     }
 
@@ -185,6 +200,7 @@ pub async fn serve_with_shutdown(
 
 fn create_grpc_local_socket_server_future(
     local_socket: PathBuf,
+    grpc_access_token: Option<String>,
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -207,12 +223,20 @@ fn create_grpc_local_socket_server_future(
                 Err(err) => return ExitStatus::Failure(err),
             };
 
+            let interceptor = grpc::Interceptor::new(grpc_access_token);
             let result = tonic::transport::Server::builder()
-                .add_service(SystemServer::new(grpc::SystemService::new()))
-                .add_service(WatcherServer::new(grpc::WatcherService::new(
-                    clipboard_watcher_toggle,
-                )))
-                .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
+                .add_service(SystemServer::with_interceptor(
+                    grpc::SystemService::new(),
+                    interceptor.clone(),
+                ))
+                .add_service(WatcherServer::with_interceptor(
+                    grpc::WatcherService::new(clipboard_watcher_toggle),
+                    interceptor.clone(),
+                ))
+                .add_service(ManagerServer::with_interceptor(
+                    grpc::ManagerService::new(clipboard_manager),
+                    interceptor,
+                ))
                 .serve_with_incoming_shutdown(uds_stream, signal)
                 .await
                 .context(error::StartTonicServerSnafu);
@@ -290,6 +314,7 @@ fn create_clipboard_watcher_worker_future(
 
 fn create_grpc_http_server_future(
     listen_address: SocketAddr,
+    grpc_access_token: Option<String>,
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
@@ -297,12 +322,20 @@ fn create_grpc_http_server_future(
         async move {
             tracing::info!("Listen Clipcat gRPC endpoint on {listen_address}");
 
+            let interceptor = grpc::Interceptor::new(grpc_access_token);
             let result = tonic::transport::Server::builder()
-                .add_service(SystemServer::new(grpc::SystemService::new()))
-                .add_service(WatcherServer::new(grpc::WatcherService::new(
-                    clipboard_watcher_toggle,
-                )))
-                .add_service(ManagerServer::new(grpc::ManagerService::new(clipboard_manager)))
+                .add_service(SystemServer::with_interceptor(
+                    grpc::SystemService::new(),
+                    interceptor.clone(),
+                ))
+                .add_service(WatcherServer::with_interceptor(
+                    grpc::WatcherService::new(clipboard_watcher_toggle),
+                    interceptor.clone(),
+                ))
+                .add_service(ManagerServer::with_interceptor(
+                    grpc::ManagerService::new(clipboard_manager),
+                    interceptor,
+                ))
                 .serve_with_shutdown(listen_address, signal)
                 .await
                 .context(error::StartTonicServerSnafu);
@@ -341,6 +374,30 @@ fn create_clipboard_worker_future(
                     ExitStatus::Success
                 }
                 Err(err) => ExitStatus::Failure(err),
+            }
+        }
+        .boxed()
+    }
+}
+
+fn create_metrics_server_future<Metrics>(
+    listen_address: SocketAddr,
+    metrics: Metrics,
+) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>>
+where
+    Metrics: clipcat_metrics::Metrics + 'static,
+{
+    move |signal| {
+        async move {
+            tracing::info!("Listen metrics endpoint on {listen_address}");
+            let result =
+                clipcat_metrics::start_metrics_server(listen_address, metrics, signal).await;
+            match result {
+                Ok(()) => {
+                    tracing::info!("Metrics server is shut down gracefully");
+                    ExitStatus::Success
+                }
+                Err(err) => ExitStatus::Failure(Error::from(err)),
             }
         }
         .boxed()

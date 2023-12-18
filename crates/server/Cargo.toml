@@ -40,6 +40,7 @@ lazy_static = "1"
 mime = "0.3"
 notify-rust = "4"
 parking_lot = "0.12"
+prometheus = "0.13"
 regex = "1"
 semver = "1"
 snafu = "0.7"
@@ -53,6 +54,7 @@ time = { version = "0.3", features = [
 clipcat-base         = { path = "../base" }
 clipcat-clipboard    = { path = "../clipboard" }
 clipcat-dbus-variant = { path = "../dbus-variant" }
+clipcat-metrics      = { path = "../metrics" }
 clipcat-proto        = { path = "../proto" }
 
 [lints]

@@ -23,6 +23,7 @@ members = [
   "crates/clipboard",
   "crates/dbus-variant",
   "crates/external-editor",
+  "crates/metrics",
   "crates/proto",
   "crates/server",
 ]

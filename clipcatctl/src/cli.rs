@@ -231,11 +231,14 @@ impl Cli {
             _ => {}
         }
 
-        let Config { server_endpoint, log } = self.load_config();
-        log.registry();
+        let config = self.load_config();
+        config.log.registry();
 
         let fut = async move {
-            let client = Client::new(server_endpoint).await?;
+            let client = {
+                let access_token = config.access_token();
+                Client::new(config.server_endpoint, access_token).await?
+            };
             let server_version = client
                 .get_version()
                 .await

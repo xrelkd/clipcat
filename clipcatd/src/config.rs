@@ -38,6 +38,9 @@ pub struct Config {
     pub dbus: DBusConfig,
 
     #[serde(default)]
+    pub metrics: MetricsConfig,
+
+    #[serde(default)]
     pub desktop_notification: DesktopNotificationConfig,
 
     #[serde(default)]
@@ -137,6 +140,12 @@ pub struct GrpcConfig {
 
     #[serde(default = "clipcat_base::config::default_unix_domain_socket")]
     pub local_socket: PathBuf,
+
+    #[serde(default = "GrpcConfig::default_access_token")]
+    pub access_token: Option<String>,
+
+    #[serde(default = "GrpcConfig::default_access_token_file_path")]
+    pub access_token_file_path: Option<PathBuf>,
 }
 
 impl GrpcConfig {
@@ -154,6 +163,26 @@ impl GrpcConfig {
 
     #[inline]
     pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
+
+    #[inline]
+    pub const fn default_access_token() -> Option<String> { None }
+
+    #[inline]
+    pub const fn default_access_token_file_path() -> Option<PathBuf> { None }
+}
+
+impl Default for GrpcConfig {
+    fn default() -> Self {
+        Self {
+            enable_http: Self::default_enable_http(),
+            enable_local_socket: Self::default_enable_local_socket(),
+            host: Self::default_host(),
+            port: Self::default_port(),
+            local_socket: clipcat_base::config::default_unix_domain_socket(),
+            access_token: Self::default_access_token(),
+            access_token_file_path: Self::default_access_token_file_path(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -171,6 +200,42 @@ impl DBusConfig {
 
 impl Default for DBusConfig {
     fn default() -> Self { Self { enable: Self::default_enable(), identifier: None } }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct MetricsConfig {
+    #[serde(default = "MetricsConfig::default_enable")]
+    pub enable: bool,
+
+    #[serde(default = "MetricsConfig::default_host")]
+    pub host: IpAddr,
+
+    #[serde(default = "MetricsConfig::default_port")]
+    pub port: u16,
+}
+
+impl MetricsConfig {
+    #[inline]
+    pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
+
+    #[inline]
+    pub const fn default_enable() -> bool { true }
+
+    #[inline]
+    pub const fn default_host() -> IpAddr { clipcat_base::DEFAULT_METRICS_HOST }
+
+    #[inline]
+    pub const fn default_port() -> u16 { clipcat_base::DEFAULT_METRICS_PORT }
+}
+
+impl Default for MetricsConfig {
+    fn default() -> Self {
+        Self {
+            enable: Self::default_enable(),
+            host: Self::default_host(),
+            port: Self::default_port(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -251,6 +316,7 @@ impl Default for Config {
             desktop_notification: DesktopNotificationConfig::default(),
             snippets: Vec::new(),
             dbus: DBusConfig::default(),
+            metrics: MetricsConfig::default(),
         }
     }
 }
@@ -267,18 +333,6 @@ impl Default for WatcherConfig {
             denied_text_regex_patterns: HashSet::new(),
             filter_image_max_size: Self::default_filter_image_max_size(),
             sensitive_x11_atoms: Self::default_sensitive_x11_atoms(),
-        }
-    }
-}
-
-impl Default for GrpcConfig {
-    fn default() -> Self {
-        Self {
-            enable_http: true,
-            enable_local_socket: true,
-            host: clipcat_base::DEFAULT_GRPC_HOST,
-            port: clipcat_base::DEFAULT_GRPC_PORT,
-            local_socket: clipcat_base::config::default_unix_domain_socket(),
         }
     }
 }
@@ -420,26 +474,52 @@ impl From<DBusConfig> for clipcat_server::config::DBusConfig {
     fn from(DBusConfig { enable, identifier }: DBusConfig) -> Self { Self { enable, identifier } }
 }
 
+impl From<MetricsConfig> for clipcat_server::config::MetricsConfig {
+    fn from(config: MetricsConfig) -> Self {
+        Self { enable: config.enable, listen_address: config.socket_address() }
+    }
+}
+
 impl From<Config> for clipcat_server::Config {
     fn from(
         Config {
-            grpc, max_history, history_file_path, watcher, desktop_notification, dbus, ..
+            grpc,
+            max_history,
+            history_file_path,
+            watcher,
+            desktop_notification,
+            dbus,
+            metrics,
+            ..
         }: Config,
     ) -> Self {
         let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
         let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
+        let grpc_access_token = if let Some(file_path) = grpc.access_token_file_path {
+            if let Ok(token) = std::fs::read_to_string(file_path) {
+                Some(token.trim_end().to_string())
+            } else {
+                grpc.access_token
+            }
+        } else {
+            grpc.access_token
+        };
         let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
         let desktop_notification =
             clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
         let dbus = clipcat_server::config::DBusConfig::from(dbus);
+        let metrics = clipcat_server::config::MetricsConfig::from(metrics);
+
         Self {
             grpc_listen_address,
             grpc_local_socket,
+            grpc_access_token,
             max_history,
             history_file_path,
             watcher,
             dbus,
             desktop_notification,
+            metrics,
         }
     }
 }
