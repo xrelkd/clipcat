@@ -140,6 +140,12 @@ pub struct GrpcConfig {
 
     #[serde(default = "clipcat_base::config::default_unix_domain_socket")]
     pub local_socket: PathBuf,
+
+    #[serde(default = "GrpcConfig::default_access_token")]
+    pub access_token: Option<String>,
+
+    #[serde(default = "GrpcConfig::default_access_token_file_path")]
+    pub access_token_file_path: Option<PathBuf>,
 }
 
 impl GrpcConfig {
@@ -157,6 +163,12 @@ impl GrpcConfig {
 
     #[inline]
     pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
+
+    #[inline]
+    pub const fn default_access_token() -> Option<String> { None }
+
+    #[inline]
+    pub const fn default_access_token_file_path() -> Option<PathBuf> { None }
 }
 
 impl Default for GrpcConfig {
@@ -167,6 +179,8 @@ impl Default for GrpcConfig {
             host: Self::default_host(),
             port: Self::default_port(),
             local_socket: clipcat_base::config::default_unix_domain_socket(),
+            access_token: Self::default_access_token(),
+            access_token_file_path: Self::default_access_token_file_path(),
         }
     }
 }
@@ -481,6 +495,15 @@ impl From<Config> for clipcat_server::Config {
     ) -> Self {
         let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
         let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
+        let grpc_access_token = if let Some(file_path) = grpc.access_token_file_path {
+            if let Ok(token) = std::fs::read_to_string(file_path) {
+                Some(token.trim_end().to_string())
+            } else {
+                grpc.access_token
+            }
+        } else {
+            grpc.access_token
+        };
         let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
         let desktop_notification =
             clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
@@ -490,6 +513,7 @@ impl From<Config> for clipcat_server::Config {
         Self {
             grpc_listen_address,
             grpc_local_socket,
+            grpc_access_token,
             max_history,
             history_file_path,
             watcher,
