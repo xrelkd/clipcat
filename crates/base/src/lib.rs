@@ -65,6 +65,9 @@ pub const DEFAULT_GRPC_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 pub const DEFAULT_WEBUI_PORT: u16 = 45046;
 pub const DEFAULT_WEBUI_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
+pub const DEFAULT_METRICS_PORT: u16 = 45047;
+pub const DEFAULT_METRICS_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
+
 pub const DEFAULT_MENU_PROMPT: &str = "Clipcat";
 
 lazy_static::lazy_static! {
