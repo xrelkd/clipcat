@@ -12,6 +12,8 @@ pub struct Config {
 
     pub max_history: usize,
 
+    pub synchronize_selection_with_clipboard: bool,
+
     pub history_file_path: PathBuf,
 
     pub watcher: ClipboardWatcherOptions,

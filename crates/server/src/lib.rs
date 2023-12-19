@@ -11,7 +11,7 @@ mod watcher;
 
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
-use clipcat_base::ClipEntry;
+use clipcat_base::{ClipEntry, ClipboardKind};
 use clipcat_proto::{ManagerServer, SystemServer, WatcherServer};
 use futures::{FutureExt, StreamExt};
 use notification::Notification;
@@ -46,6 +46,7 @@ pub async fn serve_with_shutdown(
         grpc_access_token,
         max_history,
         history_file_path,
+        synchronize_selection_with_clipboard,
         watcher: watcher_opts,
         desktop_notification: desktop_notification_config,
         dbus,
@@ -184,6 +185,7 @@ pub async fn serve_with_shutdown(
             clipboard_watcher,
             clipboard_manager,
             history_manager,
+            synchronize_selection_with_clipboard,
             handle,
         ),
     );
@@ -356,6 +358,7 @@ fn create_clipboard_worker_future(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     history_manager: HistoryManager,
+    synchronize_selection_with_clipboard: bool,
     handle: Handle<Error>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |shutdown_signal| {
@@ -364,6 +367,7 @@ fn create_clipboard_worker_future(
                 clipboard_watcher,
                 clipboard_manager,
                 history_manager,
+                synchronize_selection_with_clipboard,
                 handle,
                 shutdown_signal,
             )
@@ -409,6 +413,7 @@ async fn serve_worker(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     mut history_manager: HistoryManager,
+    synchronize_selection_with_clipboard: bool,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,
 ) -> Result<()> {
@@ -428,7 +433,20 @@ async fn serve_worker(
                     kind = clip.kind(),
                     basic_info = clip.basic_information()
                 );
-                let _unused = clipboard_manager.lock().await.insert(clip.clone());
+                {
+                    let mut clipboard_manager = clipboard_manager.lock().await;
+                    let id = clipboard_manager.insert(clip.clone());
+                    if synchronize_selection_with_clipboard
+                        && clip.kind() == ClipboardKind::Clipboard
+                    {
+                        if let Err(err) =
+                            clipboard_manager.mark(id, clipcat_base::ClipboardKind::Primary).await
+                        {
+                            tracing::warn!("{err}");
+                        }
+                    }
+                }
+
                 if let Err(err) = history_manager.put(&clip).await {
                     tracing::error!("{err}");
                 }
