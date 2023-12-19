@@ -59,12 +59,12 @@ pub enum Commands {
     #[clap(about = "Insert new clip into clipboard")]
     Insert {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
 
         data: String,
     },
@@ -72,12 +72,12 @@ pub enum Commands {
     #[clap(aliases = &["cut"], about = "Loads file into clipboard")]
     Load {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
 
         #[clap(
             long = "mime",
@@ -279,15 +279,20 @@ impl Cli {
 
                     println!("{data}");
                 }
-                Some(Commands::Insert { kind, data }) => {
-                    let _id = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                Some(Commands::Insert { kinds, data }) => {
+                    for kind in kinds {
+                        let _id =
+                            client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                    }
                 }
                 Some(Commands::Length) => {
                     println!("{len}", len = client.length().await?);
                 }
-                Some(Commands::Load { kind, file_path, mime }) => {
+                Some(Commands::Load { kinds, file_path, mime }) => {
                     let (data, mime) = load_file_or_read_stdin(file_path, mime).await?;
-                    let _id = client.insert(&data, mime, kind).await?;
+                    for kind in kinds {
+                        let _id = client.insert(&data, mime.clone(), kind).await?;
+                    }
                 }
                 Some(Commands::Save { file_path, kind }) => {
                     let data = client.get_current_clip(kind).await?.encoded()?;
