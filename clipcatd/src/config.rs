@@ -22,6 +22,9 @@ pub struct Config {
     #[serde(default = "Config::default_max_history")]
     pub max_history: usize,
 
+    #[serde(default = "Config::default_synchronize_selection_with_clipboard")]
+    pub synchronize_selection_with_clipboard: bool,
+
     #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
@@ -310,6 +313,8 @@ impl Default for Config {
             pid_file: Self::default_pid_file_path(),
             max_history: Self::default_max_history(),
             history_file_path: Self::default_history_file_path(),
+            synchronize_selection_with_clipboard:
+                Self::default_synchronize_selection_with_clipboard(),
             log: clipcat_cli::config::LogConfig::default(),
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
@@ -359,6 +364,9 @@ impl Config {
         .into_iter()
         .collect()
     }
+
+    #[inline]
+    pub const fn default_synchronize_selection_with_clipboard() -> bool { true }
 
     #[inline]
     pub const fn default_max_history() -> usize { 50 }
@@ -485,6 +493,7 @@ impl From<Config> for clipcat_server::Config {
         Config {
             grpc,
             max_history,
+            synchronize_selection_with_clipboard,
             history_file_path,
             watcher,
             desktop_notification,
@@ -515,6 +524,7 @@ impl From<Config> for clipcat_server::Config {
             grpc_local_socket,
             grpc_access_token,
             max_history,
+            synchronize_selection_with_clipboard,
             history_file_path,
             watcher,
             dbus,
