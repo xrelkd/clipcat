@@ -19,6 +19,9 @@ pub enum Error {
     #[snafu(display("Could not create HistoryManager, error: {source}"))]
     CreateHistoryManager { source: crate::history::Error },
 
+    #[snafu(display("Could not create file watcher, error: {source}"))]
+    CreateFileWatcher { source: notify::Error },
+
     #[snafu(display("Could not load HistoryManager, error: {source}"))]
     LoadHistoryManager { source: crate::history::Error },
 

@@ -38,11 +38,13 @@ hex = "0.4"
 humansize = "2"
 lazy_static = "1"
 mime = "0.3"
+notify = "6"
 notify-rust = "4"
 parking_lot = "0.12"
 prometheus = "0.13"
 regex = "1"
 semver = "1"
+simdutf8 = "0.1"
 snafu = "0.7"
 time = { version = "0.3", features = [
   "formatting",

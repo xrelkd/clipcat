@@ -7,16 +7,18 @@ mod history;
 mod manager;
 mod metrics;
 mod notification;
+mod snippets;
 mod watcher;
 
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
-use clipcat_base::{ClipEntry, ClipboardKind};
+use clipcat_base::ClipboardKind;
 use clipcat_proto::{ManagerServer, SystemServer, WatcherServer};
-use futures::{FutureExt, StreamExt};
+use futures::FutureExt;
 use notification::Notification;
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
 use snafu::ResultExt;
+use snippets::SnippetWatcherEvent;
 use tokio::{
     net::UnixListener,
     sync::{broadcast::error::RecvError, Mutex},
@@ -34,6 +36,7 @@ use self::{
     metrics::Metrics,
     watcher::{ClipboardWatcher, ClipboardWatcherToggle, ClipboardWatcherWorker},
 };
+use crate::snippets::SnippetWatcherEventReceiver;
 
 /// # Errors
 ///
@@ -51,8 +54,8 @@ pub async fn serve_with_shutdown(
         desktop_notification: desktop_notification_config,
         dbus,
         metrics: metrics_config,
+        snippets,
     }: Config,
-    snippets: &[ClipEntry],
 ) -> Result<()> {
     let clip_filter =
         Arc::new(watcher_opts.generate_clip_filter().context(error::GenerateClipFilterSnafu)?);
@@ -71,7 +74,9 @@ pub async fn serve_with_shutdown(
     )
     .context(error::CreateClipboardBackendSnafu)?;
 
-    let (clipboard_manager, history_manager) = {
+    let (clipboard_manager, history_manager, snippets_watcher, snippet_event_receiver) = {
+        let ((snippets_watcher, snippet_event_receiver), snippets) =
+            snippets::load_and_create_watcher(&snippets).await?;
         tracing::info!("History file path: `{path}`", path = history_file_path.display());
         let mut history_manager = HistoryManager::new(&history_file_path)
             .await
@@ -109,9 +114,14 @@ pub async fn serve_with_shutdown(
         clipboard_manager.import(&history_clips);
 
         tracing::info!("Import {snippet_count} snippet(s) into ClipboardManager");
-        clipboard_manager.insert_snippets(snippets);
+        clipboard_manager.insert_snippets(&snippets);
 
-        (Arc::new(Mutex::new(clipboard_manager)), history_manager)
+        (
+            Arc::new(Mutex::new(clipboard_manager)),
+            history_manager,
+            snippets_watcher,
+            snippet_event_receiver,
+        )
     };
 
     let (clipboard_watcher, clipboard_watcher_worker) = ClipboardWatcher::new(
@@ -186,6 +196,7 @@ pub async fn serve_with_shutdown(
             clipboard_manager,
             history_manager,
             synchronize_selection_with_clipboard,
+            snippet_event_receiver,
             handle,
         ),
     );
@@ -196,6 +207,7 @@ pub async fn serve_with_shutdown(
         tracing::error!("{err}");
         Err(err)
     } else {
+        drop(snippets_watcher);
         Ok(())
     }
 }
@@ -359,6 +371,7 @@ fn create_clipboard_worker_future(
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     history_manager: HistoryManager,
     synchronize_selection_with_clipboard: bool,
+    snippet_event_receiver: SnippetWatcherEventReceiver,
     handle: Handle<Error>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |shutdown_signal| {
@@ -368,6 +381,7 @@ fn create_clipboard_worker_future(
                 clipboard_manager,
                 history_manager,
                 synchronize_selection_with_clipboard,
+                snippet_event_receiver,
                 handle,
                 shutdown_signal,
             )
@@ -414,20 +428,70 @@ async fn serve_worker(
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
     mut history_manager: HistoryManager,
     synchronize_selection_with_clipboard: bool,
+    mut snippet_event_receiver: SnippetWatcherEventReceiver,
     handle: Handle<Error>,
     shutdown_signal: Shutdown,
 ) -> Result<()> {
-    let mut shutdown_signal = shutdown_signal.into_stream();
-    let mut clip_recv = clipboard_watcher.subscribe();
+    enum Event {
+        NewClip(clipcat_base::ClipEntry),
+        NewSnippet(clipcat_base::ClipEntry),
+        RemoveSnippet(u64),
+        Shutdown,
+    }
 
-    loop {
-        let maybe_clip = tokio::select! {
-            clip = clip_recv.recv().fuse() => clip,
-            _ = shutdown_signal.next() => break,
-        };
+    let (send, mut recv) = tokio::sync::mpsc::unbounded_channel();
+    let snippets_event_handle = tokio::spawn({
+        let send = send.clone();
+        async move {
+            while let Some(event) = snippet_event_receiver.recv().await {
+                let event = match event {
+                    SnippetWatcherEvent::Add(clip) => Event::NewSnippet(clip),
+                    SnippetWatcherEvent::Remove(id) => Event::RemoveSnippet(id),
+                };
+                drop(send.send(event));
+            }
+        }
+    });
+    let clip_reciever_handle = tokio::spawn({
+        let send = send.clone();
+        async move {
+            let mut clip_recv = clipboard_watcher.subscribe();
+            loop {
+                match clip_recv.recv().await {
+                    Ok(clip) => drop(send.send(Event::NewClip(clip))),
+                    Err(RecvError::Closed) => {
+                        tracing::info!(
+                            "ClipboardWatcher is closing, no further clip will be received"
+                        );
 
-        match maybe_clip {
-            Ok(clip) => {
+                        tracing::info!("Internal shutdown signal is sent");
+                        handle.shutdown();
+
+                        drop(send.send(Event::Shutdown));
+                        break;
+                    }
+                    Err(RecvError::Lagged(_)) => {}
+                }
+            }
+        }
+    });
+    let shutdown_handle = tokio::spawn(async move {
+        shutdown_signal.await;
+        drop(send.send(Event::Shutdown));
+    });
+
+    while let Some(event) = recv.recv().await {
+        match event {
+            Event::Shutdown => break,
+            Event::RemoveSnippet(clip_id) => {
+                let mut clipboard_manager = clipboard_manager.lock().await;
+                let _ = clipboard_manager.remove_snippet(clip_id);
+            }
+            Event::NewSnippet(snippet) => {
+                let mut clipboard_manager = clipboard_manager.lock().await;
+                clipboard_manager.insert_snippets(&[snippet]);
+            }
+            Event::NewClip(clip) => {
                 tracing::debug!(
                     "New clip: {kind} [{basic_info}]",
                     kind = clip.kind(),
@@ -451,15 +515,6 @@ async fn serve_worker(
                     tracing::error!("{err}");
                 }
             }
-            Err(RecvError::Closed) => {
-                tracing::info!("ClipboardWatcher is closing, no further clip will be received");
-
-                tracing::info!("Internal shutdown signal is sent");
-                handle.shutdown();
-
-                break;
-            }
-            Err(RecvError::Lagged(_)) => {}
         }
     }
 
@@ -475,6 +530,10 @@ async fn serve_worker(
         }
         tracing::info!("Clips are stored in `{path}`", path = history_manager.path().display());
     }
+
+    snippets_event_handle.abort();
+    clip_reciever_handle.abort();
+    shutdown_handle.abort();
 
     Ok(())
 }

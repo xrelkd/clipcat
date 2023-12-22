@@ -174,7 +174,6 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
         pid_file.create()?;
     }
 
-    let snippets = config.load_snippets();
     let config = clipcat_server::Config::from(config);
 
     tracing::info!(
@@ -186,9 +185,9 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     tracing::info!("Initializing Tokio runtime");
 
     let exit_status = match Runtime::new().context(error::InitializeTokioRuntimeSnafu) {
-        Ok(runtime) => runtime
-            .block_on(clipcat_server::serve_with_shutdown(config, &snippets))
-            .map_err(Error::from),
+        Ok(runtime) => {
+            runtime.block_on(clipcat_server::serve_with_shutdown(config)).map_err(Error::from)
+        }
         Err(err) => Err(err),
     };
 
