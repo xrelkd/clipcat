@@ -8,7 +8,6 @@ use std::{
 use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
-use time::OffsetDateTime;
 
 const DEFAULT_ICON_NAME: &str = "accessories-clipboard";
 
@@ -241,69 +240,11 @@ impl Default for MetricsConfig {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SnippetConfig {
-    name: String,
-
-    file_path: Option<PathBuf>,
-
-    content: Option<String>,
-}
-
-impl SnippetConfig {
-    #[allow(clippy::cognitive_complexity)]
-    fn load(&self) -> Option<clipcat_base::ClipEntry> {
-        let Self { name, file_path, content } = self;
-        tracing::trace!("Load snippet `{name}`");
-        let data = match (file_path, content) {
-            (Some(file_path), Some(_content)) => {
-                tracing::warn!(
-                    "Loading snippet, both `file_path` and `content` are provided, prefer \
-                     `file_path`"
-                );
-                std::fs::read(file_path)
-                    .map_err(|err| {
-                        tracing::warn!(
-                            "Failed to load snippet from `{}`, error: {err}",
-                            file_path.display()
-                        );
-                    })
-                    .ok()
-            }
-            (Some(file_path), None) => std::fs::read(file_path)
-                .map_err(|err| {
-                    tracing::warn!(
-                        "Failed to load snippet from `{}`, error: {err}",
-                        file_path.display()
-                    );
-                })
-                .ok(),
-            (None, Some(content)) => Some(content.as_bytes().to_vec()),
-            (None, None) => None,
-        };
-
-        if let Some(data) = data {
-            if data.is_empty() {
-                tracing::warn!("Snippet `{name}` is empty, ignored it");
-                return None;
-            }
-
-            if let Err(err) = simdutf8::basic::from_utf8(&data) {
-                tracing::warn!("Snippet `{name}` is not valid UTF-8 string, error: {err}");
-                return None;
-            }
-
-            clipcat_base::ClipEntry::new(
-                &data,
-                &mime::TEXT_PLAIN_UTF_8,
-                clipcat_base::ClipboardKind::Clipboard,
-                Some(OffsetDateTime::UNIX_EPOCH),
-            )
-            .ok()
-        } else {
-            None
-        }
-    }
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum SnippetConfig {
+    Text { name: String, content: String },
+    File { name: String, path: PathBuf },
+    Directory { name: String, path: PathBuf },
 }
 
 impl Default for Config {
@@ -319,9 +260,9 @@ impl Default for Config {
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
             desktop_notification: DesktopNotificationConfig::default(),
-            snippets: Vec::new(),
             dbus: DBusConfig::default(),
             metrics: MetricsConfig::default(),
+            snippets: Vec::new(),
         }
     }
 }
@@ -397,10 +338,6 @@ impl Config {
         }
 
         Ok(config)
-    }
-
-    pub fn load_snippets(&self) -> Vec<clipcat_base::ClipEntry> {
-        self.snippets.iter().filter_map(SnippetConfig::load).collect()
     }
 }
 
@@ -488,6 +425,16 @@ impl From<MetricsConfig> for clipcat_server::config::MetricsConfig {
     }
 }
 
+impl From<SnippetConfig> for clipcat_server::config::SnippetConfig {
+    fn from(config: SnippetConfig) -> Self {
+        match config {
+            SnippetConfig::Text { name, content } => Self::Inline { name, content },
+            SnippetConfig::File { name, path } => Self::File { name, path },
+            SnippetConfig::Directory { name, path } => Self::Directory { name, path },
+        }
+    }
+}
+
 impl From<Config> for clipcat_server::Config {
     fn from(
         Config {
@@ -499,6 +446,7 @@ impl From<Config> for clipcat_server::Config {
             desktop_notification,
             dbus,
             metrics,
+            snippets,
             ..
         }: Config,
     ) -> Self {
@@ -518,6 +466,8 @@ impl From<Config> for clipcat_server::Config {
             clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
         let dbus = clipcat_server::config::DBusConfig::from(dbus);
         let metrics = clipcat_server::config::MetricsConfig::from(metrics);
+        let snippets =
+            snippets.into_iter().map(clipcat_server::config::SnippetConfig::from).collect();
 
         Self {
             grpc_listen_address,
@@ -530,6 +480,7 @@ impl From<Config> for clipcat_server::Config {
             dbus,
             desktop_notification,
             metrics,
+            snippets,
         }
     }
 }
