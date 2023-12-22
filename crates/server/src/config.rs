@@ -23,6 +23,8 @@ pub struct Config {
     pub desktop_notification: DesktopNotificationConfig,
 
     pub metrics: MetricsConfig,
+
+    pub snippets: Vec<SnippetConfig>,
 }
 
 #[derive(Clone, Debug)]
@@ -48,4 +50,11 @@ pub struct MetricsConfig {
     pub enable: bool,
 
     pub listen_address: SocketAddr,
+}
+
+#[derive(Clone, Debug)]
+pub enum SnippetConfig {
+    Inline { name: String, content: String },
+    File { name: String, path: PathBuf },
+    Directory { name: String, path: PathBuf },
 }
