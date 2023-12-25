@@ -226,7 +226,7 @@ fn create_grpc_local_socket_server_future(
                     .await
                     .context(error::CreateUnixListenerSnafu { socket_path: local_socket.clone() })
                 {
-                    return ExitStatus::Failure(err);
+                    return ExitStatus::FatalError(err);
                 }
             }
 
@@ -234,7 +234,7 @@ fn create_grpc_local_socket_server_future(
                 .context(error::CreateUnixListenerSnafu { socket_path: local_socket.clone() })
             {
                 Ok(uds) => UnixListenerStream::new(uds),
-                Err(err) => return ExitStatus::Failure(err),
+                Err(err) => return ExitStatus::FatalError(err),
             };
 
             let interceptor = grpc::Interceptor::new(grpc_access_token);
@@ -265,7 +265,7 @@ fn create_grpc_local_socket_server_future(
                     tracing::info!("gRPC local socket server is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(err),
+                Err(err) => ExitStatus::FatalError(err),
             }
         }
         .boxed()
@@ -285,7 +285,7 @@ fn create_dbus_service_future(
                     tracing::info!("D-Bus service is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(err),
+                Err(err) => ExitStatus::FatalError(err),
             }
         }
         .boxed()
@@ -319,7 +319,7 @@ fn create_clipboard_watcher_worker_future(
                     tracing::info!("Clipboard Watcher worker is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(err),
+                Err(err) => ExitStatus::FatalError(err),
             }
         }
         .boxed()
@@ -359,7 +359,7 @@ fn create_grpc_http_server_future(
                     tracing::info!("gRPC HTTP server is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(err),
+                Err(err) => ExitStatus::FatalError(err),
             }
         }
         .boxed()
@@ -391,7 +391,7 @@ fn create_clipboard_worker_future(
                     tracing::info!("Clipboard worker is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(err),
+                Err(err) => ExitStatus::FatalError(err),
             }
         }
         .boxed()
@@ -415,7 +415,7 @@ where
                     tracing::info!("Metrics server is shut down gracefully");
                     ExitStatus::Success
                 }
-                Err(err) => ExitStatus::Failure(Error::from(err)),
+                Err(err) => ExitStatus::FatalError(Error::from(err)),
             }
         }
         .boxed()
