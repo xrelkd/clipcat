@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         term.store(true, Ordering::Relaxed);
 
         if let Err(err) = join_handle.await.expect("task is joinable") {
-            ExitStatus::Failure(err)
+            ExitStatus::FatalError(err)
         } else {
             ExitStatus::Success
         }
