@@ -20,7 +20,7 @@ serde_json = "1"
 
 async-trait = "0.1"
 futures = "0.3"
-sigfinn = "0.1"
+sigfinn = "0.2"
 tokio = { version = "1", features = [
   "fs",
   "macros",
