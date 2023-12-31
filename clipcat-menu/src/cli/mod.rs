@@ -321,9 +321,12 @@ mod tests {
 
     #[test]
     fn test_command_simple() {
-        match Cli::parse_from(["program_name", "version"]).commands {
-            Some(Commands::Version { .. }) => (),
-            _ => panic!(),
+        if let Some(Commands::Version { .. }) =
+            Cli::parse_from(["program_name", "version"]).commands
+        {
+            // everything is good.
+        } else {
+            panic!();
         }
     }
 }
