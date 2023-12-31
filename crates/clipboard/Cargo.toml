@@ -25,7 +25,7 @@ bytes       = "1"
 mime        = "0.3"
 mio         = { version = "0.8", features = ["os-ext"] }
 parking_lot = "0.12"
-snafu       = "0.7"
+snafu       = "0.8"
 
 clipcat-base = { path = "../base/" }
 

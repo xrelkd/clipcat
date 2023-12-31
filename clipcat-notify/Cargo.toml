@@ -20,7 +20,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 mime          = "0.3"
-snafu         = "0.7"
+snafu         = "0.8"
 time          = { version = "0.3", features = ["local-offset", "serde"] }
 
 clipcat-base   = { path = "../crates/base" }
