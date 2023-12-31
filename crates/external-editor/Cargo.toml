@@ -14,7 +14,7 @@ keywords.workspace   = true
 [dependencies]
 tokio = { version = "1", features = ["fs", "process", "rt-multi-thread"] }
 
-snafu = "0.7"
+snafu = "0.8"
 
 clipcat-base = { path = "../base" }
 

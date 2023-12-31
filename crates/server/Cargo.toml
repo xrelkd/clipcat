@@ -45,7 +45,7 @@ prometheus = "0.13"
 regex = "1"
 semver = "1"
 simdutf8 = "0.1"
-snafu = "0.7"
+snafu = "0.8"
 time = { version = "0.3", features = [
   "formatting",
   "macros",

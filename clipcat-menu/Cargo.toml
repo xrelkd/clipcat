@@ -26,7 +26,7 @@ clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 http          = "1"
 skim          = "0.10"
-snafu         = "0.7"
+snafu         = "0.8"
 
 clipcat-base            = { path = "../crates/base" }
 clipcat-cli             = { path = "../crates/cli" }

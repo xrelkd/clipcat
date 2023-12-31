@@ -22,7 +22,7 @@ bytes       = "1"
 lazy_static = "1"
 mime        = "0.3"
 prometheus  = "0.13"
-snafu       = "0.7"
+snafu       = "0.8"
 
 [lints]
 workspace = true

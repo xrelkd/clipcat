@@ -29,7 +29,7 @@ directories   = "5"
 http          = "1"
 mime          = "0.3"
 simdutf8      = "0.1"
-snafu         = "0.7"
+snafu         = "0.8"
 
 clipcat-base            = { path = "../crates/base" }
 clipcat-cli             = { path = "../crates/cli" }
