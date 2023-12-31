@@ -1,0 +1,28 @@
+[package]
+name                 = "clipcat-metrics"
+description          = "Clipcat metrics utilities"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+repository.workspace = true
+readme.workspace     = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+async-trait = "0.1"
+
+axum       = { version = "0.6", features = ["headers"] }
+tower      = { version = "0.4", features = ["timeout"] }
+tower-http = { version = "0.5", features = ["trace"] }
+
+bytes       = "1"
+lazy_static = "1"
+mime        = "0.3"
+prometheus  = "0.13"
+snafu       = "0.8"
+
+[lints]
+workspace = true

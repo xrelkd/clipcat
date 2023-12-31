@@ -13,12 +13,20 @@ use tokio::{
 use crate::{
     config::Config,
     error::{self, Error},
+    shadow,
 };
 
 const PREVIEW_LENGTH: usize = 100;
 
 #[derive(Parser)]
-#[clap(name = clipcat_base::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(
+    name = clipcat_base::CTL_PROGRAM_NAME,
+    author,
+    version,
+    long_version = shadow::CLAP_LONG_VERSION,
+    about,
+    long_about = None
+)]
 pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,
@@ -59,12 +67,12 @@ pub enum Commands {
     #[clap(about = "Insert new clip into clipboard")]
     Insert {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
 
         data: String,
     },
@@ -72,12 +80,12 @@ pub enum Commands {
     #[clap(aliases = &["cut"], about = "Loads file into clipboard")]
     Load {
         #[clap(
-            long = "kind",
+            long = "kinds",
             short = 'k',
             default_value = "clipboard",
             help = "Specify which clipboard to insert (\"clipboard\", \"primary\", \"secondary\")"
         )]
-        kind: ClipboardKind,
+        kinds: Vec<ClipboardKind>,
 
         #[clap(
             long = "mime",
@@ -231,11 +239,14 @@ impl Cli {
             _ => {}
         }
 
-        let Config { server_endpoint, log } = self.load_config();
-        log.registry();
+        let config = self.load_config();
+        config.log.registry();
 
         let fut = async move {
-            let client = Client::new(server_endpoint).await?;
+            let client = {
+                let access_token = config.access_token();
+                Client::new(config.server_endpoint, access_token).await?
+            };
             let server_version = client
                 .get_version()
                 .await
@@ -276,15 +287,20 @@ impl Cli {
 
                     println!("{data}");
                 }
-                Some(Commands::Insert { kind, data }) => {
-                    let _id = client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                Some(Commands::Insert { kinds, data }) => {
+                    for kind in kinds {
+                        let _id =
+                            client.insert(data.as_bytes(), mime::TEXT_PLAIN_UTF_8, kind).await?;
+                    }
                 }
                 Some(Commands::Length) => {
                     println!("{len}", len = client.length().await?);
                 }
-                Some(Commands::Load { kind, file_path, mime }) => {
+                Some(Commands::Load { kinds, file_path, mime }) => {
                     let (data, mime) = load_file_or_read_stdin(file_path, mime).await?;
-                    let _id = client.insert(&data, mime, kind).await?;
+                    for kind in kinds {
+                        let _id = client.insert(&data, mime.clone(), kind).await?;
+                    }
                 }
                 Some(Commands::Save { file_path, kind }) => {
                     let data = client.get_current_clip(kind).await?.encoded()?;

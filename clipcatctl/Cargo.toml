@@ -28,13 +28,17 @@ clap_complete = "4"
 directories   = "5"
 http          = "1"
 mime          = "0.3"
+shadow-rs     = "0.26"
 simdutf8      = "0.1"
-snafu         = "0.7"
+snafu         = "0.8"
 
 clipcat-base            = { path = "../crates/base" }
 clipcat-cli             = { path = "../crates/cli" }
 clipcat-client          = { path = "../crates/client" }
 clipcat-external-editor = { path = "../crates/external-editor" }
+
+[build-dependencies]
+shadow-rs = "0.26"
 
 [lints]
 workspace = true

@@ -1,0 +1,24 @@
+[package]
+name                 = "clipcat-dbus-variant"
+description          = "Clipcat D-Bus variant"
+version.workspace    = true
+authors.workspace    = true
+homepage.workspace   = true
+readme.workspace     = true
+repository.workspace = true
+license.workspace    = true
+edition.workspace    = true
+categories.workspace = true
+keywords.workspace   = true
+
+[dependencies]
+serde    = { version = "1", features = ["derive"] }
+zvariant = "3"
+
+mime = "0.3"
+time = { version = "0.3", features = ["formatting", "macros"] }
+
+clipcat-base = { path = "../base" }
+
+[lints]
+workspace = true

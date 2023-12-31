@@ -13,12 +13,20 @@ use crate::{
     config::Config,
     error::{self, Error},
     finder::{FinderRunner, FinderType},
+    shadow,
 };
 
 const PREVIEW_LENGTH: usize = 80;
 
 #[derive(Parser)]
-#[command(name = clipcat_base::MENU_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(
+    name = clipcat_base::MENU_PROGRAM_NAME,
+    author,
+    version,
+    long_version = shadow::CLAP_LONG_VERSION,
+    about,
+    long_about = None
+)]
 pub struct Cli {
     #[command(subcommand)]
     commands: Option<Commands>,
@@ -144,7 +152,10 @@ impl Cli {
         let finder =
             build_finder(finder, rofi_config, dmenu_config, custom_finder_config, &mut config);
         let fut = async move {
-            let client = Client::new(config.server_endpoint).await?;
+            let client = {
+                let access_token = config.access_token();
+                Client::new(config.server_endpoint, access_token).await?
+            };
             let clips = client.list(PREVIEW_LENGTH).await?;
 
             match commands {
@@ -310,9 +321,12 @@ mod tests {
 
     #[test]
     fn test_command_simple() {
-        match Cli::parse_from(["program_name", "version"]).commands {
-            Some(Commands::Version { .. }) => (),
-            _ => panic!(),
+        if let Some(Commands::Version { .. }) =
+            Cli::parse_from(["program_name", "version"]).commands
+        {
+            // everything is good.
+        } else {
+            panic!();
         }
     }
 }

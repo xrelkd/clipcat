@@ -20,7 +20,7 @@ serde_json = "1"
 
 async-trait = "0.1"
 futures = "0.3"
-sigfinn = "0.1"
+sigfinn = "0.2"
 tokio = { version = "1", features = [
   "fs",
   "macros",
@@ -31,15 +31,21 @@ tokio-stream = { version = "0.1", features = ["net"] }
 
 tonic = { version = "0.10", features = ["gzip"] }
 
+zbus     = { version = "3", default-features = false, features = ["tokio"] }
+zvariant = "3"
+
 hex = "0.4"
 humansize = "2"
 lazy_static = "1"
 mime = "0.3"
+notify = "6"
 notify-rust = "4"
 parking_lot = "0.12"
+prometheus = "0.13"
 regex = "1"
 semver = "1"
-snafu = "0.7"
+simdutf8 = "0.1"
+snafu = "0.8"
 time = { version = "0.3", features = [
   "formatting",
   "macros",
@@ -47,9 +53,11 @@ time = { version = "0.3", features = [
   "serde",
 ] }
 
-clipcat-base      = { path = "../base" }
-clipcat-clipboard = { path = "../clipboard" }
-clipcat-proto     = { path = "../proto" }
+clipcat-base         = { path = "../base" }
+clipcat-clipboard    = { path = "../clipboard" }
+clipcat-dbus-variant = { path = "../dbus-variant" }
+clipcat-metrics      = { path = "../metrics" }
+clipcat-proto        = { path = "../proto" }
 
 [lints]
 workspace = true

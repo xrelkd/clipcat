@@ -18,17 +18,17 @@ cp -v "target/$TARGET/release/clipcatctl" "$DIST"
 cp -v "target/$TARGET/release/clipcat-notify" "$DIST"
 cp -v "target/$TARGET/release/clipcat-menu" "$DIST"
 cp \
-  LICENSE \
-  README.md \
-  "$DIST"
+    LICENSE \
+    README.md \
+    "$DIST"
 
 cd "$DIST"
 echo "Creating release archive..."
 case "$OS" in
 ubuntu-latest | macos-latest)
-  ARCHIVE="$DIST/$PACKAGE_NAME-$VERSION-$TARGET.tar.gz"
-  tar czvf "$ARCHIVE" -- *
-  echo "::set-output name=archive::$ARCHIVE"
-  ;;
+    ARCHIVE="$DIST/$PACKAGE_NAME-$VERSION-$TARGET.tar.gz"
+    tar czvf "$ARCHIVE" -- *
+    echo "archive=$ARCHIVE" >>"$GITHUB_OUTPUT"
+    ;;
 
 esac

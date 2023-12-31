@@ -2,12 +2,19 @@ name: Release
 
 on:
   push:
+    branches:
+      - release/*
     tags:
       - "v*"
 
 defaults:
   run:
     shell: bash
+
+env:
+  MAINTAINER: "xrelkd <46590321+xrelkd@users.noreply.github.com>"
+  PACKAGE_NAME: "clipcat"
+  PACKAGE_DESCRIPTION: "Clipboard manager written in Rust Programming Language"
 
 jobs:
   all:
@@ -16,29 +23,14 @@ jobs:
     strategy:
       matrix:
         target:
-          - aarch64-unknown-linux-musl
-          - armv7-unknown-linux-musleabihf
           - x86_64-unknown-linux-musl
-          # TODO: support macOS in the future?
-          # - x86_64-apple-darwin
 
         include:
-          - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
-            target_rustflags: "--codegen linker=aarch64-linux-gnu-gcc"
-
-          - target: armv7-unknown-linux-musleabihf
-            os: ubuntu-latest
-            target_rustflags: "--codegen linker=arm-linux-gnueabihf-gcc"
-
           - target: x86_64-unknown-linux-musl
+            arch_deb: amd64
+            arch_rpm: x86_64
             os: ubuntu-latest
             target_rustflags: ""
-
-          # TODO: support macOS in the future?
-          # - target: x86_64-apple-darwin
-          #   os: macos-latest
-          #   target_rustflags: ""
 
     runs-on: ${{matrix.os}}
 
@@ -48,7 +40,7 @@ jobs:
       - name: Install Dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt install -y protobuf-compiler
+          sudo apt install -y --no-install-recommends musl-tools protobuf-compiler libprotobuf-dev
 
       - name: Install Rust Toolchain Components
         uses: actions-rs/toolchain@v1
@@ -56,18 +48,6 @@ jobs:
           override: true
           target: ${{ matrix.target }}
           toolchain: stable
-
-      - name: Install AArch64 Toolchain
-        if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
-        run: |
-          sudo apt update
-          sudo apt install -y gcc-aarch64-linux-gnu
-
-      - name: Install ARM7 Toolchain
-        if: ${{ matrix.target == 'armv7-unknown-linux-musleabihf' }}
-        run: |
-          sudo apt update
-          sudo apt install -y gcc-arm-linux-gnueabihf
 
       - name: Create Package
         id: package
@@ -79,12 +59,79 @@ jobs:
         run: ./dev-support/bin/create-package
         shell: bash
 
-      - name: Publish Archive
+      - name: Prepare DEB Package
+        env:
+          TARGET: ${{ matrix.target }}
+          REF: ${{ github.ref }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch_deb }}
+          TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
+        run: ./dev-support/bin/prepare-deb-package
+        if: ${{ matrix.arch_deb == 'amd64' }}
+        shell: bash
+
+      - name: Create DEB Package
+        id: deb-package
+        uses: jiro4989/build-deb-action@v3
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_deb == 'amd64' }}
+        with:
+          package: ${{ env.PACKAGE_NAME }}
+          package_root: .debpkg
+          maintainer: ${{ env.MAINTAINER }}
+          version: ${{ github.ref }}
+          arch: ${{ matrix.arch_deb }}
+          desc: ${{ env.PACKAGE_DESCRIPTION }}
+
+      - name: Prepare RPM Package
+        env:
+          TARGET: ${{ matrix.target }}
+          REF: ${{ github.ref }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch_rpm }}
+          TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
+        run: ./dev-support/bin/prepare-rpm-package
+        if: ${{ matrix.arch_rpm == 'x86_64' }}
+        shell: bash
+
+      - name: Create RPM Package
+        id: rpm-package
+        uses: jiro4989/build-rpm-action@v2
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_rpm == 'x86_64' }}
+        with:
+          summary: ${{ env.PACKAGE_DESCRIPTION }}
+          package: ${{ env.PACKAGE_NAME }}
+          package_root: .rpmpkg
+          maintainer: ${{ env.MAINTAINER }}
+          version: ${{ github.ref }}
+          arch: ${{ matrix.arch_rpm }}
+          desc: ${{ env.PACKAGE_DESCRIPTION }}
+
+      - name: Publish Package Archive
         uses: softprops/action-gh-release@v1
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           draft: false
           files: ${{ steps.package.outputs.archive }}
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish DEB Package
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_deb == 'amd64' }}
+        with:
+          draft: false
+          files: ${{ steps.deb-package.outputs.file_name }}
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish RPM Package
+        uses: softprops/action-gh-release@v1
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_rpm == 'x86_64' }}
+        with:
+          draft: false
+          files: ${{ steps.rpm-package.outputs.file_name }}
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

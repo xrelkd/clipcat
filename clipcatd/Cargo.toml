@@ -29,13 +29,17 @@ exitcode      = "1"
 libc          = "0.2"
 linicon       = "2"
 mime          = "0.3"
+shadow-rs     = "0.26"
 simdutf8      = "0.1"
-snafu         = "0.7"
+snafu         = "0.8"
 time          = { version = "0.3", features = ["formatting", "macros"] }
 
 clipcat-base   = { path = "../crates/base" }
 clipcat-cli    = { path = "../crates/cli" }
 clipcat-server = { path = "../crates/server" }
+
+[build-dependencies]
+shadow-rs = "0.26"
 
 [lints]
 workspace = true

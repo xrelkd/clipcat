@@ -13,7 +13,7 @@ pub trait System {
 impl System for Client {
     async fn get_version(&self) -> Result<semver::Version, GetSystemVersionError> {
         let proto::GetSystemVersionResponse { major, minor, patch } =
-            proto::SystemClient::new(self.channel.clone())
+            proto::SystemClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
                 .get_version(Request::new(()))
                 .await
                 .map_err(|source| GetSystemVersionError::Status { source })?

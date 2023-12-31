@@ -25,7 +25,7 @@ prost-types = "0.12"
 
 mime   = "0.3"
 semver = "1"
-snafu  = "0.7"
+snafu  = "0.8"
 
 clipcat-base  = { path = "../base" }
 clipcat-proto = { path = "../proto" }

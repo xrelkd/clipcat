@@ -14,6 +14,8 @@ keywords.workspace   = true
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 
+tokio = { version = "1" }
+
 http = "1"
 
 bytes       = "1"
@@ -25,7 +27,7 @@ mime        = "0.3"
 regex       = "1"
 semver      = "1"
 sha2        = "0.10"
-snafu       = "0.7"
+snafu       = "0.8"
 time        = { version = "0.3", features = ["formatting", "local-offset", "macros"] }
 
 [lints]

@@ -25,7 +25,15 @@ pub fn new<I>(
 where
     I: IntoIterator<Item = ClipboardKind>,
 {
-    Ok(Box::new(DefaultClipboardBackend::new(kinds, clip_filter, event_observers)?))
+    DefaultClipboardBackend::new(kinds, clip_filter, event_observers).map_or_else::<Result<
+        Box<dyn traits::Backend>,
+    >, _, _>(
+        |err| {
+            tracing::warn!("{err}");
+            Ok(Box::new(LocalClipboardBackend::new()))
+        },
+        |backend| Ok(Box::new(backend)),
+    )
 }
 
 /// # Errors
@@ -37,5 +45,13 @@ pub fn new_shared<I>(
 where
     I: IntoIterator<Item = ClipboardKind>,
 {
-    Ok(Arc::new(DefaultClipboardBackend::new(kinds, clip_filter, event_observers)?))
+    DefaultClipboardBackend::new(kinds, clip_filter, event_observers).map_or_else::<Result<
+        Arc<dyn traits::Backend>,
+    >, _, _>(
+        |err| {
+            tracing::warn!("{err}");
+            Ok(Arc::new(LocalClipboardBackend::new()))
+        },
+        |backend| Ok(Arc::new(backend)),
+    )
 }

@@ -1,4 +1,11 @@
 mod error;
+mod shadow {
+    #![allow(clippy::needless_raw_string_hashes)]
+    use shadow_rs::shadow;
+    shadow!(build);
+
+    pub use self::build::*;
+}
 
 use std::{io::Write, sync::Arc};
 
@@ -12,7 +19,14 @@ use tokio::runtime::Runtime;
 use self::error::Error;
 
 #[derive(Parser)]
-#[clap(name = clipcat_base::NOTIFY_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(
+    name = clipcat_base::NOTIFY_PROGRAM_NAME,
+    author,
+    version,
+    long_version = shadow::CLAP_LONG_VERSION,
+    about,
+    long_about = None
+)]
 struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,

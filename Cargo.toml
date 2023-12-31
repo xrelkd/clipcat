@@ -1,5 +1,5 @@
 [workspace.package]
-version     = "0.15.0"
+version     = "0.16.0"
 authors     = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage    = "https://github.com/xrelkd/clipcat"
 repository  = "https://github.com/xrelkd/clipcat"
@@ -21,7 +21,9 @@ members = [
   "crates/cli",
   "crates/client",
   "crates/clipboard",
+  "crates/dbus-variant",
   "crates/external-editor",
+  "crates/metrics",
   "crates/proto",
   "crates/server",
 ]

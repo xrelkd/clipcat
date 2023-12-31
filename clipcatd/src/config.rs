@@ -8,7 +8,6 @@ use std::{
 use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
-use time::OffsetDateTime;
 
 const DEFAULT_ICON_NAME: &str = "accessories-clipboard";
 
@@ -21,6 +20,9 @@ pub struct Config {
 
     #[serde(default = "Config::default_max_history")]
     pub max_history: usize,
+
+    #[serde(default = "Config::default_synchronize_selection_with_clipboard")]
+    pub synchronize_selection_with_clipboard: bool,
 
     #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
@@ -35,6 +37,12 @@ pub struct Config {
     pub grpc: GrpcConfig,
 
     #[serde(default)]
+    pub dbus: DBusConfig,
+
+    #[serde(default)]
+    pub metrics: MetricsConfig,
+
+    #[serde(default)]
     pub desktop_notification: DesktopNotificationConfig,
 
     #[serde(default)]
@@ -45,9 +53,6 @@ pub struct Config {
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct WatcherConfig {
-    #[serde(default)]
-    pub load_current: bool,
-
     #[serde(default)]
     pub enable_clipboard: bool,
 
@@ -79,7 +84,6 @@ pub struct WatcherConfig {
 impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
     fn from(
         WatcherConfig {
-            load_current,
             enable_clipboard,
             enable_primary,
             enable_secondary,
@@ -92,7 +96,6 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
         }: WatcherConfig,
     ) -> Self {
         Self {
-            load_current,
             enable_clipboard,
             enable_primary,
             enable_secondary,
@@ -139,6 +142,12 @@ pub struct GrpcConfig {
 
     #[serde(default = "clipcat_base::config::default_unix_domain_socket")]
     pub local_socket: PathBuf,
+
+    #[serde(default = "GrpcConfig::default_access_token")]
+    pub access_token: Option<String>,
+
+    #[serde(default = "GrpcConfig::default_access_token_file_path")]
+    pub access_token_file_path: Option<PathBuf>,
 }
 
 impl GrpcConfig {
@@ -156,71 +165,86 @@ impl GrpcConfig {
 
     #[inline]
     pub const fn default_port() -> u16 { clipcat_base::DEFAULT_GRPC_PORT }
+
+    #[inline]
+    pub const fn default_access_token() -> Option<String> { None }
+
+    #[inline]
+    pub const fn default_access_token_file_path() -> Option<PathBuf> { None }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct SnippetConfig {
-    name: String,
-
-    file_path: Option<PathBuf>,
-
-    content: Option<String>,
-}
-
-impl SnippetConfig {
-    #[allow(clippy::cognitive_complexity)]
-    fn load(&self) -> Option<clipcat_base::ClipEntry> {
-        let Self { name, file_path, content } = self;
-        tracing::trace!("Load snippet `{name}`");
-        let data = match (file_path, content) {
-            (Some(file_path), Some(_content)) => {
-                tracing::warn!(
-                    "Loading snippet, both `file_path` and `content` are provided, prefer \
-                     `file_path`"
-                );
-                std::fs::read(file_path)
-                    .map_err(|err| {
-                        tracing::warn!(
-                            "Failed to load snippet from `{}`, error: {err}",
-                            file_path.display()
-                        );
-                    })
-                    .ok()
-            }
-            (Some(file_path), None) => std::fs::read(file_path)
-                .map_err(|err| {
-                    tracing::warn!(
-                        "Failed to load snippet from `{}`, error: {err}",
-                        file_path.display()
-                    );
-                })
-                .ok(),
-            (None, Some(content)) => Some(content.as_bytes().to_vec()),
-            (None, None) => None,
-        };
-
-        if let Some(data) = data {
-            if data.is_empty() {
-                tracing::warn!("Snippet `{name}` is empty, ignored it");
-                return None;
-            }
-
-            if let Err(err) = simdutf8::basic::from_utf8(&data) {
-                tracing::warn!("Snippet `{name}` is not valid UTF-8 string, error: {err}");
-                return None;
-            }
-
-            clipcat_base::ClipEntry::new(
-                &data,
-                &mime::TEXT_PLAIN_UTF_8,
-                clipcat_base::ClipboardKind::Clipboard,
-                Some(OffsetDateTime::UNIX_EPOCH),
-            )
-            .ok()
-        } else {
-            None
+impl Default for GrpcConfig {
+    fn default() -> Self {
+        Self {
+            enable_http: Self::default_enable_http(),
+            enable_local_socket: Self::default_enable_local_socket(),
+            host: Self::default_host(),
+            port: Self::default_port(),
+            local_socket: clipcat_base::config::default_unix_domain_socket(),
+            access_token: Self::default_access_token(),
+            access_token_file_path: Self::default_access_token_file_path(),
         }
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct DBusConfig {
+    #[serde(default = "DBusConfig::default_enable")]
+    pub enable: bool,
+
+    pub identifier: Option<String>,
+}
+
+impl DBusConfig {
+    #[inline]
+    pub const fn default_enable() -> bool { true }
+}
+
+impl Default for DBusConfig {
+    fn default() -> Self { Self { enable: Self::default_enable(), identifier: None } }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct MetricsConfig {
+    #[serde(default = "MetricsConfig::default_enable")]
+    pub enable: bool,
+
+    #[serde(default = "MetricsConfig::default_host")]
+    pub host: IpAddr,
+
+    #[serde(default = "MetricsConfig::default_port")]
+    pub port: u16,
+}
+
+impl MetricsConfig {
+    #[inline]
+    pub const fn socket_address(&self) -> SocketAddr { SocketAddr::new(self.host, self.port) }
+
+    #[inline]
+    pub const fn default_enable() -> bool { true }
+
+    #[inline]
+    pub const fn default_host() -> IpAddr { clipcat_base::DEFAULT_METRICS_HOST }
+
+    #[inline]
+    pub const fn default_port() -> u16 { clipcat_base::DEFAULT_METRICS_PORT }
+}
+
+impl Default for MetricsConfig {
+    fn default() -> Self {
+        Self {
+            enable: Self::default_enable(),
+            host: Self::default_host(),
+            port: Self::default_port(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum SnippetConfig {
+    Text { name: String, content: String },
+    File { name: String, path: PathBuf },
+    Directory { name: String, path: PathBuf },
 }
 
 impl Default for Config {
@@ -230,10 +254,14 @@ impl Default for Config {
             pid_file: Self::default_pid_file_path(),
             max_history: Self::default_max_history(),
             history_file_path: Self::default_history_file_path(),
+            synchronize_selection_with_clipboard:
+                Self::default_synchronize_selection_with_clipboard(),
             log: clipcat_cli::config::LogConfig::default(),
             watcher: WatcherConfig::default(),
             grpc: GrpcConfig::default(),
             desktop_notification: DesktopNotificationConfig::default(),
+            dbus: DBusConfig::default(),
+            metrics: MetricsConfig::default(),
             snippets: Vec::new(),
         }
     }
@@ -242,7 +270,6 @@ impl Default for Config {
 impl Default for WatcherConfig {
     fn default() -> Self {
         Self {
-            load_current: true,
             enable_clipboard: true,
             enable_primary: true,
             enable_secondary: Self::default_enable_secondary(),
@@ -252,18 +279,6 @@ impl Default for WatcherConfig {
             denied_text_regex_patterns: HashSet::new(),
             filter_image_max_size: Self::default_filter_image_max_size(),
             sensitive_x11_atoms: Self::default_sensitive_x11_atoms(),
-        }
-    }
-}
-
-impl Default for GrpcConfig {
-    fn default() -> Self {
-        Self {
-            enable_http: true,
-            enable_local_socket: true,
-            host: clipcat_base::DEFAULT_GRPC_HOST,
-            port: clipcat_base::DEFAULT_GRPC_PORT,
-            local_socket: clipcat_base::config::default_unix_domain_socket(),
         }
     }
 }
@@ -290,6 +305,9 @@ impl Config {
         .into_iter()
         .collect()
     }
+
+    #[inline]
+    pub const fn default_synchronize_selection_with_clipboard() -> bool { true }
 
     #[inline]
     pub const fn default_max_history() -> usize { 50 }
@@ -320,10 +338,6 @@ impl Config {
         }
 
         Ok(config)
-    }
-
-    pub fn load_snippets(&self) -> Vec<clipcat_base::ClipEntry> {
-        self.snippets.iter().filter_map(SnippetConfig::load).collect()
     }
 }
 
@@ -401,22 +415,72 @@ impl From<DesktopNotificationConfig> for clipcat_server::config::DesktopNotifica
     }
 }
 
+impl From<DBusConfig> for clipcat_server::config::DBusConfig {
+    fn from(DBusConfig { enable, identifier }: DBusConfig) -> Self { Self { enable, identifier } }
+}
+
+impl From<MetricsConfig> for clipcat_server::config::MetricsConfig {
+    fn from(config: MetricsConfig) -> Self {
+        Self { enable: config.enable, listen_address: config.socket_address() }
+    }
+}
+
+impl From<SnippetConfig> for clipcat_server::config::SnippetConfig {
+    fn from(config: SnippetConfig) -> Self {
+        match config {
+            SnippetConfig::Text { name, content } => Self::Inline { name, content },
+            SnippetConfig::File { name, path } => Self::File { name, path },
+            SnippetConfig::Directory { name, path } => Self::Directory { name, path },
+        }
+    }
+}
+
 impl From<Config> for clipcat_server::Config {
     fn from(
-        Config { grpc, max_history, history_file_path, watcher, desktop_notification, .. }: Config,
-    ) -> Self {
-        let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
-        let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
-        let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
-        let desktop_notification =
-            clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
-        Self {
-            grpc_listen_address,
-            grpc_local_socket,
+        Config {
+            grpc,
             max_history,
+            synchronize_selection_with_clipboard,
             history_file_path,
             watcher,
             desktop_notification,
+            dbus,
+            metrics,
+            snippets,
+            ..
+        }: Config,
+    ) -> Self {
+        let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
+        let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
+        let grpc_access_token = if let Some(file_path) = grpc.access_token_file_path {
+            if let Ok(token) = std::fs::read_to_string(file_path) {
+                Some(token.trim_end().to_string())
+            } else {
+                grpc.access_token
+            }
+        } else {
+            grpc.access_token
+        };
+        let watcher = clipcat_server::ClipboardWatcherOptions::from(watcher);
+        let desktop_notification =
+            clipcat_server::config::DesktopNotificationConfig::from(desktop_notification);
+        let dbus = clipcat_server::config::DBusConfig::from(dbus);
+        let metrics = clipcat_server::config::MetricsConfig::from(metrics);
+        let snippets =
+            snippets.into_iter().map(clipcat_server::config::SnippetConfig::from).collect();
+
+        Self {
+            grpc_listen_address,
+            grpc_local_socket,
+            grpc_access_token,
+            max_history,
+            synchronize_selection_with_clipboard,
+            history_file_path,
+            watcher,
+            dbus,
+            desktop_notification,
+            metrics,
+            snippets,
         }
     }
 }

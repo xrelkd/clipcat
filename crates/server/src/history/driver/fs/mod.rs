@@ -287,15 +287,13 @@ impl Driver for FileSystemDriver {
 
         drop(self.clips_file.flush().await);
 
-        let mut entries = tokio::fs::read_dir(&image_dir_path)
-            .await
-            .with_context(|_| error::ReadDirectorySnafu { dir_path: image_dir_path.clone() })?;
-
-        while let Ok(Some(entry)) = entries.next_entry().await {
-            let file_path = entry.path();
-            if !image_files.contains(&file_path) {
-                tracing::debug!("Remove image file `{}`", file_path.display());
-                drop(tokio::fs::remove_file(file_path).await);
+        if let Ok(mut entries) = tokio::fs::read_dir(&image_dir_path).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let file_path = entry.path();
+                if !image_files.contains(&file_path) {
+                    tracing::debug!("Remove image file `{}`", file_path.display());
+                    drop(tokio::fs::remove_file(file_path).await);
+                }
             }
         }
 

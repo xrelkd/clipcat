@@ -19,6 +19,9 @@ pub enum Error {
     #[snafu(display("Could not create HistoryManager, error: {source}"))]
     CreateHistoryManager { source: crate::history::Error },
 
+    #[snafu(display("Could not create file watcher, error: {source}"))]
+    CreateFileWatcher { source: notify::Error },
+
     #[snafu(display("Could not load HistoryManager, error: {source}"))]
     LoadHistoryManager { source: crate::history::Error },
 
@@ -28,6 +31,20 @@ pub enum Error {
     #[snafu(display("Could not serve ClipboardWatcherWorker, error: {source}"))]
     ServeClipboardWatcherWorker { source: crate::watcher::Error },
 
+    #[snafu(display("Error occurs while starting dbus service, error: {source}"))]
+    StartDBusService { source: zbus::Error },
+
     #[snafu(display("Could not generate clip filter, error: {source}"))]
     GenerateClipFilter { source: crate::watcher::ClipboardWatcherOptionsError },
+
+    #[snafu(display("{source}"))]
+    Metrics { source: clipcat_metrics::Error },
+}
+
+impl From<zbus::Error> for Error {
+    fn from(source: zbus::Error) -> Self { Self::StartDBusService { source } }
+}
+
+impl From<clipcat_metrics::Error> for Error {
+    fn from(source: clipcat_metrics::Error) -> Self { Self::Metrics { source } }
 }
