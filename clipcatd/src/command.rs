@@ -8,10 +8,18 @@ use crate::{
     config::Config,
     error::{self, Error},
     pid_file::PidFile,
+    shadow,
 };
 
 #[derive(Parser)]
-#[command(name = clipcat_base::DAEMON_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(
+    name = clipcat_base::DAEMON_PROGRAM_NAME,
+    author,
+    version,
+    long_version = shadow::CLAP_LONG_VERSION,
+    about,
+    long_about = None
+)]
 pub struct Cli {
     #[clap(subcommand)]
     subcommand: Option<Commands>,

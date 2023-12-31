@@ -13,12 +13,20 @@ use tokio::{
 use crate::{
     config::Config,
     error::{self, Error},
+    shadow,
 };
 
 const PREVIEW_LENGTH: usize = 100;
 
 #[derive(Parser)]
-#[clap(name = clipcat_base::CTL_PROGRAM_NAME, author, version, about, long_about = None)]
+#[command(
+    name = clipcat_base::CTL_PROGRAM_NAME,
+    author,
+    version,
+    long_version = shadow::CLAP_LONG_VERSION,
+    about,
+    long_about = None
+)]
 pub struct Cli {
     #[clap(subcommand)]
     commands: Option<Commands>,

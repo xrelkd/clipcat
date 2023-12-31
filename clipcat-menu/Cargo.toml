@@ -25,6 +25,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 http          = "1"
+shadow-rs     = "0.26"
 skim          = "0.10"
 snafu         = "0.8"
 
@@ -32,6 +33,9 @@ clipcat-base            = { path = "../crates/base" }
 clipcat-cli             = { path = "../crates/cli" }
 clipcat-client          = { path = "../crates/client" }
 clipcat-external-editor = { path = "../crates/external-editor" }
+
+[build-dependencies]
+shadow-rs = "0.26"
 
 [lints]
 workspace = true
