@@ -23,35 +23,14 @@ jobs:
     strategy:
       matrix:
         target:
-          - aarch64-unknown-linux-musl
-          - armv7-unknown-linux-musleabihf
           - x86_64-unknown-linux-musl
-          # TODO: support macOS in the future?
-          # - x86_64-apple-darwin
 
         include:
-          - target: aarch64-unknown-linux-musl
-            arch_deb: arm64
-            arch_rpm: aarch64
-            os: ubuntu-latest
-            target_rustflags: "--codegen linker=aarch64-linux-gnu-gcc"
-
-          - target: armv7-unknown-linux-musleabihf
-            arch_deb: armhf
-            arch_rpm: armhf # Fedora does not support armv7
-            os: ubuntu-latest
-            target_rustflags: "--codegen linker=arm-linux-gnueabihf-gcc"
-
           - target: x86_64-unknown-linux-musl
             arch_deb: amd64
             arch_rpm: x86_64
             os: ubuntu-latest
             target_rustflags: ""
-
-          # TODO: support macOS in the future?
-          # - target: x86_64-apple-darwin
-          #   os: macos-latest
-          #   target_rustflags: ""
 
     runs-on: ${{matrix.os}}
 
@@ -61,7 +40,7 @@ jobs:
       - name: Install Dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt install -y protobuf-compiler
+          sudo apt install -y --no-install-recommends musl-tools protobuf-compiler libprotobuf-dev
 
       - name: Install Rust Toolchain Components
         uses: actions-rs/toolchain@v1
@@ -69,18 +48,6 @@ jobs:
           override: true
           target: ${{ matrix.target }}
           toolchain: stable
-
-      - name: Install AArch64 Toolchain
-        if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
-        run: |
-          sudo apt update
-          sudo apt install -y gcc-aarch64-linux-gnu
-
-      - name: Install ARM7 Toolchain
-        if: ${{ matrix.target == 'armv7-unknown-linux-musleabihf' }}
-        run: |
-          sudo apt update
-          sudo apt install -y gcc-arm-linux-gnueabihf
 
       - name: Create Package
         id: package
@@ -106,7 +73,7 @@ jobs:
       - name: Create DEB Package
         id: deb-package
         uses: jiro4989/build-deb-action@v3
-        if: ${{ matrix.arch_deb == 'amd64' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_deb == 'amd64' }}
         with:
           package: ${{ env.PACKAGE_NAME }}
           package_root: .debpkg
@@ -129,7 +96,7 @@ jobs:
       - name: Create RPM Package
         id: rpm-package
         uses: jiro4989/build-rpm-action@v2
-        if: ${{ matrix.arch_rpm == 'x86_64' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.arch_rpm == 'x86_64' }}
         with:
           summary: ${{ env.PACKAGE_DESCRIPTION }}
           package: ${{ env.PACKAGE_NAME }}

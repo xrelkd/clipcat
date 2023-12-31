@@ -7,6 +7,7 @@
 
 <p align="center">
     <a href="https://github.com/xrelkd/clipcat/releases"><img src="https://img.shields.io/github/v/release/xrelkd/clipcat.svg"></a>
+    <a href="https://deps.rs/repo/github/xrelkd/clipcat"><img src="https://deps.rs/repo/github/xrelkd/clipcat/status.svg"></a>
     <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARust"><img src="https://github.com/xrelkd/clipcat/workflows/Rust/badge.svg"></a>
     <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARelease"><img src="https://github.com/xrelkd/clipcat/workflows/Release/badge.svg"></a>
     <a href="https://github.com/xrelkd/clipcat/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
@@ -39,6 +40,7 @@
 - [x] Support `gRPC`
   - [x] gRPC over `HTTP`
   - [x] gRPC over `Unix domain socket`
+- [x] Support `D-Bus`
 
 ## Screenshots
 
@@ -59,11 +61,12 @@
 <details>
     <summary>Install with package manager</summary>
 
-| Linux Distribution                  | Package Manager                     | Package                                                                                            | Command                                                                                  |
-| ----------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Various                             | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)          | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org) | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                         |
+| Linux Distribution                                                        | Package Manager                     | Package                                                                                            | Command                                                                                  |
+| ------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Various                                                                   | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixpkgs.clipcat` |
+| [NixOS](https://nixos.org)                                                | [Nix](https://github.com/NixOS/nix) | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixos.clipcat`   |
+| [Arch Linux](https://archlinux.org)                                       | [Yay](https://github.com/Jguer/yay) | [clipcat](https://aur.archlinux.org/packages/clipcat/)                                             | `yay -S clipcat`                                                                         |
+| [Debian](https://debian.org) and [Ubuntu](https://ubuntu.com) derivatives | APT                                 | [clipcat](https://github.com/xrelkd/clipcat/releases/latest)                                       | `dpkg -i clipcat_*.deb`                                                                  |
 
 </details>
 
@@ -83,10 +86,10 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.15.0
+export CLIPCAT_VERSION=v0.16.0
 
 # NOTE: the architecture of your machine,
-# available values are `x86_64-unknown-linux-musl`, `armv7-unknown-linux-musleabihf`, `aarch64-unknown-linux-musl`
+# available value is `x86_64-unknown-linux-musl`
 export ARCH=x86_64-unknown-linux-musl
 curl -s -L "https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION}-${ARCH}.tar.gz" | tar xzf -
 
@@ -179,7 +182,7 @@ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 1. Start `clipcatd` for watching clipboard events.
 
 ```bash
-# show the usage, please read the usage before doing any other operations
+# Show the usage, please read the usage before doing any other operations.
 clipcatd help
 
 # Start and daemonize clipcatd, clipcatd will run in the background.
@@ -228,94 +231,108 @@ clipcatd --no-daemon
     <summary>Configuration for <b>clipcatd</b></summary>
 
 ```toml
-# run as a traditional UNIX daemon
+# Run as a traditional UNIX daemon.
 daemonize = true
-# maximum number of clip history
+# Maximum number of clip history.
 max_history = 50
-# file path of clip history,
-# if you omit this value, clipcatd will persist history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`
+# File path of clip history,
+# if you omit this value, clipcatd will persist history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`.
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
-# file path of PID file,
-# if you omit this value, clipcatd will place the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`
+# File path of PID file,
+# if you omit this value, clipcatd will place the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`.
 pid_file = "/run/user/<user-id>/clipcatd.pid"
 
 [log]
-# emit log message to a log file.
-# if you omit this value, clipcatd will disable emitting to a log file
+# Emit log message to a log file.
+# If you omit this value, clipcatd will disable emitting to a log file.
 file_path = "/path/to/log/file"
-# emit log message to journald
+# Emit log message to systemd-journald.
 emit_journald = true
-# emit log message to stdout
+# Emit log message to stdout.
 emit_stdout = false
-# emit log message to stderr
+# Emit log message to stderr.
 emit_stderr = false
-# log level
+# Log level
 level = "INFO"
 
 [watcher]
-# load current clipboard content at startup
-load_current = true
-# enable watching X11/Wayland clipboard selection
+# Enable watching X11/Wayland clipboard selection.
 enable_clipboard = true
-# enable watching X11/Wayland primary selection
+# Enable watching X11/Wayland primary selection.
 enable_primary = true
-# ignore clips which match with one of the X11 `TARGETS`
+# Ignore clips which match with one of the X11 `TARGETS`.
 sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
-# ignore text clips which match with one of the regular expressions
-# the regular expression engine is powered by https://github.com/rust-lang/regex
+# Ignore text clips which match with one of the regular expressions.
+# The regular expression engine is powered by https://github.com/rust-lang/regex .
 denied_text_regex_patterns = []
-# ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not in byte
+# Ignore text clips with a length <= `filter_text_min_length`, in characters (Unicode scalar value), not in byte.
 filter_text_min_length = 1
-# ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not in byte
+# Ignore text clips with a length > `filter_text_max_length`, in characters (Unicode scalar value), not in byte.
 filter_text_max_length = 20000000
-# enable capturing image or not
+# Enable capturing image or not.
 capture_image = true
-# ignore image clips with a size > `filter_image_max_size`, in byte
+# Ignore image clips with a size > `filter_image_max_size`, in byte.
 filter_image_max_size = 5242880
 
 [grpc]
-# enable gRPC over http
+# Enable gRPC over http.
 enable_http = true
-# enable gRPC over unix domain socket
+# Enable gRPC over unix domain socket.
 enable_local_socket = true
-# host address for gRPC
+# Host address for gRPC.
 host = "127.0.0.1"
-# port number for gRPC
+# Port number for gRPC.
 port = 45045
-# path of unix domain socket
-# if you omit this value, clipcatd will place the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`
+# Path of unix domain socket.
+# If you omit this value, clipcatd will place the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`.
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
 
-[desktop_notification]
-# enable desktop notification
+[dbus]
+# Enable D-Bus.
 enable = true
-# path of a icon, the given icon will be displayed on desktop notification,
+
+# Specify the identifier for current clipcat instance.
+# The D-Bus service name shows as "org.clipcat.clipcat.instance-0".
+# If identifier is not provided, D-Bus service name shows as "org.clipcat.clipcat".
+identifier = "instance-0"
+
+[desktop_notification]
+# Enable desktop notification.
+enable = true
+# Path of a icon, the given icon will be displayed on desktop notification,
 # if your desktop notification server supports showing a icon
-# if not provided, the value `accessories-clipboard` will be applied
+# If not provided, the value `accessories-clipboard` will be applied.
 icon = "/path/to/the/icon"
-# timeout duration in milliseconds
-# this sets the time from the time the notification is displayed until it is
-# closed again by the notification server
+# Timeout duration in milliseconds.
+# This sets the time from the time the notification is displayed until it is
+# closed again by the notification server.
 timeout_ms = 2000
-# define the length of a long plaintext,
+# Define the length of a long plaintext,
 # if the length of a plaintext is >= `long_plaintext_length`,
-# desktop notification will be emitted
-# if this value is 0, no desktop desktop notification will be emitted when fetched plaintext
+# desktop notification will be emitted.
+# If this value is 0, no desktop desktop notification will be emitted when fetched a long plaintext.
 long_plaintext_length = 2000
 
-# snippets, only UTF-8 text is supported.
+# Snippets, only UTF-8 text is supported.
 [[snippets]]
-# name of snippet
+[snippets.Directory]
+# Name of snippet
+name = "my-snippets"
+# File path to the directory containing snippets.
+path = "/home/user/snippets"
+
+[[snippets]]
+[snippets.File]
+# Name of snippet.
 name = "os-release"
-
-# file path to the snippet, if both `content` and `file_path` are provided, `file_path` is preferred
-file_path = "/etc/os-release"
+# File path to the snippet.
+path = "/etc/os-release"
 
 [[snippets]]
-# name of snippet
+[snippets.Text]
+# Name of snippet.
 name = "cxx-io-speed-up"
-
-# content of the snippet, if both `content` and `file_path` are provided, `file_path` is preferred
+# Content of the snippet.
 content = '''
 int io_speed_up = [] {
     std::ios::sync_with_stdio(false);
@@ -326,6 +343,7 @@ int io_speed_up = [] {
 '''
 
 [[snippets]]
+[snippets.Text]
 name = "rust-sieve-primes"
 content = '''
 fn sieve_primes(n: usize) -> Vec<usize> {
@@ -358,22 +376,23 @@ fn sieve_primes(n: usize) -> Vec<usize> {
     <summary>Configuration for <b>clipcatctl</b></summary>
 
 ```toml
-# server endpoint
+# Server endpoint.
 # clipcatctl connects to server via unix domain socket if `server_endpoint` is a file path like:
 # "/run/user/<user-id>/clipcat/grpc.sock".
 # clipcatctl connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [log]
-# emit log message to a log file. Delete this line to disable emitting to a log file
+# Emit log message to a log file.
+# Delete this line to disable emitting to a log file.
 file_path = "/path/to/log/file"
-# emit log message to journald
+# Emit log message to systemd-journald
 emit_journald = true
-# emit log message to stdout
+# Emit log message to stdout.
 emit_stdout = false
-# emit log message to stderr
+# Emit log message to stderr.
 emit_stderr = false
-# log level
+# Log level
 level = "INFO"
 ```
 
@@ -383,47 +402,47 @@ level = "INFO"
     <summary>Configuration for <b>clipcat-menu</b></summary>
 
 ```toml
-# server endpoint
+# Server endpoint
 # clipcat-menu connects to server via unix domain socket if `server_endpoint` is a file path like:
 # "/run/user/<user-id>/clipcat/grpc.sock".
-# clipcat-menu connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
+# clipcat-menu connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045".
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
-# the default finder to invoke when no "--finder=<finder>" option provided
+# The default finder to invoke when no "--finder=<finder>" option provided.
 finder = "rofi"
 
 [log]
-# emit log message to a log file. Delete this line to disable emitting to a log file
+# Emit log message to a log file. Delete this line to disable emitting to a log file.
 file_path = "/path/to/log/file"
-# emit log message to journald
+# Emit log message to systemd-journald.
 emit_journald = true
-# emit log message to stdout
+# Emit log message to stdout.
 emit_stdout = false
-# emit log message to stderr
+# Emit log message to stderr.
 emit_stderr = false
-# log level
+# Log level.
 level = "INFO"
 
-# options for "rofi"
+# Options for "rofi".
 [rofi]
-# length of line
+# Length of line.
 line_length = 100
-# length of menu
+# Length of menu.
 menu_length = 30
-# prompt of menu
+# Prompt of menu.
 menu_prompt = "Clipcat"
-# extra arguments to pass to `rofi`
+# Extra arguments to pass to `rofi`.
 extra_arguments = ["-mesg", "Please select a clip"]
 
-# options for "dmenu"
+# Options for "dmenu".
 [dmenu]
-# length of line
+# Length of line.
 line_length = 100
-# length of menu
+# Length of menu.
 menu_length = 30
-# prompt of menu
+# Prompt of menu.
 menu_prompt = "Clipcat"
-# extra arguments to pass to `dmenu`
+# Extra arguments to pass to `dmenu`.
 extra_arguments = [
   "-fn",
   "SauceCodePro Nerd Font Mono-12",
@@ -437,11 +456,11 @@ extra_arguments = [
   "#282828",
 ]
 
-# customize your finder
+# Customize your finder.
 [custom_finder]
-# external program name
+# External program name.
 program = "fzf"
-# arguments for calling external program
+# Arguments for calling external program.
 args = []
 ```
 
@@ -516,7 +535,7 @@ Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
 ```bash
 # other configurations
 
-# start clipcatd
+# Start clipcatd
 clipcatd
 
 # other configurations
@@ -527,7 +546,7 @@ Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/down`:
 ```bash
 # other configurations
 
-# terminate clipcatd
+# Terminate clipcatd
 pkill clipcatd
 
 # other configurations
