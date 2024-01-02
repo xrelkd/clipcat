@@ -11,8 +11,13 @@ use bytes::{BufMut, BytesMut};
 use lazy_static::lazy_static;
 use mime::Mime;
 use prometheus::{Encoder, TextEncoder};
+use snafu::ResultExt;
+use tokio::net::TcpListener;
 
-use crate::{error::Error, traits};
+use crate::{
+    error::{self, Error},
+    traits,
+};
 
 lazy_static! {
     static ref OPENMETRICS_TEXT: Mime =
@@ -64,8 +69,9 @@ where
         .layer(middleware_stack)
         .into_make_service_with_connect_info::<SocketAddr>();
 
-    axum::Server::bind(&listen_address)
-        .serve(router)
+    let listener =
+        TcpListener::bind(&listen_address).await.context(error::BindMetricsServerSnafu)?;
+    axum::serve(listener, router)
         .with_graceful_shutdown(shutdown_signal)
         .await
         .map_err(|err| Error::ServeMetricsServer { message: err.to_string() })
