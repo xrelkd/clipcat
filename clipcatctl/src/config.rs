@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use resolve_path::PathResolveExt;
 use serde::{Deserialize, Serialize};
 use snafu::{ResultExt, Snafu};
 
@@ -40,13 +41,31 @@ impl Config {
 
     #[inline]
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
-        let data = std::fs::read_to_string(&path)
-            .context(OpenConfigSnafu { filename: path.as_ref().to_path_buf() })?;
+        let mut config: Self = {
+            let path =
+                path.as_ref().try_resolve().map(|path| path.to_path_buf()).with_context(|_| {
+                    ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() }
+                })?;
+            let data = std::fs::read_to_string(&path)
+                .context(OpenConfigSnafu { filename: path.clone() })?;
+            toml::from_str(&data).context(ParseConfigSnafu { filename: path })?
+        };
 
-        let mut config: Self = toml::from_str(&data)
-            .context(ParseConfigSnafu { filename: path.as_ref().to_path_buf() })?;
+        config.log.file_path = match config.log.file_path.map(|path| {
+            path.try_resolve()
+                .map(|path| path.to_path_buf())
+                .with_context(|_| ResolveFilePathSnafu { file_path: path.clone() })
+        }) {
+            Some(Ok(path)) => Some(path),
+            Some(Err(err)) => return Err(err),
+            None => None,
+        };
 
         if let Some(ref file_path) = config.access_token_file_path {
+            let file_path = file_path
+                .try_resolve()
+                .with_context(|_| ResolveFilePathSnafu { file_path: file_path.clone() })?;
+
             if let Ok(token) = std::fs::read_to_string(file_path) {
                 config.access_token = Some(token.trim_end().to_string());
             }
@@ -63,9 +82,12 @@ impl Config {
 
 #[derive(Debug, Snafu)]
 pub enum Error {
-    #[snafu(display("Could not open config from {}: {source}", filename.display()))]
+    #[snafu(display("Could not open config from {}, error: {source}", filename.display()))]
     OpenConfig { filename: PathBuf, source: std::io::Error },
 
-    #[snafu(display("Count not parse config from {}: {source}", filename.display()))]
+    #[snafu(display("Count not parse config from {}, error: {source}", filename.display()))]
     ParseConfig { filename: PathBuf, source: toml::de::Error },
+
+    #[snafu(display("Could not resolve file path {}, error: {source}", file_path.display()))]
+    ResolveFilePath { file_path: PathBuf, source: std::io::Error },
 }
