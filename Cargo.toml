@@ -1,14 +1,15 @@
 [workspace.package]
-version     = "0.16.1"
-authors     = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
-homepage    = "https://github.com/xrelkd/clipcat"
-repository  = "https://github.com/xrelkd/clipcat"
-readme      = "README.md"
-license     = "GPL-3.0-only"
-edition     = "2021"
-description = "Clipboard manager written in Rust Programming Language."
-categories  = ["clipboard manager"]
-keywords    = ["clipboard"]
+version      = "0.16.1"
+authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
+homepage     = "https://github.com/xrelkd/clipcat"
+repository   = "https://github.com/xrelkd/clipcat"
+readme       = "README.md"
+license      = "GPL-3.0-only"
+edition      = "2021"
+rust-version = "1.70"
+description  = "Clipboard manager written in Rust Programming Language."
+categories   = ["clipboard manager"]
+keywords     = ["clipboard"]
 
 [workspace]
 resolver = "2"
