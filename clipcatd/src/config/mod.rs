@@ -9,6 +9,7 @@ mod watcher;
 use std::path::{Path, PathBuf};
 
 use directories::BaseDirs;
+use resolve_path::PathResolveExt;
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -126,9 +127,35 @@ impl Config {
                 .context(error::ParseConfigSnafu { filename: path.as_ref().to_path_buf() })?
         };
 
-        if config.max_history == 0 {
-            config.max_history = Self::default_max_history();
-        }
+        config.log.file_path = match config.log.file_path.map(|path| {
+            path.try_resolve()
+                .map(|path| path.to_path_buf())
+                .with_context(|_| error::ResolveFilePathSnafu { file_path: path.clone() })
+        }) {
+            Some(Ok(path)) => Some(path),
+            Some(Err(err)) => return Err(err),
+            None => None,
+        };
+
+        config.max_history =
+            if config.max_history == 0 { Self::default_max_history() } else { config.max_history };
+
+        config.snippets = config
+            .snippets
+            .into_iter()
+            .filter_map(|snippet| {
+                snippet.try_resolve_path().map_err(|err| tracing::warn!("{err}")).ok()
+            })
+            .collect();
+
+        config.grpc.access_token_file_path =
+            match config.grpc.access_token_file_path.map(resolve_path) {
+                Some(Ok(path)) => Some(path),
+                Some(Err(err)) => return Err(err),
+                None => None,
+            };
+
+        config.history_file_path = resolve_path(&config.history_file_path)?;
 
         Ok(config)
     }
@@ -182,4 +209,14 @@ impl From<Config> for clipcat_server::Config {
             snippets,
         }
     }
+}
+
+fn resolve_path<P>(path: P) -> Result<PathBuf, Error>
+where
+    P: AsRef<Path>,
+{
+    path.as_ref()
+        .try_resolve()
+        .map(|path| path.to_path_buf())
+        .with_context(|_| error::ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() })
 }
