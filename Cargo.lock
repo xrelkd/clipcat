@@ -49,9 +49,9 @@ dependencies = [
 
 [[package]]
 name = "anstream"
-version = "0.6.5"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d664a92ecae85fd0a7392615844904654d1d5f5514837f471ddef4a057aba1b6"
+checksum = "4cd2405b3ac1faab2990b74d728624cd9fd115651fcecc7c2d8daf01376275ba"
 dependencies = [
  "anstyle",
  "anstyle-parse",
@@ -607,9 +607,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.15"
+version = "4.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c12ed66a79a555082f595f7eb980d08669de95009dd4b3d61168c573ebe38fc9"
+checksum = "58e54881c004cec7895b0068a0a954cd5d62da01aef83fa35b1e594497bf5445"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -617,9 +617,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.15"
+version = "4.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f4645eab3431e5a8403a96bea02506a8b35d28cd0f0330977dd5d22f9c84f43"
+checksum = "59cb82d7f531603d2fd1f507441cdd35184fa81beff7bd489570de7f773460bb"
 dependencies = [
  "anstream",
  "anstyle",
@@ -633,7 +633,7 @@ version = "4.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97aeaa95557bd02f23fbb662f981670c3d20c5a26e69f7354b28f57092437fcd"
 dependencies = [
- "clap 4.4.15",
+ "clap 4.4.16",
 ]
 
 [[package]]
@@ -766,7 +766,7 @@ dependencies = [
 name = "clipcat-menu"
 version = "0.16.1"
 dependencies = [
- "clap 4.4.15",
+ "clap 4.4.16",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -806,7 +806,7 @@ dependencies = [
 name = "clipcat-notify"
 version = "0.16.1"
 dependencies = [
- "clap 4.4.15",
+ "clap 4.4.16",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -874,7 +874,7 @@ name = "clipcatctl"
 version = "0.16.1"
 dependencies = [
  "bytes",
- "clap 4.4.15",
+ "clap 4.4.16",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -900,7 +900,7 @@ dependencies = [
 name = "clipcatd"
 version = "0.16.1"
 dependencies = [
- "clap 4.4.15",
+ "clap 4.4.16",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
