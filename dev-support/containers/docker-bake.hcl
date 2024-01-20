@@ -2,19 +2,10 @@ group "default" {
   targets = ["clipcat", "clipcat-distroless"]
 }
 
-variable "TAG" {
-  default = "develop"
-}
-
-variable "CONTAINER_REGISTRY" {
-  default = "ghcr.io/xrelkd"
-}
-
 target "clipcat" {
   dockerfile = "dev-support/containers/alpine/Containerfile"
   platforms  = ["linux/amd64"]
   target     = "clipcat"
-  tags       = ["${CONTAINER_REGISTRY}/clipcat:${TAG}"]
   contexts = {
     sccache = "docker-image://ghcr.io/thxnet/ci-containers/sccache:0.5.4"
     rust    = "docker-image://docker.io/library/rust:1.74.0-alpine3.18"
@@ -42,7 +33,6 @@ target "clipcat-distroless" {
   dockerfile = "dev-support/containers/distroless/Containerfile"
   platforms  = ["linux/amd64"]
   target     = "clipcat"
-  tags       = ["${CONTAINER_REGISTRY}/clipcat:${TAG}-distroless"]
   contexts = {
     sccache    = "docker-image://ghcr.io/thxnet/ci-containers/sccache:0.5.4"
     rust       = "docker-image://docker.io/library/rust:1.74-slim-buster"
