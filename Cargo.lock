@@ -676,7 +676,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "bytes",
  "directories",
@@ -696,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-cli"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "serde",
  "serde_with",
@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -725,7 +725,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "arboard",
  "bytes",
@@ -744,7 +744,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-dbus-variant"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -755,7 +755,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clipcat-base",
  "snafu 0.8.0",
@@ -764,7 +764,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clap 4.4.18",
  "clap_complete",
@@ -788,7 +788,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-metrics"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "async-trait",
  "axum 0.7.4",
@@ -804,7 +804,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clap 4.4.18",
  "clap_complete",
@@ -821,7 +821,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -835,7 +835,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "async-trait",
  "bincode",
@@ -871,7 +871,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "bytes",
  "clap 4.4.18",
@@ -898,7 +898,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "clap 4.4.18",
  "clap_complete",
@@ -3388,9 +3388,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.13.0"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b187f0231d56fe41bfb12034819dd2bf336422a5866de41bc3fec4b2e3883e8"
+checksum = "e6ecd384b10a64542d77071bd64bd7b231f4ed5940fba55e98c3de13824cf3d7"
 
 [[package]]
 name = "snafu"
