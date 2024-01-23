@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches:
+      - hotfix/*
       - release/*
     tags:
       - "v*"
