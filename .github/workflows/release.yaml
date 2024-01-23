@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches:
+      - ci/
       - hotfix/*
       - release/*
     tags:
@@ -24,9 +25,23 @@ jobs:
     strategy:
       matrix:
         target:
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
           - x86_64-unknown-linux-musl
 
         include:
+          - target: aarch64-unknown-linux-musl
+            arch_deb: arm64
+            arch_rpm: aarch64
+            os: ubuntu-latest
+            target_rustflags: "--codegen linker=aarch64-linux-gnu-gcc"
+
+          - target: armv7-unknown-linux-musleabihf
+            arch_deb: armhf
+            arch_rpm: armhf # Fedora does not support armv7
+            os: ubuntu-latest
+            target_rustflags: "--codegen linker=arm-linux-gnueabihf-gcc"
+
           - target: x86_64-unknown-linux-musl
             arch_deb: amd64
             arch_rpm: x86_64
@@ -49,6 +64,18 @@ jobs:
           override: true
           target: ${{ matrix.target }}
           toolchain: stable
+
+      - name: Install AArch64 Toolchain
+        if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-aarch64-linux-gnu
+
+      - name: Install ARM7 Toolchain
+        if: ${{ matrix.target == 'armv7-unknown-linux-musleabihf' }}
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-arm-linux-gnueabihf
 
       - name: Create Package
         id: package
