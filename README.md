@@ -86,10 +86,10 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.16.3
+export CLIPCAT_VERSION=v0.16.4
 
 # NOTE: the architecture of your machine,
-# available value is `x86_64-unknown-linux-musl`
+# available values are `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`
 export ARCH=x86_64-unknown-linux-musl
 curl -s -L "https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION}-${ARCH}.tar.gz" | tar xzf -
 
