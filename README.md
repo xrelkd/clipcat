@@ -86,7 +86,7 @@ cd ~/bin
 
 # download and extract clipcat to ~/bin/
 # NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.16.1
+export CLIPCAT_VERSION=v0.16.3
 
 # NOTE: the architecture of your machine,
 # available value is `x86_64-unknown-linux-musl`
