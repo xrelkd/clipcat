@@ -9,6 +9,9 @@ on:
       - ci/*
     tags:
       - v*
+  pull_request:
+    paths:
+      - "dev-support/containers/**"
 
 env:
   CI: 1
@@ -17,6 +20,7 @@ env:
   MINIO_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
   MINIO_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
   SCCACHE_BUCKET: sccache
+  SCCACHE_REGION: auto
   SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
 
 concurrency:
@@ -80,8 +84,9 @@ jobs:
             clipcat.args.AWS_ACCESS_KEY_ID=${{ env.MINIO_ACCESS_KEY_ID }}
             clipcat.args.AWS_SECRET_ACCESS_KEY=${{ env.MINIO_SECRET_ACCESS_KEY }}
             clipcat.args.SCCACHE_BUCKET=${{ env.SCCACHE_BUCKET }}
+            clipcat.args.SCCACHE_REGION=${{ env.SCCACHE_REGION }}
             clipcat.args.SCCACHE_ENDPOINT=${{ env.SCCACHE_ENDPOINT }}
-            clipcat.args.SCCACHE_S3_USE_SSL=false
+            clipcat.args.SCCACHE_S3_USE_SSL=true
 
           files: |
             ./dev-support/containers/docker-bake.hcl
