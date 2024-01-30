@@ -14,10 +14,7 @@ env:
   CI: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  MINIO_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-  MINIO_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
   SCCACHE_BUCKET: sccache
-  SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
 
 concurrency:
   group: image-${{ github.ref }}
@@ -77,10 +74,10 @@ jobs:
           pull: true
           push: true
           set: |
-            clipcat.args.AWS_ACCESS_KEY_ID=${{ env.MINIO_ACCESS_KEY_ID }}
-            clipcat.args.AWS_SECRET_ACCESS_KEY=${{ env.MINIO_SECRET_ACCESS_KEY }}
+            clipcat.args.AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            clipcat.args.AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             clipcat.args.SCCACHE_BUCKET=${{ env.SCCACHE_BUCKET }}
-            clipcat.args.SCCACHE_ENDPOINT=${{ env.SCCACHE_ENDPOINT }}
+            clipcat.args.SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
             clipcat.args.SCCACHE_S3_USE_SSL=false
 
           files: |
