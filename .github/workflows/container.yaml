@@ -14,7 +14,6 @@ env:
   CI: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  SCCACHE_BUCKET: sccache
 
 concurrency:
   group: image-${{ github.ref }}
@@ -37,6 +36,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: "true"
+
+      - name: Configure sccache
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Install docker-buildx
         uses: docker/setup-buildx-action@v3
@@ -74,11 +80,9 @@ jobs:
           pull: true
           push: true
           set: |
-            clipcat.args.AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            clipcat.args.AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            clipcat.args.SCCACHE_BUCKET=${{ env.SCCACHE_BUCKET }}
-            clipcat.args.SCCACHE_ENDPOINT=${{ secrets.SCCACHE_ENDPOINT }}
-            clipcat.args.SCCACHE_S3_USE_SSL=false
+            clipcat.args.SCCACHE_GHA_ENABLED=on
+            clipcat.args.ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
+            clipcat.args.ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}
 
           files: |
             ./dev-support/containers/docker-bake.hcl
