@@ -12,12 +12,9 @@ target "clipcat" {
   }
   args = {
     RUSTC_WRAPPER         = "/usr/bin/sccache"
-    AWS_ACCESS_KEY_ID     = null
-    AWS_SECRET_ACCESS_KEY = null
-    SCCACHE_REGION        = null
-    SCCACHE_BUCKET        = null
-    SCCACHE_ENDPOINT      = null
-    SCCACHE_S3_USE_SSL    = null
+    SCCACHE_GHA_ENABLED   = "off"
+    ACTIONS_CACHE_URL     = null
+    ACTIONS_RUNTIME_TOKEN = null
   }
   labels = {
     "description"                     = "Container image for Clipcat"
