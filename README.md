@@ -44,6 +44,10 @@
 
 ## Screenshots and Demonstration
 
+- Demonstration with [Rofi](https://github.com/davatorium/rofi)
+
+  https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30
+
 - Use [Rofi](https://github.com/davatorium/rofi) to select clip
 
   ![screenshot finder rofi](docs/_static/screenshot-finder-rofi.png)
@@ -55,10 +59,6 @@
 - Use [skim](https://github.com/lotabout/skim) to select clip
 
   ![screenshot finder skim](docs/_static/screenshot-finder-skim.png)
-
-- Demonstration with [Rofi](https://github.com/davatorium/rofi)
-
-  https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30
 
 ## Installation
 
