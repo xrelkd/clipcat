@@ -141,14 +141,12 @@ A `clipcat` server (as known as daemon) is running as the background process and
 - Inserting content into `clipboard`.
 - Serving as a `gRPC` server and waiting for remote procedure call from clients.
 
-Currently, `clipcat` supports the following `windowing system`s:
+Currently, `clipcat` supports the following [windowing systems](https://en.wikipedia.org/wiki/Windowing_system):
 
-- `X11`
-  Leveraging the following `crate`s:
+- `X11`, the following `crate`s are leveraged:
   - [x11rb](https://github.com/psychon/x11rb)
   - [arboard](https://github.com/1Password/arboard)
-- `Wayland` (experimentally)
-  Leveraging the following `crate`s:
+- `Wayland` (experimentally), the following `crate`s are leveraged:
   - [wl-clipboard-rs](https://github.com/YaLTeR/wl-clipboard-rs)
   - [arboard](https://github.com/1Password/arboard)
 
@@ -186,11 +184,11 @@ clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
 clipcatd help
 
 # Start and daemonize clipcatd, clipcatd will run in the background.
-# You can use `pkill clipcatd` to stop it, `SIGTERM` will be sent to clipcatd.
+# You can use `pkill clipcatd` to stop it, a `SIGTERM` signal will be sent to clipcatd.
 clipcatd
 
 # Or you can start clipcatd, but keep it in the foreground.
-# You can use press Ctrl+C in your terminal to stop it, `SIGINT` will be sent to clipcatd.
+# You can press `Ctrl+C` in your terminal to stop it, a `SIGINT` signal will be sent to clipcatd.
 clipcatd --no-daemon
 ```
 
@@ -213,7 +211,7 @@ clipcatd --no-daemon
 
 **Note**: Supported finders for `clipcat-menu`:
 
-- built-in finder (integrate with crate [skim](https://github.com/lotabout/skim))
+- built-in finder (integrating with crate [skim](https://github.com/lotabout/skim))
 - [skim](https://github.com/lotabout/skim)
 - [fzf](https://github.com/junegunn/fzf)
 - [rofi](https://github.com/davatorium/rofi)
@@ -236,15 +234,15 @@ daemonize = true
 # Maximum number of clip history.
 max_history = 50
 # File path of clip history,
-# if you omit this value, clipcatd will persist history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`.
+# if you omit this value, clipcatd persists history in `$XDG_CACHE_HOME/clipcat/clipcatd-history`.
 history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
 # File path of PID file,
-# if you omit this value, clipcatd will place the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`.
+# if you omit this value, clipcatd places the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`.
 pid_file = "/run/user/<user-id>/clipcatd.pid"
 
 [log]
 # Emit log message to a log file.
-# If you omit this value, clipcatd will disable emitting to a log file.
+# If you omit this value, clipcatd disables emitting to a log file.
 file_path = "/path/to/log/file"
 # Emit log message to systemd-journald.
 emit_journald = true
@@ -284,7 +282,7 @@ host = "127.0.0.1"
 # Port number for gRPC.
 port = 45045
 # Path of unix domain socket.
-# If you omit this value, clipcatd will place the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`.
+# If you omit this value, clipcatd places the socket on `$XDG_RUNTIME_DIR/clipcat/grpc.sock`.
 local_socket = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [dbus]
@@ -300,8 +298,8 @@ identifier = "instance-0"
 # Enable desktop notification.
 enable = true
 # Path of a icon, the given icon will be displayed on desktop notification,
-# if your desktop notification server supports showing a icon
-# If not provided, the value `accessories-clipboard` will be applied.
+# if your desktop notification server supports showing a icon.
+# If this value is not provided, the value `accessories-clipboard` is applied.
 icon = "/path/to/the/icon"
 # Timeout duration in milliseconds.
 # This sets the time from the time the notification is displayed until it is
@@ -309,14 +307,14 @@ icon = "/path/to/the/icon"
 timeout_ms = 2000
 # Define the length of a long plaintext,
 # if the length of a plaintext is >= `long_plaintext_length`,
-# desktop notification will be emitted.
-# If this value is 0, no desktop desktop notification will be emitted when fetched a long plaintext.
+# desktop notification is emitted.
+# If this value is 0, no desktop desktop notification is emitted when fetched a long plaintext.
 long_plaintext_length = 2000
 
 # Snippets, only UTF-8 text is supported.
 [[snippets]]
 [snippets.Directory]
-# Name of snippet
+# Name of snippet.
 name = "my-snippets"
 # File path to the directory containing snippets.
 path = "/home/user/snippets"
@@ -379,7 +377,7 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 # Server endpoint.
 # clipcatctl connects to server via unix domain socket if `server_endpoint` is a file path like:
 # "/run/user/<user-id>/clipcat/grpc.sock".
-# clipcatctl connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045"
+# clipcatctl connects to server via http if `server_endpoint` is a URL like: "http://127.0.0.1:45045".
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
 [log]
@@ -412,7 +410,8 @@ server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 finder = "rofi"
 
 [log]
-# Emit log message to a log file. Delete this line to disable emitting to a log file.
+# Emit log message to a log file.
+# Delete this line to disable emitting to a log file.
 file_path = "/path/to/log/file"
 # Emit log message to systemd-journald.
 emit_journald = true
@@ -471,7 +470,7 @@ args = []
 <details>
     <summary>Integrating with <a href="https://www.zsh.org/" target="_blank">Zsh</a></summary>
 
-For a `zsh` user, it will be useful to integrate `clipcat` with `zsh`.
+For a `zsh` user, it is useful to integrate `clipcat` with `zsh`.
 
 Add the following command in your `zsh` configuration file (`~/.zshrc`):
 
@@ -490,12 +489,12 @@ fi
 <details>
     <summary>Integrating with <a href="https://i3wm.org/" target="_blank">i3 Window Manager</a></summary>
 
-For a `i3` window manager user, it will be useful to integrate `clipcat` with `i3`.
+For a `i3` window manager user, it is useful to integrate `clipcat` with `i3`.
 
 Add the following options in your `i3` configuration file (`$XDG_CONFIG_HOME/i3/config`):
 
 ```
-exec_always --no-startup-id clipcatd                # start clipcatd at startup
+exec_always --no-startup-id clipcatd    # start clipcatd at startup
 
 set $launcher-clipboard-insert clipcat-menu insert
 set $launcher-clipboard-remove clipcat-menu remove
@@ -511,7 +510,7 @@ bindsym $mod+o exec $launcher-clipboard-remove
 <details>
     <summary>Integrating with <a href="http://leftwm.org/" target="_blank">LeftWM</a></summary>
 
-For a `leftwm` user, it will be useful to integrate `clipcat` with `leftwm`.
+For a `leftwm` user, it is useful to integrate `clipcat` with `leftwm`.
 
 Add the following keybindings in your `leftwm` configuration file (`$XDG_CONFIG_HOME/leftwm/config.ron`):
 
@@ -587,16 +586,12 @@ systemctl --user status clipcat.service
 
 ## Programs in this Repository
 
-| Program          | Description                                                                             |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| `clipcatd`       | The `clipcat` server (daemon).                                                          |
-| `clipcatctl`     | The `clipcat` client which provides a command line interface.                           |
-| `clipcat-menu`   | The `clipcat` client which calls built-in finder or external finder for selecting clip. |
-| `clipcat-notify` | A tool for watching clipboard event. <br>                                               |
-|                  | It watches the clipboard and exit on clipboard changed. <br>                            |
-|                  | It returns exit code 0 if success, 1 if error occurred. <br>                            |
-|                  | **Note**: It does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, <br>      |
-|                  | it is just a tool for watching clipboard.                                               |
+- `clipcatd`: The `clipcat` server (daemon).
+- `clipcatctl`: The `clipcat` client which provides a command line interface.
+- `clipcat-menu`: The `clipcat` client which calls built-in finder or external finder for selecting clip.
+- `clipcat-notify`: A tool for watching clipboard event. It watches the clipboard and exit on clipboard changed. It returns exit code 0 if success, 1 if error occurred.
+
+**Note**: `clipcat-notify` does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, it is just a tool for watching clipboard.
 
 ## License
 
