@@ -76,7 +76,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             ./target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
@@ -122,7 +122,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             ./target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.mode }}-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
@@ -165,7 +165,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             ./target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
