@@ -209,7 +209,7 @@ clipcatd --no-daemon
 | `clipcat-menu remove` | Remove cached clips from server         |
 | `clipcat-menu edit`   | Edit a cached clip with `$EDITOR`       |
 
-**Note**: Supported finders for `clipcat-menu`:
+The following finders are supported by `clipcat-menu`:
 
 - built-in finder (integrating with crate [skim](https://github.com/lotabout/skim))
 - [skim](https://github.com/lotabout/skim)
@@ -503,7 +503,7 @@ bindsym $mod+p exec $launcher-clipboard-insert
 bindsym $mod+o exec $launcher-clipboard-remove
 ```
 
-**Note**: You can use `rofi` or `dmenu` as the default finder.
+**NOTE**: You can use `rofi` or `dmenu` as the default finder.
 
 </details>
 
@@ -527,7 +527,7 @@ Add the following keybindings in your `leftwm` configuration file (`$XDG_CONFIG_
 )
 ```
 
-**Note**: You can use `rofi` or `dmenu` as the default finder.
+**NOTE**: You can use `rofi` or `dmenu` as the default finder.
 
 Add the following command in your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
 
@@ -589,9 +589,11 @@ systemctl --user status clipcat.service
 - `clipcatd`: The `clipcat` server (daemon).
 - `clipcatctl`: The `clipcat` client which provides a command line interface.
 - `clipcat-menu`: The `clipcat` client which calls built-in finder or external finder for selecting clip.
+
 - `clipcat-notify`: A tool for watching clipboard event. It watches the clipboard and exit on clipboard changed. It returns exit code 0 if success, 1 if error occurred.
 
-**Note**: `clipcat-notify` does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, it is just a tool for watching clipboard.
+> [!Note]
+> clipcat-notify does not interact with `clipcatd`, `clipcatctl`, `clipcat-menu`, it is just a tool for watching clipboard.
 
 ## License
 
