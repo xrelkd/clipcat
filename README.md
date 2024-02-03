@@ -62,75 +62,11 @@
 
 ## Installation
 
-<details>
-    <summary>Install with package manager</summary>
+`Clipcat` can be installed by using various package managers on Linux.
 
-| Linux Distribution                                                        | Package Manager                         | Package                                                                                            | Command                                                                                  |
-| ------------------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Various                                                                   | [Nix](https://github.com/NixOS/nix)     | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixpkgs.clipcat` |
-| [NixOS](https://nixos.org)                                                | [Nix](https://github.com/NixOS/nix)     | [clipcat](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/clipcat/default.nix) | `nix profile install 'github:xrelkd/clipcat/main'` or <br> `nix-env -iA nixos.clipcat`   |
-| [Arch Linux](https://archlinux.org)                                       | [Pacman](https://archlinux.org/pacman/) | [clipcat](https://archlinux.org/packages/?q=clipcat)                                               | `pacman -S clipcat`                                                                      |
-| [Debian](https://debian.org) and [Ubuntu](https://ubuntu.com) derivatives | APT                                     | [clipcat](https://github.com/xrelkd/clipcat/releases/latest)                                       | `dpkg -i clipcat_*.deb`                                                                  |
+Pre-built binaries can also be downloaded from the [GitHub releases page](https://github.com/xrelkd/clipcat/releases).
 
-</details>
-
-<details>
-    <summary>Install the pre-built binaries</summary>
-
-Pre-built binaries for Linux can be found on [the releases page](https://github.com/xrelkd/clipcat/releases/), the latest release is available [here](https://github.com/xrelkd/clipcat/releases/latest).
-
-For example, to install `clipcat` to `~/bin`:
-
-```bash
-# create ~/bin
-mkdir -p ~/bin
-
-# change directory to ~/bin
-cd ~/bin
-
-# download and extract clipcat to ~/bin/
-# NOTE: replace the version with the version you want to install
-export CLIPCAT_VERSION=v0.16.4
-
-# NOTE: the architecture of your machine,
-# available values are `x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`
-export ARCH=x86_64-unknown-linux-musl
-curl -s -L "https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION}-${ARCH}.tar.gz" | tar xzf -
-
-# add `~/bin` to the paths that your shell searches for executables
-# this line should be added to your shells initialization file,
-# e.g. `~/.bashrc` or `~/.zshrc`
-export PATH="$PATH:$HOME/bin"
-
-# show version info
-clipcatd     version
-clipcatctl   version
-clipcat-menu version
-```
-
-</details>
-
-<details>
-  <summary>Build from source</summary>
-
-`clipcat` requires the following tools and packages to build:
-
-- `rustc`
-- `cargo`
-- `protobuf-compiler`
-
-With the above tools and packages already installed, you can simply run:
-
-```bash
-git clone --branch=main https://github.com/xrelkd/clipcat.git
-cd clipcat
-
-cargo install --path clipcatd
-cargo install --path clipcatctl
-cargo install --path clipcat-menu
-```
-
-</details>
+The detailed instructions to install `Clipcat` can be found [here](docs/INSTALL.md).
 
 ## Architecture
 
