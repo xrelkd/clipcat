@@ -4,10 +4,12 @@
 
   - [Install the pre-built binaries](#install-the-pre-built-binaries)
   - [Build from source](#build-from-source)
-  - [NixOS and Nix](#nixos-and-nix)
-  - [Arch Linux](#arch-linux)
-  - [Debian and ubuntu derivatives](#debian-and-ubuntu-derivatives)
-  - [Fedora](#fedora)
+  - [Install via Package Manager](#install-via-package-manager)
+    - [NixOS and Nix](#nixos-and-nix)
+    - [Arch Linux](#arch-linux)
+    - [Debian and ubuntu derivatives](#debian-and-ubuntu-derivatives)
+    - [Fedora Linux](#fedora-linux)
+    - [FreeBSD](#freebsd)
 
 ## Install the pre-built binaries
 
@@ -61,33 +63,35 @@ cargo install --path clipcatctl
 cargo install --path clipcat-menu
 ```
 
-## NixOS and Nix
+## Install via Package Manager
 
-### Install with `nix profile`
+### NixOS and Nix
+
+#### Install via `nix profile`
 
 ```bash
 nix profile install 'github:xrelkd/clipcat/main'
 ```
 
-### Install on `NixOS`
+#### Install on `NixOS`
 
 ```bash
 nix-env -iA nixos.clipcat
 ```
 
-### Install with `Nix` on various Linux distribution
+#### Install via `Nix` on various Linux distribution
 
 ```bash
 nix-env -iA nixpkgs.clipcat
 ```
 
-## Arch Linux
+### Arch Linux
 
 ```bash
 pacman -S clipcat
 ```
 
-## Debian and Ubuntu derivatives
+### Debian and Ubuntu derivatives
 
 ```bash
 export CLIPCAT_VERSION=$(basename $(curl -s -w %{redirect_url} https://github.com/xrelkd/clipcat/releases/latest))
@@ -96,11 +100,17 @@ curl -s -L -O https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERS
 dpkg -i clipcat_${CLIPCAT_VERSION#v}_amd64.deb
 ```
 
-## Fedora
+### Fedora Linux
 
 ```bash
 export CLIPCAT_VERSION=$(basename $(curl -s -w %{redirect_url} https://github.com/xrelkd/clipcat/releases/latest))
 
 curl -s -L -O https://github.com/xrelkd/clipcat/releases/download/${CLIPCAT_VERSION}/clipcat-${CLIPCAT_VERSION#v}-1.el7.x86_64.rpm
 dnf install --assumeyes clipcat-${CLIPCAT_VERSION#v}-1.el7.x86_64.rpm
+```
+
+### FreeBSD
+
+```bash
+pkg install clipcat
 ```
