@@ -98,8 +98,7 @@ impl LogDriver {
             Self::Stdout => Some(Box::new(fmt.with_writer(std::io::stdout))),
             Self::Stderr => Some(Box::new(fmt.with_writer(std::io::stderr))),
             Self::File(path) => {
-                let file =
-                    OpenOptions::new().create(true).write(true).append(true).open(path).ok()?;
+                let file = OpenOptions::new().create(true).append(true).open(path).ok()?;
                 Some(Box::new(fmt.with_writer(file)))
             }
             Self::Journald => Some(Box::new(tracing_journald::layer().ok()?)),
