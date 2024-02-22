@@ -16,8 +16,6 @@ use crate::{
     shadow,
 };
 
-const PREVIEW_LENGTH: usize = 100;
-
 #[derive(Parser)]
 #[command(
     name = clipcat_base::CTL_PROGRAM_NAME,
@@ -267,17 +265,17 @@ impl Cli {
                     return Ok(0);
                 }
                 None => {
-                    print_list(&client, false).await?;
+                    print_list(&client, config.preview_length, false).await?;
                 }
                 Some(Commands::List { no_id }) => {
-                    print_list(&client, no_id).await?;
+                    print_list(&client, config.preview_length, no_id).await?;
                 }
                 Some(Commands::Get { id }) => {
                     let data = if let Some(id) = id {
                         client.get(id).await?.preview_information(None)
                     } else {
                         client
-                            .list(PREVIEW_LENGTH)
+                            .list(config.preview_length)
                             .await?
                             .into_iter()
                             .find(|metadata| metadata.kind == ClipboardKind::Clipboard)
@@ -455,8 +453,8 @@ fn print_watcher_state(state: ClipboardWatcherState) {
     println!("{msg}");
 }
 
-async fn print_list(client: &Client, no_id: bool) -> Result<(), Error> {
-    let metadata_list = client.list(PREVIEW_LENGTH).await?;
+async fn print_list(client: &Client, preview_length: usize, no_id: bool) -> Result<(), Error> {
+    let metadata_list = client.list(preview_length).await?;
     for metadata in metadata_list {
         let ClipEntryMetadata { id, preview, .. } = metadata;
         if no_id {
