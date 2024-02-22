@@ -16,8 +16,6 @@ use crate::{
     shadow,
 };
 
-const PREVIEW_LENGTH: usize = 80;
-
 #[derive(Parser)]
 #[command(
     name = clipcat_base::MENU_PROGRAM_NAME,
@@ -156,7 +154,7 @@ impl Cli {
                 let access_token = config.access_token();
                 Client::new(config.server_endpoint, access_token).await?
             };
-            let clips = client.list(PREVIEW_LENGTH).await?;
+            let clips = client.list(config.preview_length).await?;
 
             match commands {
                 Some(Commands::Version { .. }) => print_version(&client).await,
