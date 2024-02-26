@@ -686,7 +686,7 @@ dependencies = [
  "semver",
  "serde",
  "sha2",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "time",
  "tokio",
 ]
@@ -713,7 +713,7 @@ dependencies = [
  "mime",
  "prost-types",
  "semver",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
  "tonic",
  "tower",
@@ -731,7 +731,7 @@ dependencies = [
  "mio",
  "parking_lot",
  "sigfinn",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -755,7 +755,7 @@ name = "clipcat-external-editor"
 version = "0.16.4"
 dependencies = [
  "clipcat-base",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
 ]
 
@@ -775,7 +775,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "skim",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
  "toml",
  "tracing",
@@ -793,7 +793,7 @@ dependencies = [
  "lazy_static",
  "mime",
  "prometheus",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
  "tower",
  "tower-http",
@@ -811,7 +811,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shadow-rs",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "time",
  "tokio",
 ]
@@ -856,7 +856,7 @@ dependencies = [
  "serde_json",
  "sigfinn",
  "simdutf8",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "time",
  "tokio",
  "tokio-stream",
@@ -885,7 +885,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "tokio",
  "toml",
  "tracing",
@@ -912,7 +912,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.0",
+ "snafu 0.8.1",
  "time",
  "tokio",
  "toml",
@@ -3428,11 +3428,11 @@ dependencies = [
 
 [[package]]
 name = "snafu"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d342c51730e54029130d7dc9fd735d28c4cd360f1368c01981d4f03ff207f096"
+checksum = "5ed22871b3fe6eff9f1b48f6cbd54149ff8e9acd740dea9146092435f9c43bd3"
 dependencies = [
- "snafu-derive 0.8.0",
+ "snafu-derive 0.8.1",
 ]
 
 [[package]]
@@ -3449,9 +3449,9 @@ dependencies = [
 
 [[package]]
 name = "snafu-derive"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "080c44971436b1af15d6f61ddd8b543995cf63ab8e677d46b00cc06f4ef267a0"
+checksum = "4651148226ec36010993fcba6c3381552e8463e9f3e337b75af202b0688b5274"
 dependencies = [
  "heck",
  "proc-macro2",
