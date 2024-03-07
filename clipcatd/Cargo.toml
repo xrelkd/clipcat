@@ -31,7 +31,7 @@ libc          = "0.2"
 linicon       = "2"
 mime          = "0.3"
 resolve-path  = "0.1"
-shadow-rs     = "0.26"
+shadow-rs     = "0.27"
 simdutf8      = "0.1"
 snafu         = "0.8"
 time          = { version = "0.3", features = ["formatting", "macros"] }
@@ -41,7 +41,7 @@ clipcat-cli    = { path = "../crates/cli" }
 clipcat-server = { path = "../crates/server" }
 
 [build-dependencies]
-shadow-rs = "0.26"
+shadow-rs = "0.27"
 
 [lints]
 workspace = true
