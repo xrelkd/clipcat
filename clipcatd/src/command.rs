@@ -213,7 +213,12 @@ fn kill_other(pid: libc::pid_t) -> Result<(), Error> {
     tracing::info!("Try to terminate another instance (PID: {pid})");
     let ret = unsafe { libc::kill(pid, libc::SIGTERM) };
     if ret != 0 {
-        return Err(Error::SendSignalTermination { pid });
+        match std::io::Error::last_os_error().raw_os_error() {
+            Some(libc::ESRCH) => {
+                tracing::warn!("Previous instance (PID: {pid}) did not remove its PID file");
+            }
+            _ => return Err(Error::SendSignalTermination { pid }),
+        }
     }
     Ok(())
 }
