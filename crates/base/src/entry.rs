@@ -291,7 +291,7 @@ fn encode_as_png(width: usize, height: usize, bytes: &[u8]) -> Result<Vec<u8>, E
 
     let mut png_bytes = Vec::new();
     image::codecs::png::PngEncoder::new(&mut png_bytes)
-        .write_image(bytes, width, height, image::ColorType::Rgba8)
+        .write_image(bytes, width, height, image::ExtendedColorType::Rgba8)
         .context(ConvertImageSnafu {})?;
 
     Ok(png_bytes)
