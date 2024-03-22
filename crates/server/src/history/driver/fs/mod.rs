@@ -71,6 +71,7 @@ impl FileSystemDriver {
 
         let header_file = OpenOptions::new()
             .create(true)
+            .truncate(true)
             .write(true)
             .read(true)
             .append(false)
@@ -232,6 +233,7 @@ impl Driver for FileSystemDriver {
         let clips_file_path = self.clips_file_path();
         let clips_file = OpenOptions::new()
             .create(true)
+            .append(true)
             .write(true)
             .read(true)
             .open(&clips_file_path)

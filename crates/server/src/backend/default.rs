@@ -57,7 +57,7 @@ impl Backend {
     fn select_clipboard(&self, kind: ClipboardKind) -> Result<Arc<Clipboard>> {
         self.clipboards
             .get(usize::from(kind))
-            .map(Arc::clone)
+            .cloned()
             .ok_or(Error::UnsupportedClipboardKind { kind })
     }
 }

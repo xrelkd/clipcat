@@ -31,6 +31,7 @@ where
 
     let mut header_file = OpenOptions::new()
         .create(true)
+        .truncate(true)
         .write(true)
         .read(true)
         .append(false)
@@ -41,6 +42,7 @@ where
     let clips_file_path = clips_file_path.as_ref().to_path_buf();
     let mut clips_file = OpenOptions::new()
         .create(true)
+        .truncate(true)
         .write(true)
         .read(true)
         .open(&clips_file_path)
