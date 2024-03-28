@@ -1,4 +1,4 @@
-module.exports = {
+const Configuration = {
   extends: [
     process.env.IN_NIX_SHELL ? process.env.COMMITLINT_PRESET : "@commitlint/config-conventional",
   ],
@@ -7,3 +7,5 @@ module.exports = {
     "header-max-length": [2, "always", 150],
   },
 };
+
+export default Configuration;
