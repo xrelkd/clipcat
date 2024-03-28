@@ -73,8 +73,6 @@ jobs:
 
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v6.0.0
-        with:
-          firstParent: false
 
   codespell:
     name: Codespell
