@@ -1,11 +1,7 @@
 # syntax=docker/dockerfile:1.4
 
-FROM sccache AS sccache
-
-# This is the build stage for fixa. Here we create the binary in a temporary image.
+# This is the build stage for clipcat. Here we create the binary in a temporary image.
 FROM rust AS builder
-
-COPY --from=sccache /usr/bin/sccache /usr/bin/sccache
 
 RUN <<EOF
 #!/usr/bin/env ash
@@ -13,17 +9,16 @@ RUN <<EOF
 set -eu
 
 apk add --no-cache \
+    sccache \
     musl-dev \
     protobuf-dev
 
 EOF
 
 ARG RUSTC_WRAPPER="/usr/bin/sccache"
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ARG SCCACHE_BUCKET
-ARG SCCACHE_ENDPOINT
-ARG SCCACHE_S3_USE_SSL
+ARG SCCACHE_GHA_ENABLED
+ARG ACTIONS_CACHE_URL
+ARG ACTIONS_RUNTIME_TOKEN
 
 WORKDIR /build
 COPY . /build

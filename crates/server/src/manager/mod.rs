@@ -110,7 +110,7 @@ where
     pub fn iter(&self) -> impl Iterator<Item = &ClipEntry> { self.clips.values() }
 
     #[inline]
-    pub fn get(&self, id: u64) -> Option<ClipEntry> { self.clips.get(&id).map(Clone::clone) }
+    pub fn get(&self, id: u64) -> Option<ClipEntry> { self.clips.get(&id).cloned() }
 
     #[inline]
     pub fn get_current_clip(&self, kind: ClipboardKind) -> Option<&ClipEntry> {

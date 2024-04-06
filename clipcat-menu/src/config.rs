@@ -19,6 +19,9 @@ pub struct Config {
     pub finder: FinderType,
 
     #[serde(default)]
+    pub preview_length: usize,
+
+    #[serde(default)]
     pub rofi: Option<Rofi>,
 
     #[serde(default)]
@@ -102,6 +105,7 @@ impl Default for Config {
             access_token: None,
             access_token_file_path: None,
             finder: FinderType::Rofi,
+            preview_length: 80,
             rofi: Some(Rofi::default()),
             dmenu: Some(Dmenu::default()),
             custom_finder: Some(CustomFinder::default()),

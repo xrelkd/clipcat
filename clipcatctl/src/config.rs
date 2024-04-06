@@ -14,6 +14,9 @@ pub struct Config {
     pub access_token_file_path: Option<PathBuf>,
 
     #[serde(default)]
+    pub preview_length: usize,
+
+    #[serde(default)]
     pub log: clipcat_cli::config::LogConfig,
 }
 
@@ -23,6 +26,7 @@ impl Default for Config {
             server_endpoint: clipcat_base::config::default_server_endpoint(),
             access_token: None,
             access_token_file_path: None,
+            preview_length: 100,
             log: clipcat_cli::config::LogConfig::default(),
         }
     }

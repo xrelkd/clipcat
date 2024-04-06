@@ -16,8 +16,8 @@
 
   outputs = { self, nixpkgs, flake-utils, fenix, crane }:
     let
+      cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
       name = "clipcat";
-      version = "0.16.4";
     in
     (flake-utils.lib.eachDefaultSystem
       (system:
@@ -74,10 +74,12 @@
           packages = rec {
             default = clipcat;
             clipcat = pkgs.callPackage ./devshell/package.nix {
-              inherit name version rustPlatform;
+              inherit (cargoToml.workspace.package) version;
+              inherit name rustPlatform;
             };
             container = pkgs.callPackage ./devshell/container.nix {
-              inherit name version clipcat;
+              inherit (cargoToml) version;
+              inherit name clipcat;
             };
           };
 

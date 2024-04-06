@@ -15,7 +15,7 @@ keywords.workspace     = true
 [dependencies]
 prost       = "0.12"
 prost-types = "0.12"
-tonic       = { version = "0.10", features = ["gzip"] }
+tonic       = { version = "0.11", features = ["gzip"] }
 
 mime = "0.3"
 time = { version = "0.3", features = ["formatting", "macros"] }
@@ -23,7 +23,7 @@ time = { version = "0.3", features = ["formatting", "macros"] }
 clipcat-base = { path = "../base" }
 
 [build-dependencies]
-tonic-build = { version = "0.10", default-features = false, features = [
+tonic-build = { version = "0.11", default-features = false, features = [
   "prost",
   "transport",
 ] }

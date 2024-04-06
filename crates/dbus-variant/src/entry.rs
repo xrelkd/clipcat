@@ -6,7 +6,7 @@ use zvariant::Type;
 
 use crate::ClipboardKind;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Type)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, Type)]
 pub struct Entry {
     id: u64,
 
