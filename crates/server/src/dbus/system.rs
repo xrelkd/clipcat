@@ -1,4 +1,4 @@
-use zbus::dbus_interface;
+use zbus::interface;
 
 use crate::metrics;
 
@@ -9,10 +9,10 @@ impl SystemService {
     pub const fn new() -> Self { Self {} }
 }
 
-#[dbus_interface(name = "org.clipcat.clipcat.System")]
+#[interface(name = "org.clipcat.clipcat.System")]
 impl SystemService {
     #[allow(clippy::unused_self)]
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn get_version(&self) -> &str {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();

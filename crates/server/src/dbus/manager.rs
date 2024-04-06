@@ -4,7 +4,7 @@ use std::{str::FromStr, sync::Arc};
 
 use clipcat_dbus_variant as dbus_variant;
 use tokio::sync::Mutex;
-use zbus::dbus_interface;
+use zbus::interface;
 
 use crate::{metrics, notification, ClipboardManager};
 
@@ -16,7 +16,7 @@ impl<Notification> ManagerService<Notification> {
     pub fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self { Self { manager } }
 }
 
-#[dbus_interface(name = "org.clipcat.clipcat.Manager")]
+#[interface(name = "org.clipcat.clipcat.Manager")]
 impl<Notification> ManagerService<Notification>
 where
     Notification: notification::Notification + 'static,
@@ -35,7 +35,7 @@ where
         id
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_clipboard_text_contents(&self, data: &str) {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
@@ -50,7 +50,7 @@ where
         drop(manager);
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn clipboard_text_contents(&self) -> String {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
@@ -86,23 +86,25 @@ where
         manager.clear();
     }
 
-    async fn get(&self, id: u64) -> Option<dbus_variant::ClipEntry> {
+    async fn get(&self, id: u64) -> zvariant::Optional<dbus_variant::ClipEntry> {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
 
         let manager = self.manager.lock().await;
-        manager.get(id).map(Into::into)
+        zvariant::Optional::from(manager.get(id).map(Into::into))
     }
 
     async fn get_current_clip(
         &self,
         kind: dbus_variant::ClipboardKind,
-    ) -> Option<dbus_variant::ClipEntry> {
+    ) -> zvariant::Optional<dbus_variant::ClipEntry> {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
 
         let manager = self.manager.lock().await;
-        manager.get_current_clip(kind.into()).map(|clip| clip.clone().into())
+        zvariant::Optional::from(
+            manager.get_current_clip(kind.into()).map(|clip| clip.clone().into()),
+        )
     }
 
     async fn list(&self, preview_length: u64) -> Vec<dbus_variant::ClipEntryMetadata> {
@@ -137,7 +139,7 @@ where
         manager.mark(id, kind.into()).await.is_ok()
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn length(&self) -> u64 {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();

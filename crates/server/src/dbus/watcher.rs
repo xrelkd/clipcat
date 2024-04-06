@@ -1,5 +1,5 @@
 use clipcat_dbus_variant as dbus_variant;
-use zbus::dbus_interface;
+use zbus::interface;
 
 use crate::{metrics, notification, ClipboardWatcherToggle};
 
@@ -14,7 +14,7 @@ impl<Notification> WatcherService<Notification> {
     }
 }
 
-#[dbus_interface(name = "org.clipcat.clipcat.Watcher")]
+#[interface(name = "org.clipcat.clipcat.Watcher")]
 impl<Notification> WatcherService<Notification>
 where
     Notification: notification::Notification + 'static,

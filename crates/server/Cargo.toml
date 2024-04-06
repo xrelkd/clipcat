@@ -33,7 +33,7 @@ tokio-stream = { version = "0.1", features = ["net"] }
 tonic = { version = "0.11", features = ["gzip"] }
 
 zbus     = { version = "4", default-features = false, features = ["tokio"] }
-zvariant = "3"
+zvariant = "4"
 
 hex = "0.4"
 humansize = "2"
