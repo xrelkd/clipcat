@@ -14,7 +14,7 @@ keywords.workspace     = true
 
 [dependencies]
 serde    = { version = "1", features = ["derive"] }
-zvariant = "3"
+zvariant = "4"
 
 mime = "0.3"
 time = { version = "0.3", features = ["formatting", "macros"] }
