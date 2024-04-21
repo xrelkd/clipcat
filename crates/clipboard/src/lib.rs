@@ -7,10 +7,19 @@ mod traits;
 
 pub use clipcat_base::ClipboardKind;
 
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
+pub use self::listener::{WaylandListenerError, X11ListenerError};
 pub use self::{
     default::Clipboard,
     error::Error,
-    listener::{WaylandListenerError, X11ListenerError},
     local::Clipboard as LocalClipboard,
     pubsub::Subscriber,
     traits::{

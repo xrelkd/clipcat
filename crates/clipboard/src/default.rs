@@ -6,26 +6,94 @@ use std::{
     thread,
 };
 
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
 use arboard::{ClearExtLinux, GetExtLinux, SetExtLinux};
 use bytes::Bytes;
 use clipcat_base::{ClipFilter, ClipboardContent};
 
+#[cfg(target_os = "macos")]
+use crate::listener::MacOsListener;
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
+use crate::listener::{WaylandListener, X11Listener};
 use crate::{
-    listener::{WaylandListener, X11Listener},
-    traits::EventObserver,
-    ClipboardKind, ClipboardLoad, ClipboardStore, ClipboardSubscribe, Error, Subscriber,
+    traits::EventObserver, ClipboardKind, ClipboardLoad, ClipboardStore, ClipboardSubscribe, Error,
+    Subscriber,
 };
 
 #[derive(Clone)]
 pub struct Clipboard {
     listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,
-    clipboard_kind: arboard::LinuxClipboardKind,
+
     clear_on_drop: Arc<AtomicBool>,
+
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    clipboard_kind: arboard::LinuxClipboardKind,
 }
 
 impl Clipboard {
     /// # Errors
     pub fn new(
+        clipboard_kind: ClipboardKind,
+        clip_filter: Arc<ClipFilter>,
+        event_observers: Vec<Arc<dyn EventObserver>>,
+    ) -> Result<Self, Error> {
+        #[cfg(all(
+            unix,
+            not(any(
+                target_os = "macos",
+                target_os = "ios",
+                target_os = "android",
+                target_os = "emscripten"
+            ))
+        ))]
+        {
+            Self::new_on_linux(clipboard_kind, clip_filter, event_observers)
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            let _ = clipboard_kind;
+            drop(clip_filter);
+            drop(event_observers);
+            Self::new_on_macos()
+        }
+    }
+
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    /// # Errors
+    fn new_on_linux(
         clipboard_kind: ClipboardKind,
         clip_filter: Arc<ClipFilter>,
         event_observers: Vec<Arc<dyn EventObserver>>,
@@ -59,12 +127,24 @@ impl Clipboard {
             };
 
         let clear_on_drop = Arc::new(AtomicBool::from(false));
+
         let clipboard_kind = match clipboard_kind {
             ClipboardKind::Clipboard => arboard::LinuxClipboardKind::Clipboard,
             ClipboardKind::Primary => arboard::LinuxClipboardKind::Primary,
             ClipboardKind::Secondary => arboard::LinuxClipboardKind::Secondary,
         };
-        Ok(Self { listener, clipboard_kind, clear_on_drop })
+        Ok(Self { listener, clear_on_drop, clipboard_kind })
+    }
+
+    /// # Errors
+    #[cfg(target_os = "macos")]
+    pub fn new_on_macos() -> Result<Self, Error> {
+        let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
+            Arc::new(MacOsListener::new()?);
+
+        let clear_on_drop = Arc::new(AtomicBool::from(false));
+
+        Ok(Self { listener, clear_on_drop })
     }
 }
 
@@ -84,7 +164,21 @@ impl ClipboardLoad for Clipboard {
                 let mut arboard = arboard::Clipboard::new()?;
 
                 if mime.type_() == mime::TEXT {
-                    match arboard.get().clipboard(self.clipboard_kind).text() {
+                    #[cfg(all(
+                        unix,
+                        not(any(
+                            target_os = "macos",
+                            target_os = "ios",
+                            target_os = "android",
+                            target_os = "emscripten"
+                        ))
+                    ))]
+                    let maybe_text = arboard.get().clipboard(self.clipboard_kind).text();
+
+                    #[cfg(target_os = "macos")]
+                    let maybe_text = arboard.get().text();
+
+                    match maybe_text {
                         Ok(text) => Ok(ClipboardContent::Plaintext(text)),
                         Err(arboard::Error::ClipboardNotSupported) => unreachable!(),
                         Err(err) => {
@@ -93,7 +187,21 @@ impl ClipboardLoad for Clipboard {
                         }
                     }
                 } else if mime.type_() == mime::IMAGE {
-                    match arboard.get().clipboard(self.clipboard_kind).image() {
+                    #[cfg(all(
+                        unix,
+                        not(any(
+                            target_os = "macos",
+                            target_os = "ios",
+                            target_os = "android",
+                            target_os = "emscripten"
+                        ))
+                    ))]
+                    let maybe_image = arboard.get().clipboard(self.clipboard_kind).image();
+
+                    #[cfg(target_os = "macos")]
+                    let maybe_image = arboard.get().image();
+
+                    match maybe_image {
                         Ok(arboard::ImageData { width, height, bytes }) => {
                             Ok(ClipboardContent::Image {
                                 width,
@@ -119,13 +227,35 @@ impl ClipboardStore for Clipboard {
     #[inline]
     fn store(&self, content: ClipboardContent) -> Result<(), Error> {
         let mut arboard = arboard::Clipboard::new()?;
+        #[cfg(all(
+            unix,
+            not(any(
+                target_os = "macos",
+                target_os = "ios",
+                target_os = "android",
+                target_os = "emscripten"
+            ))
+        ))]
         let clipboard_kind = self.clipboard_kind;
+
+        #[cfg(target_os = "macos")]
+        let clipboard_kind = ClipboardKind::Clipboard;
+
         let clear_on_drop = self.clear_on_drop.clone();
 
         let _join_handle =
             thread::Builder::new().name(format!("{clipboard_kind:?}-setter")).spawn(move || {
                 clear_on_drop.store(true, Ordering::Relaxed);
 
+                #[cfg(all(
+                    unix,
+                    not(any(
+                        target_os = "macos",
+                        target_os = "ios",
+                        target_os = "android",
+                        target_os = "emscripten"
+                    ))
+                ))]
                 let _result = match content {
                     ClipboardContent::Plaintext(text) => {
                         arboard.set().clipboard(clipboard_kind).wait().text(text)
@@ -137,6 +267,14 @@ impl ClipboardStore for Clipboard {
                         .image(arboard::ImageData { width, height, bytes: bytes.to_vec().into() }),
                 };
 
+                #[cfg(target_os = "macos")]
+                let _result = match content {
+                    ClipboardContent::Plaintext(text) => arboard.set().text(text),
+                    ClipboardContent::Image { width, height, bytes } => arboard
+                        .set()
+                        .image(arboard::ImageData { width, height, bytes: bytes.to_vec().into() }),
+                };
+
                 clear_on_drop.store(false, Ordering::Relaxed);
             });
         Ok(())
@@ -144,7 +282,20 @@ impl ClipboardStore for Clipboard {
 
     #[inline]
     fn clear(&self) -> Result<(), Error> {
+        #[cfg(all(
+            unix,
+            not(any(
+                target_os = "macos",
+                target_os = "ios",
+                target_os = "android",
+                target_os = "emscripten"
+            ))
+        ))]
         arboard::Clipboard::new()?.clear_with().clipboard(self.clipboard_kind)?;
+
+        #[cfg(target_os = "macos")]
+        arboard::Clipboard::new()?.clear()?;
+
         self.clear_on_drop.store(false, Ordering::Relaxed);
         Ok(())
     }
