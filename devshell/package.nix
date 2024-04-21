@@ -1,11 +1,11 @@
 { name
 , version
 , lib
+, stdenv
 , rustPlatform
 , protobuf
-, xvfb-run
-, cargo-nextest
 , installShellFiles
+, darwin
 }:
 
 rustPlatform.buildRustPackage {
@@ -18,32 +18,23 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
+  buildInputs = lib.optionals stdenv.isDarwin [
+    darwin.apple_sdk.frameworks.Cocoa
+    darwin.apple_sdk.frameworks.Security
+    darwin.apple_sdk.frameworks.SystemConfiguration
+  ];
+
   nativeBuildInputs = [
     protobuf
 
     installShellFiles
   ];
 
-  nativeCheckInputs = [
-    cargo-nextest
-
-    xvfb-run
+  checkFlags = [
+    # Some test cases interact with X11, skip them
+    "--skip=test_x11_clipboard"
+    "--skip=test_x11_primary"
   ];
-
-  checkPhase = ''
-    cat >test-runner <<EOF
-    #!/bin/sh
-    export NEXTEST_RETRIES=5
-
-    cargo --version
-    rustc --version
-    cargo nextest --version
-    cargo nextest run --release --workspace --no-fail-fast --no-capture
-    EOF
-
-    chmod +x test-runner
-    xvfb-run --auto-servernum ./test-runner
-  '';
 
   postInstall = ''
     for cmd in clipcatd clipcatctl clipcat-menu clipcat-notify; do
@@ -58,7 +49,7 @@ rustPlatform.buildRustPackage {
     description = "Clipboard Manager written in Rust Programming Language";
     homepage = "https://github.com/xrelkd/clipcat";
     license = licenses.gpl3Only;
-    platforms = platforms.linux;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = with maintainers; [ xrelkd ];
     mainProgram = "clipcatd";
   };
