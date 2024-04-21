@@ -1,3 +1,4 @@
+mod choose;
 mod custom;
 mod dmenu;
 mod fzf;
@@ -8,7 +9,7 @@ use std::{path::PathBuf, process::Stdio};
 
 use tokio::process::Command;
 
-pub use self::{custom::Custom, dmenu::Dmenu, fzf::Fzf, rofi::Rofi, skim::Skim};
+pub use self::{choose::Choose, custom::Custom, dmenu::Dmenu, fzf::Fzf, rofi::Rofi, skim::Skim};
 use crate::finder::{FinderStream, SelectionMode};
 
 pub trait ExternalProgram: FinderStream + Send + Sync {
