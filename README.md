@@ -37,6 +37,7 @@
 - [x] Support snippets
 - [x] Support `X11`
 - [x] Support `Wayland` (experimentally)
+- [x] Support `macOS`
 - [x] Support `gRPC`
   - [x] gRPC over `HTTP`
   - [x] gRPC over `Unix domain socket`
