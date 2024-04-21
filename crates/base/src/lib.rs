@@ -10,7 +10,7 @@ use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
     net::{IpAddr, Ipv4Addr},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use bytes::Bytes;
@@ -75,6 +75,17 @@ pub static ref PROJECT_CONFIG_DIR: PathBuf = ProjectDirs::from("", PROJECT_NAME,
             .expect("Creating `ProjectDirs` should always success")
             .config_dir()
             .to_path_buf();
+}
+
+#[must_use]
+pub fn fallback_project_config_directories() -> Vec<PathBuf> {
+    let Some(user_dirs) = directories::UserDirs::new() else {
+        return Vec::new();
+    };
+    vec![
+        [user_dirs.home_dir(), &Path::new(".config"), &Path::new(PROJECT_NAME)].iter().collect(),
+        [user_dirs.home_dir(), &Path::new(&format!(".{PROJECT_NAME}"))].iter().collect(),
+    ]
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

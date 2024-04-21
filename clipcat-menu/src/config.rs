@@ -28,6 +28,9 @@ pub struct Config {
     pub dmenu: Option<Dmenu>,
 
     #[serde(default)]
+    pub choose: Option<Choose>,
+
+    #[serde(default)]
     pub custom_finder: Option<CustomFinder>,
 
     #[serde(default)]
@@ -35,6 +38,27 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn search_config_file_path() -> PathBuf {
+        let paths = vec![Self::default_path()]
+            .into_iter()
+            .chain(clipcat_base::fallback_project_config_directories().into_iter().map(
+                |mut path| {
+                    path.push(clipcat_base::MENU_CONFIG_NAME);
+                    path
+                },
+            ))
+            .collect::<Vec<_>>();
+        for path in paths {
+            let Ok(exists) = path.try_exists() else {
+                continue;
+            };
+            if exists {
+                return path;
+            }
+        }
+        Self::default_path()
+    }
+
     #[inline]
     pub fn default_path() -> PathBuf {
         [
@@ -104,10 +128,25 @@ impl Default for Config {
             server_endpoint: clipcat_base::config::default_server_endpoint(),
             access_token: None,
             access_token_file_path: None,
+
+            #[cfg(all(
+                unix,
+                not(any(
+                    target_os = "macos",
+                    target_os = "ios",
+                    target_os = "android",
+                    target_os = "emscripten"
+                ))
+            ))]
             finder: FinderType::Rofi,
+
+            #[cfg(target_os = "macos")]
+            finder: FinderType::Choose,
+
             preview_length: 80,
             rofi: Some(Rofi::default()),
             dmenu: Some(Dmenu::default()),
+            choose: Some(Choose::default()),
             custom_finder: Some(CustomFinder::default()),
             log: clipcat_cli::config::LogConfig::default(),
         }
@@ -131,6 +170,21 @@ pub struct Rofi {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Dmenu {
+    #[serde(default = "default_line_length")]
+    pub line_length: usize,
+
+    #[serde(default = "default_menu_length")]
+    pub menu_length: usize,
+
+    #[serde(default = "default_menu_prompt")]
+    pub menu_prompt: String,
+
+    #[serde(default)]
+    pub extra_arguments: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Choose {
     #[serde(default = "default_line_length")]
     pub line_length: usize,
 
@@ -173,15 +227,62 @@ impl Default for Dmenu {
     }
 }
 
+impl Default for Choose {
+    fn default() -> Self {
+        Self {
+            menu_prompt: default_menu_prompt(),
+            menu_length: default_menu_length(),
+            line_length: default_line_length(),
+            extra_arguments: Vec::new(),
+        }
+    }
+}
+
 impl Default for CustomFinder {
     fn default() -> Self { Self { program: "fzf".to_string(), args: Vec::new() } }
 }
 
 fn default_menu_prompt() -> String { clipcat_base::DEFAULT_MENU_PROMPT.to_string() }
 
-const fn default_menu_length() -> usize { 30 }
+const fn default_menu_length() -> usize {
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    {
+        30
+    }
 
-const fn default_line_length() -> usize { 100 }
+    #[cfg(target_os = "macos")]
+    {
+        15
+    }
+}
+
+const fn default_line_length() -> usize {
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    {
+        100
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        70
+    }
+}
 
 #[derive(Debug, Snafu)]
 pub enum Error {

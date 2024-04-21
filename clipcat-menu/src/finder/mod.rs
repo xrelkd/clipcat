@@ -12,7 +12,7 @@ use tokio::io::AsyncWriteExt;
 
 use self::{
     builtin::BuiltinFinder,
-    external::{Custom, Dmenu, ExternalProgram, Fzf, Rofi, Skim},
+    external::{Choose, Custom, Dmenu, ExternalProgram, Fzf, Rofi, Skim},
 };
 pub use self::{error::FinderError, finder_stream::FinderStream};
 use crate::config::Config;
@@ -41,14 +41,32 @@ pub enum FinderType {
     #[serde(rename = "fzf")]
     Fzf,
 
+    #[serde(rename = "choose")]
+    Choose,
+
     #[serde(rename = "custom")]
     Custom,
 }
 
 impl FinderType {
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
     #[inline]
     pub fn available_types() -> Vec<Self> {
         vec![Self::Builtin, Self::Rofi, Self::Dmenu, Self::Skim, Self::Fzf, Self::Custom]
+    }
+
+    #[cfg(target_os = "macos")]
+    #[inline]
+    pub fn available_types() -> Vec<Self> {
+        vec![Self::Builtin, Self::Choose, Self::Skim, Self::Fzf, Self::Custom]
     }
 }
 
@@ -60,6 +78,7 @@ impl FromStr for FinderType {
             "builtin" => Ok(Self::Builtin),
             "rofi" => Ok(Self::Rofi),
             "dmenu" => Ok(Self::Dmenu),
+            "choose" => Ok(Self::Choose),
             "skim" => Ok(Self::Skim),
             "fzf" => Ok(Self::Fzf),
             "custom" => Ok(Self::Custom),
@@ -74,6 +93,7 @@ impl fmt::Display for FinderType {
             Self::Builtin => "builtin",
             Self::Rofi => "rofi",
             Self::Dmenu => "dmenu",
+            Self::Choose => "choose",
             Self::Skim => "skim",
             Self::Fzf => "fzf",
             Self::Custom => "custom",
@@ -95,6 +115,9 @@ impl FinderRunner {
             FinderType::Rofi => Some(Box::new(Rofi::from(config.rofi.clone().unwrap_or_default()))),
             FinderType::Dmenu => {
                 Some(Box::new(Dmenu::from(config.dmenu.clone().unwrap_or_default())))
+            }
+            FinderType::Choose => {
+                Some(Box::new(Choose::from(config.choose.clone().unwrap_or_default())))
             }
             FinderType::Custom => Some(Box::new(Custom::from_config(
                 config.custom_finder.clone().unwrap_or_default(),

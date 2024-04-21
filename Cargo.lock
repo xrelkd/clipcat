@@ -726,7 +726,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "bytes",
  "directories",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-cli"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "serde",
  "serde_with",
@@ -757,7 +757,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -775,13 +775,16 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "arboard",
  "bytes",
  "clipcat-base",
  "mime",
  "mio",
+ "objc",
+ "objc-foundation",
+ "objc_id",
  "parking_lot",
  "sigfinn",
  "snafu 0.8.2",
@@ -794,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-dbus-variant"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -805,7 +808,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clipcat-base",
  "snafu 0.8.2",
@@ -814,7 +817,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clap 4.5.4",
  "clap_complete",
@@ -838,7 +841,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-metrics"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum 0.7.5",
@@ -854,7 +857,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clap 4.5.4",
  "clap_complete",
@@ -871,7 +874,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -885,7 +888,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -921,7 +924,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "bytes",
  "clap 4.5.4",
@@ -948,7 +951,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.16.6"
+version = "0.17.0"
 dependencies = [
  "clap 4.5.4",
  "clap_complete",
@@ -3357,18 +3360,18 @@ checksum = "92d43fe69e652f3df9bdc2b85b2854a0825b86e4fb76bc44d945137d053639ca"
 
 [[package]]
 name = "serde"
-version = "1.0.197"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fb1c873e1b9b056a4dc4c0c198b24c3ffa059243875552b2bd0933b1aee4ce2"
+checksum = "9846a40c979031340571da2545a4e5b7c4163bdae79b301d5f86d03979451fcc"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.197"
+version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
+checksum = "e88edab869b01783ba905e7d0153f9fc1a6505a96e4ad3018011eedb838566d9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3377,9 +3380,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.115"
+version = "1.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12dc5c46daa8e9fdf4f5e71b6cf9a53f2487da0e86e55808e2d35539666497dd"
+checksum = "3e17db7126d17feb94eb3fad46bf1a96b034e8aacbc2e775fe81505f8b0b2813"
 dependencies = [
  "itoa",
  "ryu",

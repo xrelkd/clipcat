@@ -193,8 +193,9 @@ impl Default for Cli {
 
 impl Cli {
     fn load_config(&self) -> Config {
-        let mut config =
-            Config::load_or_default(self.config_file.clone().unwrap_or_else(Config::default_path));
+        let mut config = Config::load_or_default(
+            self.config_file.clone().unwrap_or_else(Config::search_config_file_path),
+        );
         if let Some(endpoint) = &self.server_endpoint {
             config.server_endpoint = endpoint.clone();
         }

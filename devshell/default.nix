@@ -2,6 +2,9 @@
 , cargoArgs
 , unitTestArgs
 , pkgs
+, lib
+, stdenv
+, darwin
 , ...
 }:
 
@@ -11,9 +14,13 @@ in
 pkgs.mkShell {
   name = "dev-shell";
 
-  nativeBuildInputs = with pkgs; [
-    xvfb-run
+  buildInputs = lib.optionals stdenv.isDarwin [
+    darwin.apple_sdk.frameworks.Cocoa
+    darwin.apple_sdk.frameworks.Security
+    darwin.apple_sdk.frameworks.SystemConfiguration
+  ];
 
+  nativeBuildInputs = with pkgs; [
     cargo-ext.cargo-build-all
     cargo-ext.cargo-clippy-all
     cargo-ext.cargo-doc-all
@@ -41,6 +48,8 @@ pkgs.mkShell {
 
     pkg-config
     libgit2
+  ] ++ lib.optionals stdenv.isLinux [
+    xvfb-run
   ];
 
   shellHook = ''
