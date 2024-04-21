@@ -107,7 +107,7 @@ impl Cli {
     }
 
     fn load_config(&self) -> Result<Config, Error> {
-        let config_file = &self.config_file.clone().unwrap_or_else(Config::default_path);
+        let config_file = &self.config_file.clone().unwrap_or_else(Config::search_config_file_path);
         let mut config = Config::load(config_file)?;
 
         config.daemonize = !self.no_daemon;

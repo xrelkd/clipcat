@@ -38,6 +38,27 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn search_config_file_path() -> PathBuf {
+        let paths = vec![Self::default_path()]
+            .into_iter()
+            .chain(clipcat_base::fallback_project_config_directories().into_iter().map(
+                |mut path| {
+                    path.push(clipcat_base::MENU_CONFIG_NAME);
+                    path
+                },
+            ))
+            .collect::<Vec<_>>();
+        for path in paths {
+            let Ok(exists) = path.try_exists() else {
+                continue;
+            };
+            if exists {
+                return path;
+            }
+        }
+        Self::default_path()
+    }
+
     #[inline]
     pub fn default_path() -> PathBuf {
         [
