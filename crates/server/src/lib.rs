@@ -1,5 +1,14 @@
 pub mod backend;
 pub mod config;
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
 mod dbus;
 mod error;
 mod grpc;
@@ -140,6 +149,15 @@ pub async fn serve_with_shutdown(
         );
     }
 
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
     if dbus.enable {
         let _handle = lifecycle_manager.spawn(
             "D-Bus",
@@ -150,6 +168,9 @@ pub async fn serve_with_shutdown(
             ),
         );
     }
+
+    #[cfg(target_os = "macos")]
+    drop(dbus);
 
     if let Some(grpc_listen_address) = grpc_listen_address {
         let _handle = lifecycle_manager.spawn(
@@ -272,6 +293,15 @@ fn create_grpc_local_socket_server_future(
     }
 }
 
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
 fn create_dbus_service_future(
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
@@ -538,6 +568,15 @@ async fn serve_worker(
     Ok(())
 }
 
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
 async fn serve_dbus(
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,

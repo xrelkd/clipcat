@@ -31,6 +31,13 @@ impl Backend {
             kinds.dedup();
             kinds
         };
+
+        #[cfg(target_os = "macos")]
+        let kinds = {
+            drop(kinds);
+            vec![ClipboardKind::Clipboard]
+        };
+
         let mut clipboards = Vec::with_capacity(kinds.len());
         let mut supported_clipboard_kinds = Vec::with_capacity(kinds.len());
         for kind in kinds {
@@ -82,20 +89,26 @@ impl traits::Backend for Backend {
 
     #[inline]
     async fn store(&self, kind: ClipboardKind, data: ClipboardContent) -> Result<()> {
-        let clipboard = self.select_clipboard(kind)?;
-        task::spawn_blocking(move || clipboard.store(data))
-            .await
-            .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::StoreDataToClipboardSnafu)
+        if let Ok(clipboard) = self.select_clipboard(kind) {
+            task::spawn_blocking(move || clipboard.store(data))
+                .await
+                .context(error::SpawnBlockingTaskSnafu)?
+                .context(error::StoreDataToClipboardSnafu)
+        } else {
+            Ok(())
+        }
     }
 
     #[inline]
     async fn clear(&self, kind: ClipboardKind) -> Result<()> {
-        let clipboard = self.select_clipboard(kind)?;
-        task::spawn_blocking(move || clipboard.clear())
-            .await
-            .context(error::SpawnBlockingTaskSnafu)?
-            .context(error::ClearClipboardSnafu)
+        if let Ok(clipboard) = self.select_clipboard(kind) {
+            task::spawn_blocking(move || clipboard.clear())
+                .await
+                .context(error::SpawnBlockingTaskSnafu)?
+                .context(error::ClearClipboardSnafu)
+        } else {
+            Ok(())
+        }
     }
 
     #[inline]

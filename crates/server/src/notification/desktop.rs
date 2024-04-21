@@ -155,14 +155,28 @@ impl Worker {
                     format!("Daemon is shutting down.\n(version: {PROJECT_VERSION}, PID: {pid})")
                 }
             };
-            if let Err(err) = DesktopNotification::new()
+            let notification = DesktopNotification::new()
                 .summary(clipcat_base::NOTIFICATION_SUMMARY)
                 .body(&body)
                 .icon(&icon.display().to_string())
                 .timeout(timeout)
-                .show_async()
-                .await
-            {
+                .finalize();
+
+            #[cfg(all(
+                unix,
+                not(any(
+                    target_os = "macos",
+                    target_os = "ios",
+                    target_os = "android",
+                    target_os = "emscripten"
+                ))
+            ))]
+            if let Err(err) = notification.show_async().await {
+                tracing::warn!("Could not send desktop notification, error: {err}");
+            }
+
+            #[cfg(target_os = "macos")]
+            if let Err(err) = notification.show() {
                 tracing::warn!("Could not send desktop notification, error: {err}");
             }
 
