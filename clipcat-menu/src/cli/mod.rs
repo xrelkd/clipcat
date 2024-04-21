@@ -140,7 +140,8 @@ impl Cli {
             _ => {}
         }
 
-        let mut config = Config::load_or_default(config_file.unwrap_or_else(Config::default_path));
+        let mut config =
+            Config::load_or_default(config_file.unwrap_or_else(Config::search_config_file_path));
         if let Some(log_level) = log_level {
             config.log.level = log_level;
         }
