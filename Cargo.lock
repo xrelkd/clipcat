@@ -3022,9 +3022,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.79"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
+checksum = "8ad3d49ab951a01fbaafe34f2ec74122942fe18a3f9814c3268f1bb72042131b"
 dependencies = [
  "unicode-ident",
 ]
@@ -4904,9 +4904,9 @@ dependencies = [
 
 [[package]]
 name = "zvariant"
-version = "4.0.3"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e9282c6945d9e27742ba7ad7191325546636295de7b83f6735af73159b32ac7"
+checksum = "877ef94e5e82b231d2a309c531f191a8152baba8241a7939ee04bd76b0171308"
 dependencies = [
  "endi",
  "enumflags2",
@@ -4917,9 +4917,9 @@ dependencies = [
 
 [[package]]
 name = "zvariant_derive"
-version = "4.0.3"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0142549e559746ff09d194dd43d256a554299d286cc56460a082b8ae24652aa1"
+checksum = "b7ca98581cc6a8120789d8f1f0997e9053837d6aa5346cbb43454d7121be6e39"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
