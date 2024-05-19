@@ -8,8 +8,8 @@ use axum::{
     routing, Router,
 };
 use bytes::{BufMut, BytesMut};
-use lazy_static::lazy_static;
 use mime::Mime;
+use once_cell::sync::Lazy;
 use prometheus::{Encoder, TextEncoder};
 use snafu::ResultExt;
 use tokio::net::TcpListener;
@@ -19,12 +19,13 @@ use crate::{
     traits,
 };
 
-lazy_static! {
-    static ref OPENMETRICS_TEXT: Mime =
-        Mime::from_str("application/openmetrics-text; version=1.0.0; charset=utf-8")
-            .expect("is valid mime type; qed");
-    static ref ENCODER: TextEncoder = TextEncoder::new();
-}
+// FIXME: use `OPENMETRICS_TEXT`
+#[allow(dead_code)]
+static OPENMETRICS_TEXT: Lazy<Mime> = Lazy::new(|| {
+    Mime::from_str("application/openmetrics-text; version=1.0.0; charset=utf-8")
+        .expect("is valid mime type; qed")
+});
+static ENCODER: Lazy<TextEncoder> = Lazy::new(TextEncoder::new);
 
 async fn metrics<Metrics>(Extension(metrics): Extension<Metrics>) -> Response<Body>
 where
@@ -79,14 +80,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::initialize;
+    use once_cell::sync::Lazy;
 
     use crate::server::{ENCODER, OPENMETRICS_TEXT};
 
     #[test]
-    fn test_lazy_static() {
-        initialize(&OPENMETRICS_TEXT);
-        initialize(&ENCODER);
+    fn test_once_cell_lazy() {
+        let _ = Lazy::force(&OPENMETRICS_TEXT);
+        let _ = Lazy::force(&ENCODER);
     }
 
     #[test]
