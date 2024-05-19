@@ -533,9 +533,7 @@ async fn serve_worker(
                     if synchronize_selection_with_clipboard
                         && clip.kind() == ClipboardKind::Clipboard
                     {
-                        if let Err(err) =
-                            clipboard_manager.mark(id, clipcat_base::ClipboardKind::Primary).await
-                        {
+                        if let Err(err) = clipboard_manager.mark(id, ClipboardKind::Primary).await {
                             tracing::warn!("{err}");
                         }
                     }

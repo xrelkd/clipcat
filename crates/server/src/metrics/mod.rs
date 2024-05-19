@@ -15,15 +15,15 @@ impl Metrics {
 
         // gRPC
         registry
-            .register(Box::new(self::grpc::REQUESTS_TOTAL.clone()))
+            .register(Box::new(grpc::REQUESTS_TOTAL.clone()))
             .context(error::SetupMetricsSnafu)?;
 
         // D-Bus
         registry
-            .register(Box::new(self::dbus::REQUESTS_TOTAL.clone()))
+            .register(Box::new(dbus::REQUESTS_TOTAL.clone()))
             .context(error::SetupMetricsSnafu)?;
         registry
-            .register(Box::new(self::dbus::REQUEST_DURATION_SECONDS.clone()))
+            .register(Box::new(dbus::REQUEST_DURATION_SECONDS.clone()))
             .context(error::SetupMetricsSnafu)?;
 
         Ok(Self { registry })

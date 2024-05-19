@@ -32,10 +32,6 @@ pub trait FinderStream: Send + Sync {
     fn set_line_length(&mut self, _line_length: usize) {}
 
     fn set_menu_length(&mut self, _menu_length: usize) {}
-
-    fn menu_length(&self) -> Option<usize> { None }
-
-    fn line_length(&self) -> Option<usize> { None }
 }
 
 #[cfg(test)]

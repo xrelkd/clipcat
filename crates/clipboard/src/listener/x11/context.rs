@@ -82,7 +82,7 @@ impl Context {
             .context(error::ReplySnafu)?;
 
         if !xfixes.present {
-            return Err(error::Error::XfixesNotPresent);
+            return Err(Error::XfixesNotPresent);
         }
 
         drop(self.connection.set_selection_owner(
@@ -133,7 +133,7 @@ impl Context {
         while Instant::now() < timeout_end {
             let maybe_event = self.connection.poll_for_event().context(error::PollForEventSnafu)?;
             let Some(event) = maybe_event else {
-                thread::sleep(std::time::Duration::from_millis(1));
+                thread::sleep(Duration::from_millis(1));
                 continue;
             };
 
