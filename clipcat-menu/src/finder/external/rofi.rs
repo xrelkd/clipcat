@@ -61,10 +61,6 @@ impl FinderStream for Rofi {
             .collect()
     }
 
-    fn line_length(&self) -> Option<usize> { Some(self.line_length) }
-
-    fn menu_length(&self) -> Option<usize> { Some(self.menu_length) }
-
     fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length }
 
     fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }

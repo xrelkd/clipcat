@@ -98,11 +98,6 @@ where
         return None;
     }
 
-    clipcat_base::ClipEntry::new(
-        &data,
-        &mime::TEXT_PLAIN_UTF_8,
-        clipcat_base::ClipboardKind::Clipboard,
-        None,
-    )
-    .ok()
+    ClipEntry::new(&data, &mime::TEXT_PLAIN_UTF_8, clipcat_base::ClipboardKind::Clipboard, None)
+        .ok()
 }

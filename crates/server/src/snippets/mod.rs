@@ -65,7 +65,7 @@ async fn load(config: &config::SnippetConfig) -> HashMap<ClipEntry, Option<PathB
                 return None;
             }
 
-            clipcat_base::ClipEntry::new(
+            ClipEntry::new(
                 &data,
                 &mime::TEXT_PLAIN_UTF_8,
                 clipcat_base::ClipboardKind::Clipboard,

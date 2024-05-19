@@ -307,14 +307,14 @@ fn header_file_path<P>(file_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
-    [file_path.as_ref(), &Path::new("header.json")].into_iter().collect()
+    [file_path.as_ref(), Path::new("header.json")].into_iter().collect()
 }
 
 fn clips_file_path<P>(file_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
-    [file_path.as_ref(), &Path::new("clips")].into_iter().collect()
+    [file_path.as_ref(), Path::new("clips")].into_iter().collect()
 }
 
 fn image_dir_path<P>(file_path: P) -> PathBuf

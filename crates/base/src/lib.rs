@@ -82,8 +82,8 @@ pub fn fallback_project_config_directories() -> Vec<PathBuf> {
         return Vec::new();
     };
     vec![
-        [user_dirs.home_dir(), &Path::new(".config"), &Path::new(PROJECT_NAME)].iter().collect(),
-        [user_dirs.home_dir(), &Path::new(&format!(".{PROJECT_NAME}"))].iter().collect(),
+        [user_dirs.home_dir(), Path::new(".config"), Path::new(PROJECT_NAME)].iter().collect(),
+        [user_dirs.home_dir(), Path::new(&format!(".{PROJECT_NAME}"))].iter().collect(),
     ]
 }
 

@@ -200,7 +200,7 @@ fn try_reconnect(
                 n = interval.as_millis(),
                 kind = context.clipboard_kind()
             );
-            std::thread::sleep(interval);
+            thread::sleep(interval);
         } else {
             poll.registry()
                 .register(
