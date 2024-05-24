@@ -17,6 +17,8 @@ const DEFAULT_CAPACITY: usize = 40;
 pub struct ClipboardManager<Notification> {
     backend: Arc<dyn ClipboardBackend>,
 
+    primary_threshold: time::Duration,
+
     capacity: usize,
 
     // use id of ClipEntry as the key
@@ -39,12 +41,14 @@ where
 {
     pub fn with_capacity(
         backend: Arc<dyn ClipboardBackend>,
+        primary_threshold_ms: i64,
         capacity: usize,
         notification: Notification,
     ) -> Self {
         let capacity = if capacity == 0 { DEFAULT_CAPACITY } else { capacity };
         Self {
             backend,
+            primary_threshold: time::Duration::milliseconds(primary_threshold_ms),
             capacity,
             clips: HashMap::new(),
             current_clips: [None; ClipboardKind::MAX_LENGTH],
@@ -57,7 +61,7 @@ where
     #[cfg(test)]
     #[inline]
     pub fn new(backend: Arc<dyn ClipboardBackend>, notification: Notification) -> Self {
-        Self::with_capacity(backend, DEFAULT_CAPACITY, notification)
+        Self::with_capacity(backend, 0, DEFAULT_CAPACITY, notification)
     }
 
     #[inline]
@@ -128,6 +132,20 @@ where
             }
             ClipboardContent::Plaintext(text) => {
                 self.notification.on_plaintext_fetched(text.chars().count());
+                if let Some(id) = self.current_clips[usize::from(entry.kind())] {
+                    if let Some(cur_clip) = self.clips.get(&id) {
+                        if entry.timestamp() - cur_clip.timestamp() < self.primary_threshold {
+                            if let ClipboardContent::Plaintext(cur_text) = cur_clip.as_ref() {
+                                let len = std::cmp::min(text.len(), cur_text.len());
+                                if text[..len] == cur_text[..len] {
+                                    if let Some(clip) = self.clips.remove(&id) {
+                                        let _id = self.timestamp_to_id.remove(&clip.timestamp());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -267,7 +285,7 @@ mod tests {
 
         let cap = 20;
         let backend = Arc::new(LocalClipboardBackend::new());
-        let mgr = ClipboardManager::with_capacity(backend, cap, notification);
+        let mgr = ClipboardManager::with_capacity(backend, 0, cap, notification);
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
@@ -280,7 +298,7 @@ mod tests {
         let backend = Arc::new(LocalClipboardBackend::new());
         let notification = DummyNotification::default();
         let cap = 10;
-        let mut mgr = ClipboardManager::with_capacity(backend, cap, notification);
+        let mut mgr = ClipboardManager::with_capacity(backend, 0, cap, notification);
         assert_eq!(mgr.len(), 0);
         assert_eq!(mgr.capacity(), cap);
 
@@ -336,7 +354,7 @@ mod tests {
         let mut clips = create_clips(n);
         let backend = Arc::new(LocalClipboardBackend::new());
         let notification = DummyNotification::default();
-        let mut mgr = ClipboardManager::with_capacity(backend, 20, notification);
+        let mut mgr = ClipboardManager::with_capacity(backend, 0, 20, notification);
 
         mgr.import(&clips);
         assert_eq!(mgr.len(), n);

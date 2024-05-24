@@ -10,6 +10,8 @@ pub struct Config {
 
     pub grpc_access_token: Option<String>,
 
+    pub primary_threshold_ms: i64,
+
     pub max_history: usize,
 
     pub synchronize_selection_with_clipboard: bool,

@@ -56,6 +56,7 @@ pub async fn serve_with_shutdown(
         grpc_listen_address,
         grpc_local_socket,
         grpc_access_token,
+        primary_threshold_ms,
         max_history,
         history_file_path,
         synchronize_selection_with_clipboard,
@@ -115,6 +116,7 @@ pub async fn serve_with_shutdown(
         tracing::info!("Initialize ClipboardManager with capacity {max_history}");
         let mut clipboard_manager = ClipboardManager::with_capacity(
             clipboard_backend.clone(),
+            primary_threshold_ms,
             max_history,
             desktop_notification.clone(),
         );
