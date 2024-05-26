@@ -26,6 +26,9 @@ pub struct Config {
     #[serde(default = "Config::default_pid_file_path")]
     pub pid_file: PathBuf,
 
+    #[serde(default = "Config::default_primary_threshold_ms")]
+    pub primary_threshold_ms: i64,
+
     #[serde(default = "Config::default_max_history")]
     pub max_history: usize,
 
@@ -62,6 +65,7 @@ impl Default for Config {
         Self {
             daemonize: true,
             pid_file: Self::default_pid_file_path(),
+            primary_threshold_ms: Self::default_primary_threshold_ms(),
             max_history: Self::default_max_history(),
             history_file_path: Self::default_history_file_path(),
             synchronize_selection_with_clipboard:
@@ -125,6 +129,9 @@ impl Config {
     pub const fn default_synchronize_selection_with_clipboard() -> bool { true }
 
     #[inline]
+    pub const fn default_primary_threshold_ms() -> i64 { 5000 }
+
+    #[inline]
     pub const fn default_max_history() -> usize { 50 }
 
     #[inline]
@@ -186,6 +193,7 @@ impl From<Config> for clipcat_server::Config {
     fn from(
         Config {
             grpc,
+            primary_threshold_ms,
             max_history,
             synchronize_selection_with_clipboard,
             history_file_path,
@@ -197,6 +205,7 @@ impl From<Config> for clipcat_server::Config {
             ..
         }: Config,
     ) -> Self {
+        let primary_threshold = time::Duration::milliseconds(primary_threshold_ms);
         let grpc_listen_address = grpc.enable_http.then_some(grpc.socket_address());
         let grpc_local_socket = grpc.enable_local_socket.then_some(grpc.local_socket);
         let grpc_access_token = if let Some(file_path) = grpc.access_token_file_path {
@@ -220,6 +229,7 @@ impl From<Config> for clipcat_server::Config {
             grpc_listen_address,
             grpc_local_socket,
             grpc_access_token,
+            primary_threshold,
             max_history,
             synchronize_selection_with_clipboard,
             history_file_path,

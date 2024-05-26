@@ -180,6 +180,11 @@ history_file_path = "/home/<username>/.cache/clipcat/clipcatd-history"
 # File path of PID file,
 # if you omit this value, clipcatd places the PID file on `$XDG_RUNTIME_DIR/clipcatd.pid`.
 pid_file = "/run/user/<user-id>/clipcatd.pid"
+# Controls how often the program updates its stored value of the Linux
+# primary selection. In the Linux environment, the primary selection is a
+# mechanism that automatically updates to reflect the current highlighted text or
+# object, typically updating with every mouse movement.
+primary_threshold_ms = 5000
 
 [log]
 # Emit log message to a log file.
