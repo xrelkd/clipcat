@@ -15,7 +15,7 @@ use std::{
 
 use bytes::Bytes;
 use directories::ProjectDirs;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 
 pub use self::{
     entry::{Entry as ClipEntry, Error as ClipEntryError, Metadata as ClipEntryMetadata},
@@ -32,16 +32,15 @@ pub const DBUS_SYSTEM_OBJECT_PATH: &str = "/org/clipcat/clipcat/system";
 pub const DBUS_WATCHER_OBJECT_PATH: &str = "/org/clipcat/clipcat/watcher";
 pub const DBUS_MANAGER_OBJECT_PATH: &str = "/org/clipcat/clipcat/manager";
 
-lazy_static! {
-    pub static ref PROJECT_SEMVER: semver::Version = semver::Version::parse(PROJECT_VERSION)
-        .unwrap_or(semver::Version {
-            major: 0,
-            minor: 0,
-            patch: 0,
-            pre: semver::Prerelease::EMPTY,
-            build: semver::BuildMetadata::EMPTY
-        });
-}
+pub static PROJECT_SEMVER: Lazy<semver::Version> = Lazy::new(|| {
+    semver::Version::parse(PROJECT_VERSION).unwrap_or(semver::Version {
+        major: 0,
+        minor: 0,
+        patch: 0,
+        pre: semver::Prerelease::EMPTY,
+        build: semver::BuildMetadata::EMPTY,
+    })
+});
 
 pub const PROJECT_NAME: &str = "clipcat";
 pub const PROJECT_NAME_WITH_INITIAL_CAPITAL: &str = "Clipcat";
@@ -70,12 +69,12 @@ pub const DEFAULT_METRICS_HOST: IpAddr = IpAddr::V4(Ipv4Addr::LOCALHOST);
 
 pub const DEFAULT_MENU_PROMPT: &str = "Clipcat";
 
-lazy_static::lazy_static! {
-pub static ref PROJECT_CONFIG_DIR: PathBuf = ProjectDirs::from("", PROJECT_NAME, PROJECT_NAME)
-            .expect("Creating `ProjectDirs` should always success")
-            .config_dir()
-            .to_path_buf();
-}
+pub static PROJECT_CONFIG_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    ProjectDirs::from("", PROJECT_NAME, PROJECT_NAME)
+        .expect("Creating `ProjectDirs` should always success")
+        .config_dir()
+        .to_path_buf()
+});
 
 #[must_use]
 pub fn fallback_project_config_directories() -> Vec<PathBuf> {
@@ -83,8 +82,8 @@ pub fn fallback_project_config_directories() -> Vec<PathBuf> {
         return Vec::new();
     };
     vec![
-        [user_dirs.home_dir(), &Path::new(".config"), &Path::new(PROJECT_NAME)].iter().collect(),
-        [user_dirs.home_dir(), &Path::new(&format!(".{PROJECT_NAME}"))].iter().collect(),
+        [user_dirs.home_dir(), Path::new(".config"), Path::new(PROJECT_NAME)].iter().collect(),
+        [user_dirs.home_dir(), Path::new(&format!(".{PROJECT_NAME}"))].iter().collect(),
     ]
 }
 

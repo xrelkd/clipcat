@@ -84,7 +84,7 @@ impl From<usize> for Kind {
 }
 
 impl fmt::Display for Kind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.as_str()) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.as_str()) }
 }
 
 #[derive(Debug, Snafu)]

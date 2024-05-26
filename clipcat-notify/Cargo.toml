@@ -21,7 +21,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 clap          = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 mime          = "0.3"
-shadow-rs     = "0.27"
+shadow-rs     = "0.28"
 snafu         = "0.8"
 time          = { version = "0.3", features = ["local-offset", "serde"] }
 
@@ -29,7 +29,7 @@ clipcat-base   = { path = "../crates/base" }
 clipcat-server = { path = "../crates/server" }
 
 [build-dependencies]
-shadow-rs = "0.27"
+shadow-rs = "0.28"
 
 [lints]
 workspace = true

@@ -113,7 +113,7 @@ impl Cli {
         config.daemonize = !self.no_daemon;
 
         if let Some(history_file_path) = &self.history_file_path {
-            config.history_file_path = history_file_path.clone();
+            config.history_file_path.clone_from(history_file_path);
         }
 
         if let Some(host) = self.grpc_host {
@@ -127,7 +127,7 @@ impl Cli {
 
         if let Some(path) = &self.grpc_socket_path {
             config.grpc.enable_local_socket = true;
-            config.grpc.local_socket = path.clone();
+            config.grpc.local_socket.clone_from(path);
         }
 
         if !config.grpc.enable_http && !config.grpc.enable_local_socket {

@@ -56,6 +56,7 @@ pub async fn serve_with_shutdown(
         grpc_listen_address,
         grpc_local_socket,
         grpc_access_token,
+        primary_threshold,
         max_history,
         history_file_path,
         synchronize_selection_with_clipboard,
@@ -116,6 +117,7 @@ pub async fn serve_with_shutdown(
         let mut clipboard_manager = ClipboardManager::with_capacity(
             clipboard_backend.clone(),
             max_history,
+            primary_threshold,
             desktop_notification.clone(),
         );
 
@@ -533,9 +535,7 @@ async fn serve_worker(
                     if synchronize_selection_with_clipboard
                         && clip.kind() == ClipboardKind::Clipboard
                     {
-                        if let Err(err) =
-                            clipboard_manager.mark(id, clipcat_base::ClipboardKind::Primary).await
-                        {
+                        if let Err(err) = clipboard_manager.mark(id, ClipboardKind::Primary).await {
                             tracing::warn!("{err}");
                         }
                     }
