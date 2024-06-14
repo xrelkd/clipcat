@@ -24,7 +24,7 @@ arboard = { version = "3", default-features = false, features = [
 
 bytes       = "1"
 mime        = "0.3"
-mio         = { version = "0.8", features = ["os-ext"] }
+mio         = { version = "1.0", features = ["os-ext"] }
 parking_lot = "0.12"
 snafu       = "0.8"
 
