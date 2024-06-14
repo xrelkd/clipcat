@@ -16,4 +16,6 @@ enum WatcherState {
   Disabled = 1;
 }
 
-message WatcherStateReply { WatcherState state = 1; }
+message WatcherStateReply {
+  WatcherState state = 1;
+}

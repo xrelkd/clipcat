@@ -7,6 +7,7 @@ pkgs.runCommandNoCC "check-format"
 
     shellcheck
 
+    buf
     nixpkgs-fmt
     nodePackages.prettier
     shfmt
@@ -19,7 +20,7 @@ pkgs.runCommandNoCC "check-format"
     --fail-on-change \
     --no-cache \
     --formatters prettier \
-    --formatters clang-format \
+    --formatters protobuf \
     --formatters nix \
     --formatters shell \
     --formatters hcl \

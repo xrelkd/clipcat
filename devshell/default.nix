@@ -35,14 +35,13 @@ pkgs.mkShell {
 
     jq
 
+    buf
     hclfmt
     nixpkgs-fmt
     nodePackages.prettier
     shfmt
     taplo
     treefmt
-    # clang-tools contains clang-format
-    clang-tools
 
     shellcheck
 
