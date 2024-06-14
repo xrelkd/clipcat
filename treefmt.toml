@@ -3,9 +3,11 @@ command  = "cargo"
 options  = ["fmt", "--all", "--verbose", "--"]
 includes = ["*.rs"]
 
-[formatter.clang-format]
-command  = "clang-format"
-options  = ["-i", "--Werror", "--verbose"]
+[formatter.protobuf]
+command = "sh"
+options = ["-eucx", """
+buf format --write
+"""]
 includes = ["*.proto"]
 
 [formatter.prettier]
