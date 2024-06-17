@@ -79,7 +79,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Show cargo clippy version
         run: |
@@ -125,7 +125,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.mode }}-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Show cargo-nextest version
         run: |
@@ -168,7 +168,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Run cargo doc
         run: |
