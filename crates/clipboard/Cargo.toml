@@ -32,7 +32,7 @@ clipcat-base = { path = "../base/" }
 
 [target.'cfg(all(unix, not(any(target_os="macos", target_os="android", target_os="emscripten"))))'.dependencies]
 x11rb           = { version = "0.13", features = ["xfixes"] }
-wl-clipboard-rs = "0.8"
+wl-clipboard-rs = "0.9"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc            = "0.2"
