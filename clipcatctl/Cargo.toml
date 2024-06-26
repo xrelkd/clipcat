@@ -30,7 +30,7 @@ directories   = "5"
 http          = "1"
 mime          = "0.3"
 resolve-path  = "0.1"
-shadow-rs     = "0.28"
+shadow-rs     = "0.29"
 simdutf8      = "0.1"
 snafu         = "0.8"
 
@@ -40,7 +40,7 @@ clipcat-client          = { path = "../crates/client" }
 clipcat-external-editor = { path = "../crates/external-editor" }
 
 [build-dependencies]
-shadow-rs = "0.28"
+shadow-rs = "0.29"
 
 [lints]
 workspace = true

@@ -50,16 +50,30 @@ message InsertRequest {
   bytes data = 2;
   string mime = 3;
 }
-message InsertResponse { uint64 id = 1; }
+message InsertResponse {
+  uint64 id = 1;
+}
 
-message GetRequest { uint64 id = 1; }
-message GetResponse { ClipEntry data = 1; }
+message GetRequest {
+  uint64 id = 1;
+}
+message GetResponse {
+  ClipEntry data = 1;
+}
 
-message GetCurrentClipRequest { ClipboardKind kind = 1; }
-message GetCurrentClipResponse { ClipEntry data = 1; }
+message GetCurrentClipRequest {
+  ClipboardKind kind = 1;
+}
+message GetCurrentClipResponse {
+  ClipEntry data = 1;
+}
 
-message ListRequest { uint64 preview_length = 1; }
-message ListResponse { repeated ClipEntryMetadata metadata = 1; }
+message ListRequest {
+  uint64 preview_length = 1;
+}
+message ListResponse {
+  repeated ClipEntryMetadata metadata = 1;
+}
 
 message UpdateRequest {
   uint64 id = 1;
@@ -75,12 +89,24 @@ message MarkRequest {
   uint64 id = 1;
   ClipboardKind kind = 2;
 }
-message MarkResponse { bool ok = 1; }
+message MarkResponse {
+  bool ok = 1;
+}
 
-message LengthResponse { uint64 length = 1; }
+message LengthResponse {
+  uint64 length = 1;
+}
 
-message RemoveRequest { uint64 id = 1; }
-message RemoveResponse { bool ok = 1; }
+message RemoveRequest {
+  uint64 id = 1;
+}
+message RemoveResponse {
+  bool ok = 1;
+}
 
-message BatchRemoveRequest { repeated uint64 ids = 1; }
-message BatchRemoveResponse { repeated uint64 ids = 1; }
+message BatchRemoveRequest {
+  repeated uint64 ids = 1;
+}
+message BatchRemoveResponse {
+  repeated uint64 ids = 1;
+}
