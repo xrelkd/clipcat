@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "bytes",
  "directories",
@@ -754,7 +754,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-cli"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "serde",
  "serde_with",
@@ -765,7 +765,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -783,7 +783,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "arboard",
  "bytes",
@@ -805,7 +805,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-dbus-variant"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clipcat-base",
  "snafu 0.8.3",
@@ -825,7 +825,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clap 4.5.7",
  "clap_complete",
@@ -849,7 +849,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-metrics"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "async-trait",
  "axum 0.7.5",
@@ -865,7 +865,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clap 4.5.7",
  "clap_complete",
@@ -882,7 +882,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -896,7 +896,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "async-trait",
  "bincode",
@@ -932,7 +932,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "bytes",
  "clap 4.5.7",
@@ -959,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "clap 4.5.7",
  "clap_complete",

@@ -1,3 +1,5 @@
+mod common;
+
 use std::sync::Arc;
 
 #[cfg(all(
@@ -11,8 +13,6 @@ use std::sync::Arc;
 ))]
 use clipcat_clipboard::X11ListenerError;
 use clipcat_clipboard::{Clipboard, ClipboardKind, Error};
-
-mod common;
 
 use self::common::ClipboardTester;
 
