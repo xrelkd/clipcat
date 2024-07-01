@@ -10,6 +10,13 @@ buf format --write
 """]
 includes = ["*.proto"]
 
+[formatter.protobuf-check]
+command = "sh"
+options = ["-eucx", """
+buf format --exit-code
+"""]
+includes = ["*.proto"]
+
 [formatter.prettier]
 command = "prettier"
 options = ["--write"]
