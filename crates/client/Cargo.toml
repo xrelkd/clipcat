@@ -21,8 +21,8 @@ tokio       = { version = "1", features = ["net"] }
 http  = "1"
 tower = "0.4"
 
+prost-types = "0.13"
 tonic       = { version = "0.12", features = ["gzip"] }
-prost-types = "0.12"
 
 mime   = "0.3"
 semver = "1"
