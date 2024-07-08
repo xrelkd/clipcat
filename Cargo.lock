@@ -727,7 +727,7 @@ dependencies = [
  "clipcat-proto",
  "http",
  "mime",
- "prost-types 0.13.0",
+ "prost-types",
  "semver",
  "snafu 0.8.4",
  "tokio",
@@ -842,8 +842,8 @@ dependencies = [
  "clipcat-base",
  "mime",
  "prost 0.12.6",
- "prost-build 0.12.6",
- "prost-types 0.13.0",
+ "prost-build",
+ "prost-types",
  "time",
  "tonic",
  "tonic-build",
@@ -3059,27 +3059,6 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.12.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
-dependencies = [
- "bytes",
- "heck 0.5.0",
- "itertools 0.12.1",
- "log",
- "multimap",
- "once_cell",
- "petgraph",
- "prettyplease",
- "prost 0.12.6",
- "prost-types 0.12.6",
- "regex",
- "syn 2.0.70",
- "tempfile",
-]
-
-[[package]]
-name = "prost-build"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04952a6dc0bf60a696e83fc8c58e912d4f6c1d06c6637db44c1cce9c6735c920"
@@ -3093,7 +3072,7 @@ dependencies = [
  "petgraph",
  "prettyplease",
  "prost 0.13.0",
- "prost-types 0.13.0",
+ "prost-types",
  "regex",
  "syn 2.0.70",
  "tempfile",
@@ -3123,15 +3102,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.70",
-]
-
-[[package]]
-name = "prost-types"
-version = "0.12.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
-dependencies = [
- "prost 0.12.6",
 ]
 
 [[package]]
@@ -4094,7 +4064,7 @@ checksum = "690943cc223adcdd67bb597a2e573ead1b88e999ba37528fe8e6356bf44b29b6"
 dependencies = [
  "prettyplease",
  "proc-macro2",
- "prost-build 0.13.0",
+ "prost-build",
  "quote",
  "syn 2.0.70",
 ]
