@@ -13,7 +13,7 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-prost       = "0.12"
+prost       = "0.13"
 prost-types = "0.12"
 tonic       = { version = "0.11", features = ["gzip"] }
 
