@@ -4,7 +4,7 @@ mod manager;
 mod system;
 mod watcher;
 
-use std::{fmt, path::Path};
+use std::fmt;
 
 use snafu::ResultExt;
 use tokio::net::UnixStream;
@@ -34,7 +34,7 @@ impl Client {
         if scheme == Some(&http::uri::Scheme::HTTP) {
             Self::connect_http(grpc_endpoint, access_token).await
         } else {
-            Self::connect_local_socket(grpc_endpoint.path(), access_token).await
+            Self::connect_local_socket(grpc_endpoint, access_token).await
         }
     }
 
@@ -61,30 +61,27 @@ impl Client {
     /// # Errors
     ///
     /// This function will an error if the server is not connected.
-    // SAFETY: it will never panic because `dummy_uri` is a valid URL
+    // SAFETY: it will never panic because `uri` is a valid URL
     #[allow(clippy::missing_panics_doc)]
-    pub async fn connect_local_socket<P, A>(socket_path: P, access_token: Option<A>) -> Result<Self>
+    pub async fn connect_local_socket<A>(uri: http::Uri, access_token: Option<A>) -> Result<Self>
     where
-        P: AsRef<Path> + Send,
         A: fmt::Display + Send,
     {
         let interceptor = Interceptor::new(access_token);
-        let socket_path = socket_path.as_ref().to_path_buf();
+        let socket_path = uri.path();
+
         // We will ignore this uri because uds do not use it
-        let dummy_uri = "http://[::]:50051";
-        let channel = tonic::transport::Endpoint::try_from(dummy_uri)
-            .expect("`dummy_uri` is a valid URL; qed")
-            .connect_with_connector(tower::service_fn({
-                let socket_path = socket_path.clone();
-                move |_| {
-                    let socket_path = socket_path.clone();
-                    // Connect to a Uds socket
-                    UnixStream::connect(socket_path)
-                }
+        let channel = tonic::transport::Endpoint::try_from(format!("file://[::]/{socket_path}"))
+            .expect("`uri` is a valid URL; qed")
+            .connect_with_connector(tower::service_fn(|uri: tonic::transport::Uri| async move {
+                // Connect to a Uds socket
+                Ok::<_, std::io::Error>(hyper_util::rt::TokioIo::new(
+                    UnixStream::connect(uri.path()).await?,
+                ))
             }))
             .await
             .with_context(|_| error::ConnectToClipcatServerViaLocalSocketSnafu {
-                socket: socket_path.clone(),
+                socket: socket_path,
             })?;
         Ok(Self { channel, interceptor })
     }

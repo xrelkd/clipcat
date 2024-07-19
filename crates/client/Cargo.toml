@@ -16,6 +16,7 @@ keywords.workspace     = true
 tracing = "0.1"
 
 async-trait = "0.1"
+hyper-util  = "0.1"
 tokio       = { version = "1", features = ["net"] }
 
 http  = "1"
