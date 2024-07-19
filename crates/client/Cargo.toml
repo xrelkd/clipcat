@@ -16,13 +16,14 @@ keywords.workspace     = true
 tracing = "0.1"
 
 async-trait = "0.1"
+hyper-util  = "0.1"
 tokio       = { version = "1", features = ["net"] }
 
 http  = "1"
 tower = "0.4"
 
-tonic       = { version = "0.11", features = ["gzip"] }
-prost-types = "0.12"
+prost-types = "0.13"
+tonic       = { version = "0.12", features = ["gzip"] }
 
 mime   = "0.3"
 semver = "1"
