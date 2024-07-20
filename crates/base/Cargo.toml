@@ -13,23 +13,23 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
+serde = { workspace = true }
 
-tokio = { version = "1" }
+tokio = { workspace = true }
 
-http = "1"
+http = { workspace = true }
 
-bytes       = "1"
-directories = "5"
-humansize   = "2"
-image       = "0.25"
-mime        = "0.3"
-once_cell   = "1"
-regex       = "1"
-semver      = "1"
-sha2        = "0.10"
-snafu       = "0.8"
-time        = { version = "0.3", features = ["formatting", "local-offset", "macros"] }
+bytes       = { workspace = true }
+directories = { workspace = true }
+humansize   = { workspace = true }
+image       = { workspace = true }
+mime        = { workspace = true }
+once_cell   = { workspace = true }
+regex       = { workspace = true }
+semver      = { workspace = true }
+sha2        = { workspace = true }
+snafu       = { workspace = true }
+time        = { workspace = true }
 
 [lints]
 workspace = true
