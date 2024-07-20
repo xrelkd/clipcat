@@ -13,24 +13,24 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-tracing = "0.1"
+tracing = { workspace = true }
 
-async-trait = "0.1"
-hyper-util  = "0.1"
-tokio       = { version = "1", features = ["net"] }
+async-trait = { workspace = true }
+hyper-util  = { workspace = true }
+tokio       = { workspace = true }
 
-http  = "1"
-tower = "0.4"
+http  = { workspace = true }
+tower = { workspace = true }
 
-prost-types = "0.13"
-tonic       = { version = "0.12", features = ["gzip"] }
+prost-types = { workspace = true }
+tonic       = { workspace = true }
 
-mime   = "0.3"
-semver = "1"
-snafu  = "0.8"
+mime   = { workspace = true }
+semver = { workspace = true }
+snafu  = { workspace = true }
 
-clipcat-base  = { path = "../base" }
-clipcat-proto = { path = "../proto" }
+clipcat-base  = { workspace = true }
+clipcat-proto = { workspace = true }
 
 [lints]
 workspace = true

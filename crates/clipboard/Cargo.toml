@@ -15,18 +15,15 @@ keywords.workspace     = true
 autoexamples = false
 
 [dependencies]
-tracing = "0.1"
+tracing = { workspace = true }
 
-arboard = { version = "3", default-features = false, features = [
-  "image-data",
-  "wayland-data-control",
-] }
+arboard = { workspace = true }
 
-bytes       = "1"
-mime        = "0.3"
-mio         = { version = "1.0", features = ["os-ext"] }
-parking_lot = "0.12"
-snafu       = "0.8"
+bytes       = { workspace = true }
+mime        = { workspace = true }
+mio         = { workspace = true }
+parking_lot = { workspace = true }
+snafu       = { workspace = true }
 
 clipcat-base = { path = "../base/" }
 

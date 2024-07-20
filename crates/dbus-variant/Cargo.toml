@@ -13,13 +13,14 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-serde    = { version = "1", features = ["derive"] }
-zvariant = "4"
+serde = { workspace = true }
 
-mime = "0.3"
-time = { version = "0.3", features = ["formatting", "macros"] }
+zvariant = { workspace = true }
 
-clipcat-base = { path = "../base" }
+mime = { workspace = true }
+time = { workspace = true }
+
+clipcat-base = { workspace = true }
 
 [lints]
 workspace = true
