@@ -621,9 +621,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.9"
+version = "4.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64acc1846d54c1fe936a78dc189c34e28d3f5afc348403f28ecf53660b9b8462"
+checksum = "8f6b81fb3c84f5563d509c59b5a48d935f689e993afa90fe39047f05adef9142"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -631,9 +631,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.9"
+version = "4.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fb8393d67ba2e7bfaf28a23458e4e2b543cc73a99595511eb207fdb8aede942"
+checksum = "5ca6706fd5224857d9ac5eb9355f6683563cc0541c7cd9d014043b57cbec78ac"
 dependencies = [
  "anstream",
  "anstyle",
@@ -647,7 +647,7 @@ version = "4.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b4be9c4c4b1f30b78d8a750e0822b6a6102d97e62061c583a6c1dea2dfb33ae"
 dependencies = [
- "clap 4.5.9",
+ "clap 4.5.10",
 ]
 
 [[package]]
@@ -782,7 +782,7 @@ dependencies = [
 name = "clipcat-menu"
 version = "0.18.1"
 dependencies = [
- "clap 4.5.9",
+ "clap 4.5.10",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -822,7 +822,7 @@ dependencies = [
 name = "clipcat-notify"
 version = "0.18.1"
 dependencies = [
- "clap 4.5.9",
+ "clap 4.5.10",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -890,7 +890,7 @@ name = "clipcatctl"
 version = "0.18.1"
 dependencies = [
  "bytes",
- "clap 4.5.9",
+ "clap 4.5.10",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -916,7 +916,7 @@ dependencies = [
 name = "clipcatd"
 version = "0.18.1"
 dependencies = [
- "clap 4.5.9",
+ "clap 4.5.10",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -2246,7 +2246,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -3054,7 +3054,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5bb182580f71dd070f88d01ce3de9f4da5021db7115d2e1c3605a754153b77c1"
 dependencies = [
  "bytes",
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.13.0",
  "log",
  "multimap",
@@ -3660,7 +3660,7 @@ version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38d1e02fca405f6280643174a50c942219f0bbf4dbf7d480f1dd864d6f211ae5"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.71",
