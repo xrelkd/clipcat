@@ -121,7 +121,8 @@ clipcat-proto           = { path = "./crates/proto" }
 clipcat-server          = { path = "./crates/server" }
 
 [workspace.lints.rust]
-box_pointers = "allow"
+async_fn_in_trait = "allow"
+box_pointers      = "allow"
 
 # TODO: deny `unused_crate_dependencies` after https://github.com/rust-lang/rust/issues/95513 being solved
 unused_crate_dependencies = "allow"
@@ -133,13 +134,12 @@ deprecated_in_future                    = "deny"
 elided_lifetimes_in_paths               = "deny"
 explicit_outlives_requirements          = "deny"
 ffi_unwind_calls                        = "deny"
-keyword_idents                          = "deny"
+keyword_idents                          = { level = "deny", priority = -1 }
 let_underscore_drop                     = "deny"
 macro_use_extern_crate                  = "deny"
 meta_variable_misuse                    = "deny"
 missing_abi                             = "deny"
 non_ascii_idents                        = "deny"
-pointer_structural_match                = "deny"
 rust_2021_incompatible_closure_captures = "deny"
 rust_2021_incompatible_or_patterns      = "deny"
 rust_2021_prefixes_incompatible_syntax  = "deny"
@@ -193,7 +193,6 @@ hidden_glob_reexports                    = "deny"
 improper_ctypes                          = "deny"
 improper_ctypes_definitions              = "deny"
 incomplete_features                      = "deny"
-indirect_structural_match                = "deny"
 inline_no_sanitize                       = "deny"
 internal_features                        = "deny"
 invalid_doc_attributes                   = "deny"
@@ -221,7 +220,8 @@ path_statements                          = "deny"
 private_bounds                           = "deny"
 private_interfaces                       = "deny"
 redundant_semicolons                     = "deny"
-refining_impl_trait                      = "deny"
+refining_impl_trait                      = { level = "deny", priority = -1 }
+renamed_and_removed_lints                = "deny"
 repr_transparent_external_private_fields = "deny"
 semicolon_in_expressions_from_macros     = "deny"
 special_module_name                      = "deny"
@@ -261,7 +261,6 @@ unused_parens                            = "deny"
 unused_unsafe                            = "deny"
 unused_variables                         = "deny"
 useless_ptr_null_checks                  = "deny"
-where_clauses_object_safety              = "deny"
 while_true                               = "deny"
 
 [workspace.lints.clippy]
