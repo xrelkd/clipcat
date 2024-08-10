@@ -148,8 +148,7 @@ impl Context {
                             event.property,
                             xproto::AtomEnum::NONE,
                             0,
-                            u32::try_from(1024 * std::mem::size_of::<xproto::Atom>())
-                                .unwrap_or(u32::MAX),
+                            u32::try_from(1024 * size_of::<xproto::Atom>()).unwrap_or(u32::MAX),
                         )
                         .context(error::GetPropertySnafu)?
                         .reply()
