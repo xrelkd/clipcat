@@ -1,4 +1,5 @@
 use std::{
+    mem::size_of,
     os::{fd::AsRawFd, unix::prelude::RawFd},
     thread,
     time::{Duration, Instant},
