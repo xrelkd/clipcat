@@ -1,5 +1,5 @@
 [workspace.package]
-version      = "0.18.1"
+version      = "0.18.2"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
@@ -274,7 +274,6 @@ pedantic = "deny"
 
 [profile.release]
 opt-level = 3
-lto       = true
 
 [profile.dev]
 opt-level = 0
