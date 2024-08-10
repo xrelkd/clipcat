@@ -22,6 +22,6 @@ impl proto::System for SystemService {
         &self,
         _request: Request<()>,
     ) -> Result<Response<proto::GetSystemVersionResponse>, Status> {
-        Ok(Response::new(GET_SYSTEM_VERSION_RESPONSE.clone()))
+        Ok(Response::new(*GET_SYSTEM_VERSION_RESPONSE))
     }
 }

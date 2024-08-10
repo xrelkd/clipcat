@@ -43,7 +43,7 @@ impl Entry {
             };
 
             let cursor = std::io::Cursor::new(&data);
-            let mut reader = image::io::Reader::new(cursor);
+            let mut reader = image::ImageReader::new(cursor);
             reader.set_format(image_format);
             reader
                 .decode()

@@ -13,11 +13,11 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-tokio = { version = "1", features = ["fs", "process", "rt-multi-thread"] }
+tokio = { workspace = true }
 
-snafu = "0.8"
+snafu = { workspace = true }
 
-clipcat-base = { path = "../base" }
+clipcat-base = { workspace = true }
 
 [lints]
 workspace = true

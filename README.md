@@ -514,6 +514,7 @@ WantedBy=graphical-session.target
 
 [Service]
 # NOTE: We assume that your `clipcatd` is placed at `/usr/bin/clipcatd`.
+ExecStartPre=/bin/rm -f %t/clipcat/grpc.sock
 ExecStart=/usr/bin/clipcatd --no-daemon --replace
 Restart=on-failure
 Type=simple

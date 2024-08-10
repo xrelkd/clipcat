@@ -13,21 +13,18 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-prost       = "0.12"
-prost-types = "0.12"
-tonic       = { version = "0.11", features = ["gzip"] }
+prost       = { workspace = true }
+prost-types = { workspace = true }
+tonic       = { workspace = true }
 
-mime = "0.3"
-time = { version = "0.3", features = ["formatting", "macros"] }
+mime = { workspace = true }
+time = { workspace = true }
 
-clipcat-base = { path = "../base" }
+clipcat-base = { workspace = true }
 
 [build-dependencies]
-tonic-build = { version = "0.11", default-features = false, features = [
-  "prost",
-  "transport",
-] }
-prost-build = "0.12"
+tonic-build = { workspace = true }
+prost-build = { workspace = true }
 
 [lints]
 workspace = true
