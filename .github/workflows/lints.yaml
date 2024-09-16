@@ -42,7 +42,7 @@ jobs:
         run: nix profile install 'nixpkgs#buf'
 
       - name: Run shfmt, shellcheck, checkbashisms
-        uses: luizm/action-sh-checker@v0.8.0
+        uses: luizm/action-sh-checker@v0.9.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
