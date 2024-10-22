@@ -122,7 +122,6 @@ clipcat-server          = { path = "./crates/server" }
 
 [workspace.lints.rust]
 async_fn_in_trait = "allow"
-box_pointers      = "allow"
 
 # TODO: deny `unused_crate_dependencies` after https://github.com/rust-lang/rust/issues/95513 being solved
 unused_crate_dependencies = "allow"

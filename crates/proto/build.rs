@@ -6,7 +6,6 @@ fn prost_config() -> Config {
     config
 }
 
-#[allow(box_pointers)]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::configure().compile_with_config(
         prost_config(),
