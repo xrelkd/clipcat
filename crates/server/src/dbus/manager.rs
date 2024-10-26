@@ -13,7 +13,9 @@ pub struct ManagerService<Notification> {
 }
 
 impl<Notification> ManagerService<Notification> {
-    pub fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self { Self { manager } }
+    pub const fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self {
+        Self { manager }
+    }
 }
 
 #[interface(name = "org.clipcat.clipcat.Manager")]

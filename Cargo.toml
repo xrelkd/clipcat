@@ -1,5 +1,5 @@
 [workspace.package]
-version      = "0.18.3"
+version      = "0.19.0"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
@@ -122,7 +122,6 @@ clipcat-server          = { path = "./crates/server" }
 
 [workspace.lints.rust]
 async_fn_in_trait = "allow"
-box_pointers      = "allow"
 
 # TODO: deny `unused_crate_dependencies` after https://github.com/rust-lang/rust/issues/95513 being solved
 unused_crate_dependencies = "allow"
@@ -165,7 +164,6 @@ asm_sub_register                         = "deny"
 bad_asm_style                            = "deny"
 bare_trait_objects                       = "deny"
 break_with_label_and_loop                = "deny"
-byte_slice_in_packed_struct_with_derive  = "deny"
 clashing_extern_declarations             = "deny"
 coherence_leak_check                     = "deny"
 confusable_idents                        = "deny"

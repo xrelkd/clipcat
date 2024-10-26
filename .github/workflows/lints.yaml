@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@v14
 
       - name: Install treefmt
         run: nix profile install 'nixpkgs#treefmt'
@@ -42,7 +42,7 @@ jobs:
         run: nix profile install 'nixpkgs#buf'
 
       - name: Run shfmt, shellcheck, checkbashisms
-        uses: luizm/action-sh-checker@v0.8.0
+        uses: luizm/action-sh-checker@v0.9.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -72,7 +72,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v6.0.2
+        uses: wagoid/commitlint-github-action@v6.1.2
 
   codespell:
     name: Codespell

@@ -16,7 +16,7 @@ impl<Notification> Toggle<Notification>
 where
     Notification: notification::Notification,
 {
-    pub fn new(is_watching: Arc<AtomicBool>, notification: Notification) -> Self {
+    pub const fn new(is_watching: Arc<AtomicBool>, notification: Notification) -> Self {
         Self { is_watching, notification }
     }
 
