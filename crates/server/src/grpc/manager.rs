@@ -11,7 +11,9 @@ pub struct ManagerService<Notification> {
 }
 
 impl<Notification> ManagerService<Notification> {
-    pub fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self { Self { manager } }
+    pub const fn new(manager: Arc<Mutex<ClipboardManager<Notification>>>) -> Self {
+        Self { manager }
+    }
 }
 
 #[tonic::async_trait]
