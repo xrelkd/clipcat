@@ -20,10 +20,4 @@ pub trait Notification: Send + Sync {
         C: fmt::Display,
     {
     }
-
-    fn on_wayland_connected<C>(&self, _clipboard_kind: ClipboardKind, _connection_info: C)
-    where
-        C: fmt::Display,
-    {
-    }
 }
