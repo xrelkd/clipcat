@@ -28,8 +28,7 @@ snafu       = { workspace = true }
 clipcat-base = { path = "../base/" }
 
 [target.'cfg(all(unix, not(any(target_os="macos", target_os="android", target_os="emscripten"))))'.dependencies]
-x11rb           = { version = "0.13", features = ["xfixes"] }
-wl-clipboard-rs = "0.9"
+x11rb = { version = "0.13", features = ["xfixes"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc            = "0.2"
@@ -37,16 +36,16 @@ objc_id         = "0.1"
 objc-foundation = "0.1"
 
 [dev-dependencies]
-tracing-subscriber = "0.3"
+tracing-subscriber = { workspace = true }
 
-tokio = { version = "1", features = [
+tokio = { workspace = true, features = [
   "macros",
   "rt-multi-thread",
   "signal",
   "sync",
 ] }
 
-sigfinn = "0.2"
+sigfinn = { workspace = true }
 
 [[example]]
 name = "load"
