@@ -1,11 +1,12 @@
-{ name
-, version
-, lib
-, stdenv
-, rustPlatform
-, protobuf
-, installShellFiles
-, darwin
+{
+  name,
+  version,
+  lib,
+  stdenv,
+  rustPlatform,
+  protobuf,
+  installShellFiles,
+  darwin,
 }:
 
 rustPlatform.buildRustPackage {

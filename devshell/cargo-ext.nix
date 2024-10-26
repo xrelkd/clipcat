@@ -1,8 +1,8 @@
-{ cargoArgs
-, unitTestArgs
-, lib
-, writeShellScriptBin
-,
+{
+  cargoArgs,
+  unitTestArgs,
+  lib,
+  writeShellScriptBin,
 }:
 
 let
