@@ -10,7 +10,7 @@
     <a href="https://deps.rs/repo/github/xrelkd/clipcat"><img src="https://deps.rs/repo/github/xrelkd/clipcat/status.svg"></a>
     <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARust"><img src="https://github.com/xrelkd/clipcat/workflows/Rust/badge.svg"></a>
     <a href="https://github.com/xrelkd/clipcat/actions?query=workflow%3ARelease"><img src="https://github.com/xrelkd/clipcat/workflows/Release/badge.svg"></a>
-    <a href="https://github.com/xrelkd/clipcat/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
+    <a href="https://github.com/xrelkd/clipcat/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
 </p>
 
 **[Installation](#installation) | [Usage](#usage) | [Integration](#integration)**
@@ -28,8 +28,6 @@
 - [License](#license)
 
 </details>
-
-## Features
 
 ## Features
 
