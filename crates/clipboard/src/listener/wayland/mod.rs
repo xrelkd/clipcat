@@ -19,7 +19,7 @@ use crate::{
     ClipboardKind, ClipboardSubscribe,
 };
 
-const POLLING_INTERVAL: Duration = Duration::from_millis(250);
+const POLLING_INTERVAL: Duration = Duration::from_millis(500);
 
 #[derive(Debug)]
 pub struct Listener {
@@ -100,28 +100,24 @@ fn build_thread(
                                 break;
                             }
                         }
-                        continue;
                     }
                     Err(
                         WaylandError::NoSeats
                         | WaylandError::ClipboardEmpty
                         | WaylandError::NoMimeType,
-                    ) => {
-                        tracing::trace!("The clipboard is empty, sleep for a while");
-                    }
+                    ) => tracing::trace!("The clipboard is empty, sleep for a while"),
                     Err(WaylandError::MissingProtocol { name, version }) => {
                         tracing::error!(
                             "A required Wayland protocol (name: {name}, version: {version}) is \
                              not supported by the compositor"
                         );
                     }
-                    Err(err) => {
-                        tracing::warn!(
-                            "Error occurs while listening to clipboard of Wayland, error: {err}"
-                        );
-                    }
+                    Err(err) => tracing::warn!(
+                        "Error occurs while listening to clipboard of Wayland, error: {err}"
+                    ),
                 }
-                // sleep for a while there is no content or error occurred
+
+                // Sleep for a while there is no content or error occurred
                 thread::sleep(POLLING_INTERVAL);
             }
 
