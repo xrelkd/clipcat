@@ -36,7 +36,7 @@
 - [x] Persistent clipboard contents
 - [x] Support for snippets
 - [x] Support for `X11`
-- [ ] ~~Support for `Wayland` (experimental)~~
+- [x] Support for `Wayland` (experimental)
 - [x] Support for `macOS`
 - [x] Support for `gRPC`
   - [x] gRPC over `HTTP`
@@ -87,9 +87,9 @@ Currently, `clipcat` supports the following [windowing systems](https://en.wikip
 - `X11`, the following `crate`s are leveraged:
   - [x11rb](https://github.com/psychon/x11rb)
   - [arboard](https://github.com/1Password/arboard)
-- ~~`Wayland` (experimentally), the following `crate`s are leveraged:~~
-  - ~~[wl-clipboard-rs](https://github.com/YaLTeR/wl-clipboard-rs)~~
-  - ~~[arboard](https://github.com/1Password/arboard)~~
+- `Wayland` (experimentally), the following `crate`s are leveraged:
+  - [wl-clipboard-rs](https://github.com/YaLTeR/wl-clipboard-rs)
+  - [arboard](https://github.com/1Password/arboard)
 
 ### Clipcat Client
 
@@ -207,10 +207,9 @@ emit_stderr = false
 level = "INFO"
 
 [watcher]
-# Enable watching the X11 clipboard selection.
+# Enable watching the X11/Wayland clipboard selection.
 enable_clipboard = true
-
-# Enable watching the X11 primary selection.
+# Enable watching the X11/Wayland primary selection.
 enable_primary = true
 
 # Ignore clips that match any of the X11 `TARGETS`.

@@ -16,7 +16,7 @@ pub use clipcat_base::ClipboardKind;
         target_os = "emscripten"
     ))
 ))]
-pub use self::listener::X11ListenerError;
+pub use self::listener::{WaylandListenerError, X11ListenerError};
 pub use self::{
     default::Clipboard,
     error::Error,
@@ -32,4 +32,5 @@ pub use self::{
 #[derive(Clone, Copy, Debug)]
 pub enum ListenerKind {
     X11,
+    Wayland,
 }

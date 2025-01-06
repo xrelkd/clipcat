@@ -18,6 +18,18 @@ pub enum Error {
     #[snafu(display("{error}"))]
     X11Listener { error: crate::listener::x11::Error },
 
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    #[snafu(display("{error}"))]
+    WaylandListener { error: crate::listener::wayland::Error },
+
     #[cfg(target_os = "macos")]
     #[snafu(display("{error}"))]
     MacOsListener { error: crate::listener::macos::Error },
@@ -47,6 +59,19 @@ impl From<arboard::Error> for Error {
 ))]
 impl From<crate::listener::x11::Error> for Error {
     fn from(error: crate::listener::x11::Error) -> Self { Self::X11Listener { error } }
+}
+
+#[cfg(all(
+    unix,
+    not(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android",
+        target_os = "emscripten"
+    ))
+))]
+impl From<crate::listener::wayland::Error> for Error {
+    fn from(error: crate::listener::wayland::Error) -> Self { Self::WaylandListener { error } }
 }
 
 #[cfg(target_os = "macos")]
