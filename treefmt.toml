@@ -39,7 +39,7 @@ options  = ["format", "$@"]
 includes = ["*.toml"]
 
 [formatter.nix]
-command  = "nixpkgs-fmt"
+command  = "nixfmt"
 includes = ["*.nix"]
 
 [formatter.shell]

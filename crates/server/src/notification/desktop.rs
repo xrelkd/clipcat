@@ -17,6 +17,7 @@ enum Event {
     WatcherEnabled,
     WatcherDisabled,
     X11Connected { clipboard_kind: ClipboardKind, connection_info: String },
+    WaylandConnected { clipboard_kind: ClipboardKind, connection_info: String },
     ImageFetched { size: usize, width: usize, height: usize },
     PlaintextFetched { character_count: usize },
     Shutdown,
@@ -75,6 +76,16 @@ impl traits::Notification for Notification {
             connection_info: connection_info.to_string(),
         }));
     }
+
+    fn on_wayland_connected<C>(&self, clipboard_kind: ClipboardKind, connection_info: C)
+    where
+        C: fmt::Display,
+    {
+        drop(self.event_sender.send(Event::WaylandConnected {
+            clipboard_kind,
+            connection_info: connection_info.to_string(),
+        }));
+    }
 }
 
 pub struct Worker {
@@ -117,6 +128,12 @@ impl Worker {
                 Some(Event::X11Connected { connection_info, clipboard_kind }) => {
                     format!(
                         "Connected to X11 server.\n(clipboard kind: {clipboard_kind}, \
+                         {connection_info})"
+                    )
+                }
+                Some(Event::WaylandConnected { connection_info, clipboard_kind }) => {
+                    format!(
+                        "Connected to Wayland server.\n(clipboard kind: {clipboard_kind}, \
                          {connection_info})"
                     )
                 }
@@ -180,6 +197,9 @@ impl clipcat_clipboard::EventObserver for Notification {
         match backend_kind {
             clipcat_clipboard::ListenerKind::X11 => {
                 traits::Notification::on_x11_connected(self, clipboard_kind, connection_info);
+            }
+            clipcat_clipboard::ListenerKind::Wayland => {
+                traits::Notification::on_wayland_connected(self, clipboard_kind, connection_info);
             }
         }
     }

@@ -1,11 +1,12 @@
-{ rustToolchain
-, cargoArgs
-, unitTestArgs
-, pkgs
-, lib
-, stdenv
-, darwin
-, ...
+{
+  rustToolchain,
+  cargoArgs,
+  unitTestArgs,
+  pkgs,
+  lib,
+  stdenv,
+  darwin,
+  ...
 }:
 
 let
@@ -20,36 +21,39 @@ pkgs.mkShell {
     darwin.apple_sdk.frameworks.SystemConfiguration
   ];
 
-  nativeBuildInputs = with pkgs; [
-    cargo-ext.cargo-build-all
-    cargo-ext.cargo-clippy-all
-    cargo-ext.cargo-doc-all
-    cargo-ext.cargo-nextest-all
-    cargo-ext.cargo-test-all
-    cargo-nextest
-    rustToolchain
+  nativeBuildInputs =
+    with pkgs;
+    [
+      cargo-ext.cargo-build-all
+      cargo-ext.cargo-clippy-all
+      cargo-ext.cargo-doc-all
+      cargo-ext.cargo-nextest-all
+      cargo-ext.cargo-test-all
+      cargo-nextest
+      rustToolchain
 
-    tokei
+      tokei
 
-    protobuf
+      protobuf
 
-    jq
+      jq
 
-    buf
-    hclfmt
-    nixpkgs-fmt
-    nodePackages.prettier
-    shfmt
-    taplo
-    treefmt
+      buf
+      hclfmt
+      nixfmt-rfc-style
+      nodePackages.prettier
+      shfmt
+      taplo
+      treefmt
 
-    shellcheck
+      shellcheck
 
-    pkg-config
-    libgit2
-  ] ++ lib.optionals stdenv.isLinux [
-    xvfb-run
-  ];
+      pkg-config
+      libgit2
+    ]
+    ++ lib.optionals stdenv.isLinux [
+      xvfb-run
+    ];
 
   shellHook = ''
     export NIX_PATH="nixpkgs=${pkgs.path}"
