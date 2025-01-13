@@ -86,7 +86,7 @@
             inherit name rustPlatform;
           };
           container = pkgs.callPackage ./devshell/container.nix {
-            inherit (cargoToml) version;
+            inherit (cargoToml.workspace.package) version;
             inherit name clipcat;
           };
         };
