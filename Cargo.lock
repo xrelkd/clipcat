@@ -766,7 +766,7 @@ dependencies = [
  "mime",
  "serde",
  "time",
- "zvariant 4.2.0",
+ "zvariant 5.2.0",
 ]
 
 [[package]]
@@ -882,7 +882,7 @@ dependencies = [
  "tonic",
  "tracing",
  "zbus 4.4.0",
- "zvariant 4.2.0",
+ "zvariant 5.2.0",
 ]
 
 [[package]]

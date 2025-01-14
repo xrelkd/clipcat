@@ -74,7 +74,7 @@ tonic-build = { version = "0.12", default-features = false, features = [
 ] }
 
 zbus     = { version = "4", default-features = false, features = ["tokio"] }
-zvariant = "4"
+zvariant = "5"
 
 bytes = "1"
 clap = { version = "4", features = ["derive", "env"] }
