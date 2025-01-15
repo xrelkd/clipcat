@@ -72,7 +72,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v6.2.0
+        uses: wagoid/commitlint-github-action@v6.2.1
 
   codespell:
     name: Codespell
