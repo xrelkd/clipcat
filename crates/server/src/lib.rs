@@ -593,7 +593,7 @@ async fn serve_dbus(
     let system = dbus::SystemService::new();
     let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
     let manager = dbus::ManagerService::new(clipboard_manager);
-    let _conn = zbus::ConnectionBuilder::session()?
+    let _conn = zbus::connection::Builder::session()?
         .name(dbus_service_name)?
         .serve_at(clipcat_base::DBUS_SYSTEM_OBJECT_PATH, system)?
         .serve_at(clipcat_base::DBUS_WATCHER_OBJECT_PATH, watcher)?
