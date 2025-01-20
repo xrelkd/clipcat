@@ -458,7 +458,7 @@ async fn print_list(client: &Client, preview_length: usize, no_id: bool) -> Resu
     let metadata_list = client.list(preview_length).await?;
     for metadata in metadata_list {
         let ClipEntryMetadata { id, preview, .. } = metadata;
-        let output = if no_id { preview } else { format!("{id:016x}: {preview}\n") };
+        let output = if no_id { format!("{preview}\n") } else { format!("{id:016x}: {preview}\n") };
         tokio::io::stdout().write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
     }
     Ok(())
