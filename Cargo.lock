@@ -4076,7 +4076,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow",
+ "winnow 0.6.22",
 ]
 
 [[package]]
@@ -4883,6 +4883,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "winnow"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86e376c75f4f43f44db463cf729e0d3acbf954d13e22c51e26e4c264b4ab545f"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "wl-clipboard-rs"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5014,7 +5023,7 @@ dependencies = [
  "tracing",
  "uds_windows",
  "windows-sys 0.59.0",
- "winnow",
+ "winnow 0.6.22",
  "xdg-home",
  "zbus_macros",
  "zbus_names",
@@ -5044,7 +5053,7 @@ checksum = "519629a3f80976d89c575895b05677cbc45eaf9f70d62a364d819ba646409cc8"
 dependencies = [
  "serde",
  "static_assertions",
- "winnow",
+ "winnow 0.6.22",
  "zvariant",
 ]
 
@@ -5138,24 +5147,24 @@ dependencies = [
 
 [[package]]
 name = "zvariant"
-version = "5.2.0"
+version = "5.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55e6b9b5f1361de2d5e7d9fd1ee5f6f7fcb6060618a1f82f3472f58f2b8d4be9"
+checksum = "31c951c21879c6e1d46ac5adfc34f698fefb465d498cf4ac87545849bd71bb5a"
 dependencies = [
  "endi",
  "enumflags2",
  "serde",
  "static_assertions",
- "winnow",
+ "winnow 0.7.1",
  "zvariant_derive",
  "zvariant_utils",
 ]
 
 [[package]]
 name = "zvariant_derive"
-version = "5.2.0"
+version = "5.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "573a8dd76961957108b10f7a45bac6ab1ea3e9b7fe01aff88325dc57bb8f5c8b"
+checksum = "9eeb539471af098d9e63faf428c71ac4cd4efe0b5baa3c8a6b991c5f2543b70e"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -5175,5 +5184,5 @@ dependencies = [
  "serde",
  "static_assertions",
  "syn 2.0.95",
- "winnow",
+ "winnow 0.6.22",
 ]
