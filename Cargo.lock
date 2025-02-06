@@ -1430,7 +1430,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3440,7 +3440,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3870,7 +3870,7 @@ dependencies = [
  "getrandom",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4995,9 +4995,9 @@ dependencies = [
 
 [[package]]
 name = "zbus"
-version = "5.3.1"
+version = "5.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2494e4b3f44d8363eef79a8a75fc0649efb710eef65a66b5e688a5eb4afe678a"
+checksum = "cbddd8b6cb25d5d8ec1b23277b45299a98bfb220f1761ca11e186d5c702507f8"
 dependencies = [
  "async-broadcast",
  "async-executor",
@@ -5023,7 +5023,7 @@ dependencies = [
  "tracing",
  "uds_windows",
  "windows-sys 0.59.0",
- "winnow 0.6.22",
+ "winnow 0.7.1",
  "xdg-home",
  "zbus_macros",
  "zbus_names",
@@ -5032,9 +5032,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "5.3.1"
+version = "5.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445efc01929302aee95e2b25bbb62a301ea8a6369466e4278e58e7d1dfb23631"
+checksum = "dac404d48b4e9cf193c8b49589f3280ceca5ff63519e7e64f55b4cf9c47ce146"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
