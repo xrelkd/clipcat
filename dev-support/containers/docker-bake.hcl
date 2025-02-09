@@ -7,8 +7,8 @@ target "clipcat" {
   platforms  = ["linux/amd64"]
   target     = "clipcat"
   contexts = {
-    rust   = "docker-image://docker.io/library/rust:1.75.0-alpine3.19"
-    alpine = "docker-image://docker.io/library/alpine:3.19"
+    rust   = "docker-image://docker.io/library/rust:1.84.0-alpine3.21"
+    alpine = "docker-image://docker.io/library/alpine:3.21"
   }
   args = {
     RUSTC_WRAPPER         = "/usr/bin/sccache"

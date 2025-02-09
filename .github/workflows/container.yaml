@@ -9,6 +9,12 @@ on:
       - ci/*
     tags:
       - v*
+  pull_request:
+    paths:
+      - "dev-support/containers/alpine/Containerfile"
+      - "dev-support/containers/docker-bake.hcl"
+      - Cargo.lock
+      - Cargo.toml
 
 env:
   CI: 1
@@ -75,7 +81,7 @@ jobs:
           bake-target: clipcat
 
       - name: Build container image
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           pull: true
           push: true
@@ -86,5 +92,5 @@ jobs:
 
           files: |
             ./dev-support/containers/docker-bake.hcl
-            ${{ steps.meta.outputs.bake-file }}
+            cwd://${{ steps.meta.outputs.bake-file }}
           targets: clipcat
