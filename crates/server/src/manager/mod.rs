@@ -143,6 +143,8 @@ where
                         if entry.timestamp() - current_clip.timestamp() < self.primary_threshold {
                             if let ClipboardContent::Plaintext(current_text) = current_clip.as_ref()
                             {
+                                let text = text.as_bytes();
+                                let current_text = current_text.as_bytes();
                                 let len = text.len().min(current_text.len());
                                 if text[..len] == current_text[..len] {
                                     if let Some(clip) = self.clips.remove(&id) {
