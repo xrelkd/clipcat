@@ -1,12 +1,12 @@
 [workspace.package]
-version      = "0.20.2"
+version      = "0.21.0"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
 readme       = "README.md"
 license      = "GPL-3.0-only"
 edition      = "2021"
-rust-version = "1.70"
+rust-version = "1.77"
 description  = "Clipboard manager written in Rust Programming Language."
 categories   = ["clipboard manager"]
 keywords     = ["clipboard"]
