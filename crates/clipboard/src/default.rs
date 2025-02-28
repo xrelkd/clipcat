@@ -140,7 +140,7 @@ impl Clipboard {
     #[cfg(target_os = "macos")]
     pub fn new_on_macos() -> Result<Self, Error> {
         let listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>> =
-            Arc::new(MacOsListener::new()?);
+            Arc::new(MacOsListener::new());
 
         let clear_on_drop = Arc::new(AtomicBool::from(false));
 
