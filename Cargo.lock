@@ -630,9 +630,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.28"
+version = "4.5.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e77c3243bd94243c03672cb5154667347c457ca271254724f9f393aee1c05ff"
+checksum = "027bb0d98429ae334a8698531da7077bdf906419543a35a55c2cb1b66437d767"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -640,9 +640,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.27"
+version = "4.5.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b26884eb4b57140e4d2d93652abfa49498b938b3c9179f9fc487b0acc3edad7"
+checksum = "5589e0cba072e0f3d23791efac0fd8627b49c829c196a492e88168e6a669d863"
 dependencies = [
  "anstream",
  "anstyle",
@@ -652,11 +652,11 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.5.44"
+version = "4.5.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "375f9d8255adeeedd51053574fd8d4ba875ea5fa558e86617b07f09f1680c8b6"
+checksum = "f5c5508ea23c5366f77e53f5a0070e5a84e51687ec3ef9e0464c86dc8d13ce98"
 dependencies = [
- "clap 4.5.28",
+ "clap 4.5.31",
 ]
 
 [[package]]
@@ -697,7 +697,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-base"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "bytes",
  "directories",
@@ -717,7 +717,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-cli"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "serde",
  "serde_with",
@@ -728,7 +728,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-client"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "async-trait",
  "clipcat-base",
@@ -747,7 +747,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-clipboard"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "arboard",
  "bytes",
@@ -767,7 +767,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-dbus-variant"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -778,7 +778,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-external-editor"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "clipcat-base",
  "snafu 0.8.5",
@@ -787,9 +787,9 @@ dependencies = [
 
 [[package]]
 name = "clipcat-menu"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
- "clap 4.5.28",
+ "clap 4.5.31",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -811,7 +811,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-metrics"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -827,9 +827,9 @@ dependencies = [
 
 [[package]]
 name = "clipcat-notify"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
- "clap 4.5.28",
+ "clap 4.5.31",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-proto"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "clipcat-base",
  "mime",
@@ -858,7 +858,7 @@ dependencies = [
 
 [[package]]
 name = "clipcat-server"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "async-trait",
  "bincode",
@@ -894,10 +894,10 @@ dependencies = [
 
 [[package]]
 name = "clipcatctl"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
  "bytes",
- "clap 4.5.28",
+ "clap 4.5.31",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -921,9 +921,9 @@ dependencies = [
 
 [[package]]
 name = "clipcatd"
-version = "0.20.2"
+version = "0.21.0"
 dependencies = [
- "clap 4.5.28",
+ "clap 4.5.31",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -1651,9 +1651,9 @@ checksum = "9e5c1b78ca4aae1ac06c48a526a655760685149f0d465d21f37abfe57ce075c6"
 
 [[package]]
 name = "futures-lite"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cef40d21ae2c515b51041df9ed313ed21e572df340ea58a922a0aefe7e8891a1"
+checksum = "f5edaec856126859abb19ed65f39e90fea3a9574b9707f13539acf4abf7eb532"
 dependencies = [
  "fastrand",
  "futures-core",
@@ -2261,15 +2261,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2334,9 +2325,9 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
-version = "0.2.169"
+version = "0.2.170"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
+checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -2675,10 +2666,11 @@ dependencies = [
 
 [[package]]
 name = "notify-rust"
-version = "4.11.4"
+version = "4.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96ae13fb6065b0865d2310dfa55ce319245052ed95fbbe2bc87c99962c58d73f"
+checksum = "7fa3b9f2364a09bd359aa0206702882e208437450866a374d5372d64aece4029"
 dependencies = [
+ "futures-lite",
  "log",
  "mac-notification-sys",
  "serde",
@@ -3274,9 +3266,9 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c0fef6c4230e4ccf618a35c59d7ede15dea37de8427500f50aff708806e42ec"
+checksum = "2796faa41db3ec313a31f7624d9286acf277b52de526150b7e69f3debf891ee5"
 dependencies = [
  "bytes",
  "prost-derive",
@@ -3284,12 +3276,12 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0f3e5beed80eb580c68e2c600937ac2c4eedabdfd5ef1e5b7ea4f3fba84497b"
+checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
  "heck 0.5.0",
- "itertools 0.12.1",
+ "itertools",
  "log",
  "multimap",
  "once_cell",
@@ -3304,12 +3296,12 @@ dependencies = [
 
 [[package]]
 name = "prost-derive"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "157c5a9d7ea5c2ed2d9fb8f495b64759f7816c7eaea54ba3978f0d63000162e3"
+checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.13.0",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 2.0.95",
@@ -3317,9 +3309,9 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.13.4"
+version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc2f1e56baa61e93533aebc21af4d2134b70f66275e0fcdf3cbe43d77ff7e8fc"
+checksum = "52c2c1bf36ddb1a1c396b3601a3cec27c2462e45f07c386894ec3ccf5332bd16"
 dependencies = [
  "prost",
 ]
@@ -3416,7 +3408,7 @@ dependencies = [
  "built",
  "cfg-if",
  "interpolate_name",
- "itertools 0.12.1",
+ "itertools",
  "libc",
  "libfuzzer-sys",
  "log",
@@ -3606,18 +3598,18 @@ checksum = "f79dfe2d285b0488816f30e700a7438c5a73d816b5b7d3ac72fbc48b0d185e03"
 
 [[package]]
 name = "serde"
-version = "1.0.217"
+version = "1.0.218"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02fc4265df13d6fa1d00ecff087228cc0a2b5f3c0e87e258d8b94a156e984c70"
+checksum = "e8dfc9d19bdbf6d17e22319da49161d5d0108e4188e8b680aef6299eed22df60"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.217"
+version = "1.0.218"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a9bf7cf98d04a2b28aead066b7496853d4779c9cc183c440dbac457641e19a0"
+checksum = "f09503e191f4e797cb8aac08e9a4a4695c5edf6a2e70e376d961ddd5c969f82b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3626,9 +3618,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d434192e7da787e94a6ea7e9670b26a036d0ca41e0b7efb2676dd32bae872949"
+checksum = "44f86c3acccc9c65b153fe1b85a3be07fe5515274ec9f0653b4a0875731c72a6"
 dependencies = [
  "itoa",
  "memchr",
@@ -5117,9 +5109,9 @@ dependencies = [
 
 [[package]]
 name = "zbus"
-version = "5.4.0"
+version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbddd8b6cb25d5d8ec1b23277b45299a98bfb220f1761ca11e186d5c702507f8"
+checksum = "59c333f648ea1b647bc95dc1d34807c8e25ed7a6feff3394034dc4776054b236"
 dependencies = [
  "async-broadcast",
  "async-executor",
@@ -5134,7 +5126,7 @@ dependencies = [
  "enumflags2",
  "event-listener",
  "futures-core",
- "futures-util",
+ "futures-lite",
  "hex",
  "nix 0.29.0",
  "ordered-stream",
@@ -5154,9 +5146,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "5.4.0"
+version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dac404d48b4e9cf193c8b49589f3280ceca5ff63519e7e64f55b4cf9c47ce146"
+checksum = "f325ad10eb0d0a3eb060203494c3b7ec3162a01a59db75d2deee100339709fc0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
