@@ -164,6 +164,7 @@ impl Config {
             Some(Err(err)) => return Err(err),
             None => None,
         };
+        config.log.registry();
 
         config.max_history =
             if config.max_history == 0 { Self::default_max_history() } else { config.max_history };
