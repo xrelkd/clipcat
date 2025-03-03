@@ -89,7 +89,7 @@ fn build_thread(
 
                 match wl_clipboard_get_mime_types(clipboard_type, Seat::Unspecified) {
                     Ok(mime_types) => {
-                        if clip_filter.filter_sensitive_atoms(mime_types.iter()) {
+                        if clip_filter.filter_sensitive_mime_type(mime_types.iter()) {
                             tracing::info!("Sensitive content detected, ignore it");
                             continue;
                         }

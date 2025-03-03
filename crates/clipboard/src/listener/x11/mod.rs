@@ -123,7 +123,7 @@ fn build_thread(
                                 match context.get_available_formats() {
                                     Ok(mut formats) => {
                                         // filter sensitive content
-                                        if clip_filter.filter_sensitive_atoms(formats.iter()) {
+                                        if clip_filter.filter_sensitive_mime_type(formats.iter()) {
                                             tracing::info!("Sensitive content detected, ignore it");
                                             continue;
                                         }
