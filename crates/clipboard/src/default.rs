@@ -103,7 +103,7 @@ impl Clipboard {
                 tracing::info!(
                     "Build Wayland listener ({clipboard_kind}) with display `{display_name}`"
                 );
-                Arc::new(WaylandListener::new(clipboard_kind)?)
+                Arc::new(WaylandListener::new(clipboard_kind, clip_filter)?)
             } else {
                 match std::env::var("DISPLAY") {
                     Ok(display_name) => {
