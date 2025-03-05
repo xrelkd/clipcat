@@ -23,7 +23,7 @@ pub struct Options {
 
     pub denied_text_regex_patterns: HashSet<String>,
 
-    pub sensitive_x11_atoms: HashSet<String>,
+    pub sensitive_mime_types: HashSet<String>,
 }
 
 impl Options {
@@ -35,7 +35,7 @@ impl Options {
         filter.set_image_max_size(self.filter_image_max_size);
         filter.deny_image(!self.capture_image);
         filter.set_regex_patterns(regex::RegexSet::new(&self.denied_text_regex_patterns)?);
-        filter.add_sensitive_atoms(self.sensitive_x11_atoms.clone());
+        filter.add_sensitive_atoms(self.sensitive_mime_types.clone());
         Ok(filter)
     }
 
@@ -67,7 +67,7 @@ impl Default for Options {
             // 5 MiB
             filter_image_max_size: 5 * (1 << 20),
             denied_text_regex_patterns: HashSet::new(),
-            sensitive_x11_atoms: HashSet::new(),
+            sensitive_mime_types: HashSet::new(),
         }
     }
 }
