@@ -212,8 +212,8 @@ enable_clipboard = true
 # Enable watching the X11/Wayland primary selection.
 enable_primary = true
 
-# Ignore clips that match any of the X11 `TARGETS`.
-sensitive_x11_atoms = ["x-kde-passwordManagerHint"]
+# Ignore clips that match any of the MIME types.
+sensitive_mime_types = ["x-kde-passwordManagerHint"]
 
 # Ignore text clips that match any of the provided regular expressions.
 # The regular expression engine is powered by https://github.com/rust-lang/regex.

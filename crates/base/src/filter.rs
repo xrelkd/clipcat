@@ -5,7 +5,7 @@ use crate::ClipboardContent;
 #[derive(Clone, Debug)]
 pub struct Filter {
     regex_set: regex::RegexSet,
-    sensitive_atoms: HashSet<String>,
+    sensitive_mime_types: HashSet<String>,
     deny_image: bool,
     filter_text_min_length: usize,
     filter_text_max_length: usize,
@@ -18,7 +18,7 @@ impl Filter {
         Self {
             regex_set: regex::RegexSet::default(),
 
-            sensitive_atoms: HashSet::new(),
+            sensitive_mime_types: HashSet::new(),
 
             deny_image: false,
 
@@ -36,7 +36,7 @@ impl Filter {
     where
         I: IntoIterator<Item = String>,
     {
-        self.sensitive_atoms.extend(sensitive_atoms);
+        self.sensitive_mime_types.extend(sensitive_atoms);
     }
 
     pub fn set_regex_patterns(&mut self, regex_patterns: regex::RegexSet) {
@@ -67,11 +67,11 @@ impl Filter {
 
     #[inline]
     #[must_use]
-    pub fn filter_sensitive_atoms<'a, I>(&self, mut atoms: I) -> bool
+    pub fn filter_sensitive_mime_type<'a, I>(&self, mut mime_types: I) -> bool
     where
         I: Iterator<Item = &'a String>,
     {
-        atoms.any(|atom| self.sensitive_atoms.contains(atom))
+        mime_types.any(|atom| self.sensitive_mime_types.contains(atom))
     }
 
     #[inline]
@@ -117,7 +117,7 @@ impl Default for Filter {
         Self {
             regex_set: regex::RegexSet::default(),
 
-            sensitive_atoms: HashSet::from(["x-kde-passwordManagerHint".to_string()]),
+            sensitive_mime_types: HashSet::from(["x-kde-passwordManagerHint".to_string()]),
 
             deny_image: false,
 
