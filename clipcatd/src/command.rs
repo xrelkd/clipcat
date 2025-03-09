@@ -145,8 +145,6 @@ impl Cli {
 
 #[allow(clippy::cognitive_complexity)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
-    config.log.registry();
-
     let pid_file = PidFile::from(config.pid_file.clone());
     if pid_file.exists() {
         let pid = pid_file.try_load()?;
