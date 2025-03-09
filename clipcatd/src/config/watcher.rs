@@ -15,8 +15,10 @@ pub struct WatcherConfig {
     #[serde(default = "WatcherConfig::default_enable_secondary")]
     pub enable_secondary: bool,
 
-    #[serde(default = "WatcherConfig::default_sensitive_x11_atoms")]
-    pub sensitive_x11_atoms: HashSet<String>,
+    #[serde(default = "WatcherConfig::default_sensitive_mime_types")]
+    pub sensitive_mime_types: HashSet<String>,
+
+    pub sensitive_x11_atoms: Option<HashSet<String>>,
 
     #[serde(default = "WatcherConfig::default_filter_text_min_length")]
     pub filter_text_min_length: usize,
@@ -45,7 +47,8 @@ impl Default for WatcherConfig {
             filter_text_max_length: Self::default_filter_text_max_length(),
             denied_text_regex_patterns: HashSet::new(),
             filter_image_max_size: Self::default_filter_image_max_size(),
-            sensitive_x11_atoms: Self::default_sensitive_x11_atoms(),
+            sensitive_mime_types: Self::default_sensitive_mime_types(),
+            sensitive_x11_atoms: None,
         }
     }
 }
@@ -61,7 +64,8 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             filter_text_max_length,
             denied_text_regex_patterns,
             filter_image_max_size,
-            sensitive_x11_atoms,
+            sensitive_mime_types,
+            ..
         }: WatcherConfig,
     ) -> Self {
         Self {
@@ -73,7 +77,7 @@ impl From<WatcherConfig> for clipcat_server::ClipboardWatcherOptions {
             filter_text_max_length,
             filter_image_max_size,
             denied_text_regex_patterns,
-            sensitive_x11_atoms,
+            sensitive_mime_types,
         }
     }
 }
@@ -90,7 +94,7 @@ impl WatcherConfig {
 
     pub const fn default_enable_secondary() -> bool { false }
 
-    pub fn default_sensitive_x11_atoms() -> HashSet<String> {
+    pub fn default_sensitive_mime_types() -> HashSet<String> {
         HashSet::from(["x-kde-passwordManagerHint".to_string()])
     }
 }

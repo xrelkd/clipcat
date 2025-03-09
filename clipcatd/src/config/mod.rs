@@ -185,6 +185,18 @@ impl Config {
 
         config.history_file_path = resolve_path(&config.history_file_path)?;
 
+        if let Some(x11_atoms) = config.watcher.sensitive_x11_atoms {
+            tracing::warn!(
+                "Found deprecated config key sensitive_x11_atoms, use sensitive_mime_types instead"
+            );
+            if config.watcher.sensitive_mime_types == WatcherConfig::default_sensitive_mime_types()
+            {
+                tracing::info!("Overwriting sensitive_mime_types with sensitive_x11_atoms");
+                config.watcher.sensitive_mime_types = x11_atoms;
+            }
+            config.watcher.sensitive_x11_atoms = None;
+        }
+
         Ok(config)
     }
 }
