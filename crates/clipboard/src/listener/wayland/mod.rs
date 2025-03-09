@@ -9,6 +9,7 @@ use std::{
     time::Duration,
 };
 
+use clipcat_base::ClipFilter;
 use wl_clipboard_rs::paste::{
     get_mime_types as wl_clipboard_get_mime_types, Error as WaylandError, Seat,
 };
@@ -29,7 +30,10 @@ pub struct Listener {
 }
 
 impl Listener {
-    pub fn new(clipboard_kind: ClipboardKind) -> Result<Self, crate::Error> {
+    pub fn new(
+        clipboard_kind: ClipboardKind,
+        clip_filter: Arc<ClipFilter>,
+    ) -> Result<Self, crate::Error> {
         let (notifier, subscriber) = pubsub::new(clipboard_kind);
         let is_running = Arc::new(AtomicBool::new(true));
 
@@ -48,7 +52,7 @@ impl Listener {
             }
         }
 
-        let thread = build_thread(is_running.clone(), clipboard_type, notifier);
+        let thread = build_thread(is_running.clone(), clipboard_type, notifier, clip_filter);
         Ok(Self { is_running, thread: Some(thread), subscriber })
     }
 }
@@ -73,6 +77,7 @@ fn build_thread(
     is_running: Arc<AtomicBool>,
     clipboard_type: wl_clipboard_rs::paste::ClipboardType,
     notifier: pubsub::Publisher,
+    clip_filter: Arc<ClipFilter>,
 ) -> thread::JoinHandle<Result<(), Error>> {
     // FIXME: re-implement this with event-driven mechanism,
     // polling is not a good enough
@@ -84,6 +89,11 @@ fn build_thread(
 
                 match wl_clipboard_get_mime_types(clipboard_type, Seat::Unspecified) {
                     Ok(mime_types) => {
+                        if clip_filter.filter_sensitive_mime_type(mime_types.iter()) {
+                            tracing::info!("Sensitive content detected, ignore it");
+                            continue;
+                        }
+
                         let mut mime_types = mime_types.into_iter().collect::<Vec<_>>();
                         mime_types.sort_unstable_by_key(|format| {
                             if format.starts_with("image") {
