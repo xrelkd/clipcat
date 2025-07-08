@@ -24,6 +24,7 @@ impl Watcher for Client {
     async fn enable_watcher(&self) -> Result<ClipboardWatcherState, EnableWatcherError> {
         let proto::WatcherStateReply { state } =
             proto::WatcherClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .enable_watcher(Request::new(()))
                 .await
                 .map_err(|source| EnableWatcherError::Status { source })?
@@ -34,6 +35,7 @@ impl Watcher for Client {
     async fn disable_watcher(&self) -> Result<ClipboardWatcherState, DisableWatcherError> {
         let proto::WatcherStateReply { state } =
             proto::WatcherClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .disable_watcher(Request::new(()))
                 .await
                 .map_err(|source| DisableWatcherError::Status { source })?
@@ -44,6 +46,7 @@ impl Watcher for Client {
     async fn toggle_watcher(&self) -> Result<ClipboardWatcherState, ToggleWatcherError> {
         let proto::WatcherStateReply { state } =
             proto::WatcherClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .toggle_watcher(Request::new(()))
                 .await
                 .map_err(|source| ToggleWatcherError::Status { source })?
@@ -54,6 +57,7 @@ impl Watcher for Client {
     async fn get_watcher_state(&self) -> Result<ClipboardWatcherState, GetWatcherStateError> {
         let proto::WatcherStateReply { state } =
             proto::WatcherClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .get_watcher_state(Request::new(()))
                 .await
                 .map_err(|source| GetWatcherStateError::Status { source })?

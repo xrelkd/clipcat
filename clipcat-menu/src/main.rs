@@ -14,7 +14,12 @@ use self::cli::Cli;
 
 fn main() {
     if let Err(err) = Cli::default().run() {
-        eprintln!("Error: {err}");
+        let error_msg = clipcat_cli::error_helpers::format_error_with_help(
+            &err,
+            "clipcat-menu",
+            "clipcat-menu.toml",
+        );
+        eprintln!("Error: {error_msg}");
         std::process::exit(1);
     }
 }

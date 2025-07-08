@@ -61,6 +61,7 @@ pub trait Manager {
 impl Manager for Client {
     async fn get(&self, id: u64) -> Result<ClipEntry, GetClipError> {
         proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+            .max_decoding_message_size(self.max_decoding_message_size)
             .get(Request::new(proto::GetRequest { id }))
             .await
             .map_err(|source| GetClipError::Status { source, id })?
@@ -74,6 +75,7 @@ impl Manager for Client {
         kind: ClipboardKind,
     ) -> Result<ClipEntry, GetCurrentClipError> {
         proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+            .max_decoding_message_size(self.max_decoding_message_size)
             .get_current_clip(Request::new(proto::GetCurrentClipRequest { kind: kind.into() }))
             .await
             .map_err(|source| GetCurrentClipError::Status { source, kind })?
@@ -90,6 +92,7 @@ impl Manager for Client {
     ) -> Result<(bool, u64), UpdateClipError> {
         let proto::UpdateResponse { ok, new_id } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .update(Request::new(proto::UpdateRequest {
                     id,
                     data: data.to_owned(),
@@ -104,6 +107,7 @@ impl Manager for Client {
     async fn mark(&self, id: u64, kind: ClipboardKind) -> Result<bool, MarkClipError> {
         let proto::MarkResponse { ok } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .mark(Request::new(proto::MarkRequest { id, kind: kind.into() }))
                 .await
                 .map_err(|source| MarkClipError::Status { source, id, kind })?
@@ -119,6 +123,7 @@ impl Manager for Client {
     ) -> Result<u64, InsertClipError> {
         let proto::InsertResponse { id } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .insert(Request::new(proto::InsertRequest {
                     kind: clipboard_kind.into(),
                     data: data.to_owned(),
@@ -133,6 +138,7 @@ impl Manager for Client {
     async fn length(&self) -> Result<usize, GetLengthError> {
         let proto::LengthResponse { length } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .length(Request::new(()))
                 .await
                 .map_err(|source| GetLengthError::Status { source })?
@@ -143,6 +149,7 @@ impl Manager for Client {
     async fn list(&self, preview_length: usize) -> Result<Vec<ClipEntryMetadata>, ListClipError> {
         let mut list: Vec<_> =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .list(Request::new(proto::ListRequest {
                     preview_length: u64::try_from(preview_length).unwrap_or(30),
                 }))
@@ -160,6 +167,7 @@ impl Manager for Client {
     async fn remove(&self, id: u64) -> Result<bool, RemoveClipError> {
         let proto::RemoveResponse { ok } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .remove(Request::new(proto::RemoveRequest { id }))
                 .await
                 .map_err(|source| RemoveClipError::Status { source })?
@@ -170,6 +178,7 @@ impl Manager for Client {
     async fn batch_remove(&self, ids: &[u64]) -> Result<Vec<u64>, BatchRemoveClipError> {
         let proto::BatchRemoveResponse { ids } =
             proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .batch_remove(Request::new(proto::BatchRemoveRequest { ids: Vec::from(ids) }))
                 .await
                 .map_err(|source| BatchRemoveClipError::Status { source })?
@@ -179,6 +188,7 @@ impl Manager for Client {
 
     async fn clear(&self) -> Result<(), ClearClipError> {
         proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+            .max_decoding_message_size(self.max_decoding_message_size)
             .clear(Request::new(()))
             .await
             .map(|_| ())
