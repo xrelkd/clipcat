@@ -130,7 +130,7 @@ dependencies = [
  "objc2-foundation",
  "parking_lot",
  "percent-encoding",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
  "wl-clipboard-rs",
  "x11rb",
 ]
@@ -617,9 +617,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.39"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd60e63e9be68e5fb56422e397cf9baddded06dae1d2e523401542383bc72a9f"
+checksum = "be92d32e80243a54711e5d7ce823c35c41c9d929dc4ab58e1276f625841aadf9"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -627,9 +627,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.39"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89cc6392a1f72bbeb820d71f32108f61fdaf18bc526e1d23954168a67759ef51"
+checksum = "707eab41e9622f9139419d573eca0900137718000c517d47da73045f54331c3d"
 dependencies = [
  "anstream",
  "anstyle",
@@ -643,14 +643,14 @@ version = "4.5.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a554639e42d0c838336fc4fbedb9e2df3ad1fa4acda149f9126b4ccfcd7900f"
 dependencies = [
- "clap 4.5.39",
+ "clap 4.5.41",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "4.5.32"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09176aae279615badda0765c0c0b3f6ed53f4709118af73cf4655d85d1530cd7"
+checksum = "ef4f52386a59ca4c860f7393bcf8abd8dfd91ecccc0f774635ff68e92eeef491"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -776,7 +776,7 @@ dependencies = [
 name = "clipcat-menu"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.39",
+ "clap 4.5.41",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -816,7 +816,7 @@ dependencies = [
 name = "clipcat-notify"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.39",
+ "clap 4.5.41",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -884,7 +884,7 @@ name = "clipcatctl"
 version = "0.21.0"
 dependencies = [
  "bytes",
- "clap 4.5.39",
+ "clap 4.5.41",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -910,7 +910,7 @@ dependencies = [
 name = "clipcatd"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.39",
+ "clap 4.5.41",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -1386,7 +1386,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3405,7 +3405,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.14",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3418,7 +3418,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.9.3",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3868,7 +3868,7 @@ dependencies = [
  "getrandom 0.3.1",
  "once_cell",
  "rustix 1.0.2",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
