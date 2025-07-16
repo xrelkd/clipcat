@@ -41,7 +41,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v19
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Show rustfmt version
         run: |
@@ -62,7 +62,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v19
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Pre Cache
         run: |
@@ -108,7 +108,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v19
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Pre Cache
         run: |
@@ -151,7 +151,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v19
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Pre Cache
         run: |
