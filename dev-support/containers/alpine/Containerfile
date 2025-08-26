@@ -10,7 +10,8 @@ set -eu
 
 apk add --no-cache \
     musl-dev \
-    protobuf-dev
+    protobuf-dev \
+    zlib-dev
 
 EOF
 
