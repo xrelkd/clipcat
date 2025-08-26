@@ -9,7 +9,7 @@ pub enum Error {
     InitializeTokioRuntime { source: tokio::io::Error },
 
     #[snafu(display("{source}"))]
-    Application { source: clipcat_server::Error },
+    Application { source: Box<clipcat_server::Error> },
 
     #[snafu(display("{source}"))]
     Config { source: config::Error },
@@ -29,7 +29,9 @@ impl From<daemonize::Error> for Error {
 }
 
 impl From<clipcat_server::Error> for Error {
-    fn from(source: clipcat_server::Error) -> Self { Self::Application { source } }
+    fn from(source: clipcat_server::Error) -> Self {
+        Self::Application { source: Box::new(source) }
+    }
 }
 
 impl From<config::Error> for Error {
