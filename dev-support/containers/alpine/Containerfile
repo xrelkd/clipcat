@@ -9,16 +9,10 @@ RUN <<EOF
 set -eu
 
 apk add --no-cache \
-    sccache \
     musl-dev \
     protobuf-dev
 
 EOF
-
-ARG RUSTC_WRAPPER="/usr/bin/sccache"
-ARG SCCACHE_GHA_ENABLED
-ARG ACTIONS_CACHE_URL
-ARG ACTIONS_RUNTIME_TOKEN
 
 WORKDIR /build
 COPY . /build
