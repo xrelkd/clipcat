@@ -50,7 +50,7 @@ use crate::snippets::SnippetWatcherEventReceiver;
 /// # Errors
 ///
 /// This function will return an error if the server fails to start.
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 pub async fn serve_with_shutdown(
     Config {
         grpc_listen_address,
@@ -454,7 +454,7 @@ where
     }
 }
 
-#[allow(clippy::redundant_pub_crate)]
+#[allow(clippy::cognitive_complexity, clippy::redundant_pub_crate)]
 async fn serve_worker(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,

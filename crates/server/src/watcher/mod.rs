@@ -70,7 +70,7 @@ pub struct Worker {
 
 impl Worker {
     /// # Errors
-    #[allow(clippy::redundant_pub_crate)]
+    #[allow(clippy::cognitive_complexity, clippy::redundant_pub_crate)]
     pub async fn serve(self, shutdown_signal: sigfinn::Shutdown) -> Result<(), Error> {
         let enabled_kinds = self.opts.get_enable_kinds();
         let Self { backend, is_watching, clip_sender, clip_filter, .. } = self;
@@ -102,7 +102,7 @@ impl Worker {
                         | BackendError::MatchMime { .. }
                         | BackendError::UnknownContentType
                         | BackendError::UnsupportedClipboardKind { .. },
-                    ) => continue,
+                    ) => {}
                     Err(error) => {
                         tracing::error!("Failed to load clipboard, error: {error}");
                     }
@@ -134,7 +134,7 @@ impl Worker {
                         BackendError::EmptyClipboard
                         | BackendError::MatchMime { .. }
                         | BackendError::UnknownContentType,
-                    ) => continue,
+                    ) => {}
                     Err(error) => {
                         tracing::error!("Failed to load clipboard, error: {error}");
                     }
