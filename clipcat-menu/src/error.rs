@@ -12,7 +12,7 @@ pub enum Error {
     CallEditor { source: clipcat_external_editor::Error },
 
     #[snafu(display("Could not call gRPC client, error: {source}"))]
-    Client { source: clipcat_client::Error },
+    Client { source: Box<clipcat_client::Error> },
 
     #[snafu(display("{source}"))]
     Finder { source: FinderError },
@@ -26,7 +26,7 @@ impl From<clipcat_external_editor::Error> for Error {
 }
 
 impl From<clipcat_client::Error> for Error {
-    fn from(source: clipcat_client::Error) -> Self { Self::Client { source } }
+    fn from(source: clipcat_client::Error) -> Self { Self::Client { source: Box::new(source) } }
 }
 
 impl From<clipcat_client::error::GetClipError> for Error {
