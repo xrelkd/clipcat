@@ -617,9 +617,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.42"
+version = "4.5.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed87a9d530bb41a67537289bafcac159cb3ee28460e0a4571123d2a778a6a882"
+checksum = "1fc0e74a703892159f5ae7d3aac52c8e6c392f5ae5f359c70b5881d60aaac318"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -627,9 +627,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.42"
+version = "4.5.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64f4f3f3c77c94aff3c7e9aac9a2ca1974a5adf392a8bb751e827d6d127ab966"
+checksum = "b3e7f4214277f3c7aa526a59dd3fbe306a370daee1f8b7b8c987069cd8e888a8"
 dependencies = [
  "anstream",
  "anstyle",
@@ -639,18 +639,18 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.5.55"
+version = "4.5.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5abde44486daf70c5be8b8f8f1b66c49f86236edf6fa2abadb4d961c4c6229a"
+checksum = "4d9501bd3f5f09f7bbee01da9a511073ed30a80cd7a509f1214bb74eadea71ad"
 dependencies = [
- "clap 4.5.42",
+ "clap 4.5.45",
 ]
 
 [[package]]
 name = "clap_derive"
-version = "4.5.41"
+version = "4.5.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef4f52386a59ca4c860f7393bcf8abd8dfd91ecccc0f774635ff68e92eeef491"
+checksum = "14cb31bb0a7d536caef2639baa7fad459e15c3144efefa6dbd1c84562c4739f6"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -697,7 +697,7 @@ dependencies = [
  "semver",
  "serde",
  "sha2",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "time",
  "tokio",
 ]
@@ -725,7 +725,7 @@ dependencies = [
  "mime",
  "prost-types",
  "semver",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
  "tonic",
  "tower 0.5.2",
@@ -744,7 +744,7 @@ dependencies = [
  "objc2-app-kit",
  "parking_lot",
  "sigfinn",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -768,7 +768,7 @@ name = "clipcat-external-editor"
 version = "0.21.0"
 dependencies = [
  "clipcat-base",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
 ]
 
@@ -776,7 +776,7 @@ dependencies = [
 name = "clipcat-menu"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.42",
+ "clap 4.5.45",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -788,7 +788,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "skim",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
  "toml",
  "tracing",
@@ -806,7 +806,7 @@ dependencies = [
  "mime",
  "once_cell",
  "prometheus",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
  "tower 0.5.2",
  "tower-http",
@@ -816,7 +816,7 @@ dependencies = [
 name = "clipcat-notify"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.42",
+ "clap 4.5.45",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -824,7 +824,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shadow-rs",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "time",
  "tokio",
 ]
@@ -869,7 +869,7 @@ dependencies = [
  "serde_json",
  "sigfinn",
  "simdutf8",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "time",
  "tokio",
  "tokio-stream",
@@ -884,7 +884,7 @@ name = "clipcatctl"
 version = "0.21.0"
 dependencies = [
  "bytes",
- "clap 4.5.42",
+ "clap 4.5.45",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -898,7 +898,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "tokio",
  "toml",
  "tracing",
@@ -910,7 +910,7 @@ dependencies = [
 name = "clipcatd"
 version = "0.21.0"
 dependencies = [
- "clap 4.5.42",
+ "clap 4.5.45",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -925,7 +925,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.6",
+ "snafu 0.8.7",
  "time",
  "tokio",
  "toml",
@@ -1909,7 +1909,7 @@ dependencies = [
  "hyper",
  "libc",
  "pin-project-lite",
- "socket2",
+ "socket2 0.5.9",
  "tokio",
  "tower-service",
  "tracing",
@@ -3120,7 +3120,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools",
  "log",
  "multimap",
@@ -3337,9 +3337,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.11.1"
+version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b544ef1b4eac5dc2db33ea63606ae9ffcfac26c1416a2806ae0bf5f56b201191"
+checksum = "23d7fd106d8c02486a8d64e778353d1cffe08ce79ac2e82f540c86d0facf6912"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -3500,9 +3500,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.141"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30b9eff21ebe718216c6ec64e1d9ac57087aad11efc64e32002bce4a0d4c03d3"
+checksum = "d401abef1d108fbd9cbaebc3e46611f4b1021f714a0597a71f41ee463f5f4a5a"
 dependencies = [
  "itoa",
  "memchr",
@@ -3723,11 +3723,11 @@ dependencies = [
 
 [[package]]
 name = "snafu"
-version = "0.8.6"
+version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "320b01e011bf8d5d7a4a4a4be966d9160968935849c83b918827f6a435e7f627"
+checksum = "0062a372b26c4a6e9155d099a3416d732514fd47ae2f235b3695b820afcee74a"
 dependencies = [
- "snafu-derive 0.8.6",
+ "snafu-derive 0.8.7",
 ]
 
 [[package]]
@@ -3744,11 +3744,11 @@ dependencies = [
 
 [[package]]
 name = "snafu-derive"
-version = "0.8.6"
+version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1961e2ef424c1424204d3a5d6975f934f56b6d50ff5732382d84ebf460e147f7"
+checksum = "7e5fd9e3263fc19d73abd5107dbd4d43e37949212d2b15d4d334ee5db53022b8"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.95",
@@ -3762,6 +3762,16 @@ checksum = "4f5fd57c80058a56cf5c777ab8a126398ece8e442983605d280a44ce79d0edef"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "socket2"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "233504af464074f9d066d7b5416c5f9b894a5862a6506e306f7b816cdd6f1807"
+dependencies = [
+ "libc",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4012,9 +4022,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.46.1"
+version = "1.47.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cc3a2344dafbe23a245241fe8b09735b521110d30fcefbbd5feb1797ca35d17"
+checksum = "89e49afdadebb872d3145a5638b59eb0691ea23e46ca484037cfab3b76b95038"
 dependencies = [
  "backtrace",
  "bytes",
@@ -4024,10 +4034,10 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "slab",
- "socket2",
+ "socket2 0.6.0",
  "tokio-macros",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4121,7 +4131,7 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost",
- "socket2",
+ "socket2 0.5.9",
  "tokio",
  "tokio-stream",
  "tower 0.4.13",
