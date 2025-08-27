@@ -11,6 +11,8 @@ use self::event_handler::EventHandler;
 pub use self::event_handler::{SnippetWatcherEvent, SnippetWatcherEventReceiver};
 use crate::{config, error, error::Error};
 
+// SAFETY: Loading clip entries requires many steps.
+#[allow(clippy::cognitive_complexity)]
 async fn load(config: &config::SnippetConfig) -> HashMap<ClipEntry, Option<PathBuf>> {
     let (name, clip_contents) = match config {
         config::SnippetConfig::Inline { name, content } => {

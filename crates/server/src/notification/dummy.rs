@@ -1,3 +1,4 @@
+#![cfg(test)]
 use crate::notification::traits;
 
 #[derive(Clone, Copy, Debug, Default)]

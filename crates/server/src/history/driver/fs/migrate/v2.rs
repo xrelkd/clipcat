@@ -13,6 +13,8 @@ use crate::history::{
     error, Error,
 };
 
+// SAFETY: Migrating requires many steps.
+#[allow(clippy::cognitive_complexity)]
 pub async fn migrate_to<P, Q, R>(
     file_path: P,
     header_file_path: Q,

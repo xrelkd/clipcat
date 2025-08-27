@@ -138,39 +138,36 @@ impl Context {
                 continue;
             };
 
-            match event {
-                // The first response after requesting a selection.
-                x11rb::protocol::Event::SelectionNotify(event) => {
-                    let reply = self
-                        .connection
-                        .get_property(
-                            false,
-                            self.window,
-                            event.property,
-                            xproto::AtomEnum::NONE,
-                            0,
-                            u32::try_from(1024 * size_of::<xproto::Atom>()).unwrap_or(u32::MAX),
-                        )
-                        .context(error::GetPropertySnafu)?
-                        .reply()
-                        .context(error::GetPropertyReplySnafu)?;
+            // The first response after requesting a selection.
+            if let x11rb::protocol::Event::SelectionNotify(event) = event {
+                let reply = self
+                    .connection
+                    .get_property(
+                        false,
+                        self.window,
+                        event.property,
+                        xproto::AtomEnum::NONE,
+                        0,
+                        u32::try_from(1024 * size_of::<xproto::Atom>()).unwrap_or(u32::MAX),
+                    )
+                    .context(error::GetPropertySnafu)?
+                    .reply()
+                    .context(error::GetPropertyReplySnafu)?;
 
-                    let mut formats = Vec::new();
-                    if let Some(atoms) = reply.value32() {
-                        for atom in atoms {
-                            let atom_name = self
-                                .connection
-                                .get_atom_name(atom)
-                                .context(error::GetAtomNameSnafu)?
-                                .reply()
-                                .context(error::GetAtomNameReplySnafu)?
-                                .name;
-                            formats.push(String::from_utf8_lossy(&atom_name).clone().to_string());
-                        }
+                let mut formats = Vec::new();
+                if let Some(atoms) = reply.value32() {
+                    for atom in atoms {
+                        let atom_name = self
+                            .connection
+                            .get_atom_name(atom)
+                            .context(error::GetAtomNameSnafu)?
+                            .reply()
+                            .context(error::GetAtomNameReplySnafu)?
+                            .name;
+                        formats.push(String::from_utf8_lossy(&atom_name).clone().to_string());
                     }
-                    return Ok(formats);
                 }
-                _ => continue,
+                return Ok(formats);
             }
         }
         Ok(Vec::new())

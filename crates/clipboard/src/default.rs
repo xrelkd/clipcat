@@ -36,6 +36,8 @@ use crate::{
     Subscriber,
 };
 
+// SAFETY: We need the `clipboard_` prefix.
+#[allow(clippy::struct_field_names)]
 #[derive(Clone)]
 pub struct Clipboard {
     listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,

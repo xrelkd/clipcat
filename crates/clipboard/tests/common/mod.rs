@@ -83,7 +83,7 @@ pub trait ClipboardTester {
                     let _unused = subscriber.wait();
                     match clipboard.load_string() {
                         Ok(data) => return Ok(data),
-                        Err(Error::Empty) => continue,
+                        Err(Error::Empty) => {}
                         Err(err) => return Err(err),
                     }
                 }
@@ -99,7 +99,7 @@ pub trait ClipboardTester {
                     let _unused = subscriber.wait();
                     match clipboard.load_string() {
                         Ok(data) => return Ok(data),
-                        Err(Error::Empty) => continue,
+                        Err(Error::Empty) => {}
                         Err(err) => return Err(err),
                     }
                 }

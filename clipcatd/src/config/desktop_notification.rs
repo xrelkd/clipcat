@@ -32,7 +32,7 @@ impl DesktopNotificationConfig {
         let icon_path = PathBuf::from(&self.icon);
         if icon_path.exists() {
             return icon_path;
-        };
+        }
 
         let clipboard_icons = {
             let iter = linicon::lookup_icon(self.icon.as_str()).use_fallback_themes(true);
