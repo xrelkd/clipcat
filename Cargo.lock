@@ -697,7 +697,7 @@ dependencies = [
  "semver",
  "serde",
  "sha2",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "time",
  "tokio",
 ]
@@ -725,7 +725,7 @@ dependencies = [
  "mime",
  "prost-types",
  "semver",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
  "tonic",
  "tower 0.5.2",
@@ -744,7 +744,7 @@ dependencies = [
  "objc2-app-kit",
  "parking_lot",
  "sigfinn",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -768,7 +768,7 @@ name = "clipcat-external-editor"
 version = "0.21.0"
 dependencies = [
  "clipcat-base",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
 ]
 
@@ -788,7 +788,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "skim",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
  "toml",
  "tracing",
@@ -806,7 +806,7 @@ dependencies = [
  "mime",
  "once_cell",
  "prometheus",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
  "tower 0.5.2",
  "tower-http",
@@ -824,7 +824,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shadow-rs",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "time",
  "tokio",
 ]
@@ -869,7 +869,7 @@ dependencies = [
  "serde_json",
  "sigfinn",
  "simdutf8",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "time",
  "tokio",
  "tokio-stream",
@@ -898,7 +898,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "tokio",
  "toml",
  "tracing",
@@ -925,7 +925,7 @@ dependencies = [
  "serde",
  "shadow-rs",
  "simdutf8",
- "snafu 0.8.8",
+ "snafu 0.8.9",
  "time",
  "tokio",
  "toml",
@@ -3120,7 +3120,7 @@ version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools",
  "log",
  "multimap",
@@ -3723,11 +3723,11 @@ dependencies = [
 
 [[package]]
 name = "snafu"
-version = "0.8.8"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4800ae0e2ebdfaea32ffb9745642acdc378740dcbd74d3fb3cd87572a34810c6"
+checksum = "6e84b3f4eacbf3a1ce05eac6763b4d629d60cbc94d632e4092c54ade71f1e1a2"
 dependencies = [
- "snafu-derive 0.8.8",
+ "snafu-derive 0.8.9",
 ]
 
 [[package]]
@@ -3744,11 +3744,11 @@ dependencies = [
 
 [[package]]
 name = "snafu-derive"
-version = "0.8.8"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "186f5ba9999528053fb497fdf0dd330efcc69cfe4ad03776c9d704bc54fee10f"
+checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
 dependencies = [
- "heck 0.5.0",
+ "heck 0.4.1",
  "proc-macro2",
  "quote",
  "syn 2.0.95",
