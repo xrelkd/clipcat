@@ -14,6 +14,7 @@ impl System for Client {
     async fn get_version(&self) -> Result<semver::Version, GetSystemVersionError> {
         let proto::GetSystemVersionResponse { major, minor, patch } =
             proto::SystemClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
                 .get_version(Request::new(()))
                 .await
                 .map_err(|source| GetSystemVersionError::Status { source })?

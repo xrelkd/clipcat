@@ -17,10 +17,14 @@ pub use self::{
     watcher::Watcher,
 };
 
+// Tonic's default max receive message size (4MB)
+const DEFAULT_MAX_RECV_MESSAGE_SIZE: usize = 4 * 1024 * 1024;
+
 #[derive(Clone, Debug)]
 pub struct Client {
     channel: tonic::transport::Channel,
     interceptor: Interceptor,
+    max_decoding_message_size: usize,
 }
 
 impl Client {
@@ -55,7 +59,7 @@ impl Client {
             .with_context(|_| error::ConnectToClipcatServerViaHttpSnafu {
                 endpoint: grpc_endpoint.clone(),
             })?;
-        Ok(Self { channel, interceptor })
+        Ok(Self { channel, interceptor, max_decoding_message_size: DEFAULT_MAX_RECV_MESSAGE_SIZE })
     }
 
     /// # Errors
@@ -83,6 +87,13 @@ impl Client {
             .with_context(|_| error::ConnectToClipcatServerViaLocalSocketSnafu {
                 socket: socket_path,
             })?;
-        Ok(Self { channel, interceptor })
+        Ok(Self { channel, interceptor, max_decoding_message_size: DEFAULT_MAX_RECV_MESSAGE_SIZE })
+    }
+
+    /// Set the maximum decoding message size in bytes
+    #[must_use]
+    pub const fn with_max_decoding_message_size(mut self, size: usize) -> Self {
+        self.max_decoding_message_size = size;
+        self
     }
 }

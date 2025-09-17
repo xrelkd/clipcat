@@ -16,6 +16,9 @@ pub struct Config {
     #[serde(default)]
     pub preview_length: usize,
 
+    #[serde(default = "default_grpc_max_message_size")]
+    pub grpc_max_message_size: usize,
+
     #[serde(default)]
     pub log: clipcat_cli::config::LogConfig,
 }
@@ -27,6 +30,7 @@ impl Default for Config {
             access_token: None,
             access_token_file_path: None,
             preview_length: 100,
+            grpc_max_message_size: default_grpc_max_message_size(),
             log: clipcat_cli::config::LogConfig::default(),
         }
     }
@@ -115,4 +119,8 @@ pub enum Error {
 
     #[snafu(display("Could not resolve file path {}, error: {source}", file_path.display()))]
     ResolveFilePath { file_path: PathBuf, source: std::io::Error },
+}
+
+const fn default_grpc_max_message_size() -> usize {
+    8 * 1024 * 1024 // 8MB (doubled from 4MB default)
 }

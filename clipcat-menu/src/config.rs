@@ -21,6 +21,9 @@ pub struct Config {
     #[serde(default)]
     pub preview_length: usize,
 
+    #[serde(default = "default_grpc_max_message_size")]
+    pub grpc_max_message_size: usize,
+
     #[serde(default)]
     pub rofi: Option<Rofi>,
 
@@ -144,6 +147,7 @@ impl Default for Config {
             finder: FinderType::Choose,
 
             preview_length: 80,
+            grpc_max_message_size: default_grpc_max_message_size(),
             rofi: Some(Rofi::default()),
             dmenu: Some(Dmenu::default()),
             choose: Some(Choose::default()),
@@ -294,4 +298,8 @@ pub enum Error {
 
     #[snafu(display("Could not resolve file path {}, error: {source}", file_path.display()))]
     ResolveFilePath { file_path: PathBuf, source: std::io::Error },
+}
+
+const fn default_grpc_max_message_size() -> usize {
+    8 * 1024 * 1024 // 8MB (doubled from 4MB default)
 }

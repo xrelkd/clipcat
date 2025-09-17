@@ -346,6 +346,11 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 # It connects via HTTP if `server_endpoint` is a URL, like: "http://127.0.0.1:45045".
 server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
+# Maximum gRPC message size in bytes that can be received from the server.
+# The default value is 8MB (8 * 1024 * 1024 bytes).
+# Increase this value if you encounter "message length too large" errors with large clipboard entries.
+grpc_max_message_size = 8388608
+
 [log]
 # Emit log messages to a log file.
 # Delete this line to disable logging to a file.
@@ -374,6 +379,11 @@ server_endpoint = "/run/user/<user-id>/clipcat/grpc.sock"
 
 # The default finder to invoke when no "--finder=<finder>" option is provided.
 finder = "rofi"
+
+# Maximum gRPC message size in bytes that can be received from the server.
+# The default value is 8MB (8 * 1024 * 1024 bytes).
+# Increase this value if you encounter "message length too large" errors with large clipboard entries.
+grpc_max_message_size = 8388608
 
 [log]
 # Emit log messages to a log file.
