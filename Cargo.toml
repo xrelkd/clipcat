@@ -1,5 +1,5 @@
 [workspace.package]
-version      = "0.21.0"
+version      = "0.21.1"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
@@ -232,7 +232,6 @@ type_alias_bounds                        = "deny"
 tyvar_behind_raw_pointer                 = "deny"
 uncommon_codepoints                      = "deny"
 unconditional_recursion                  = "deny"
-undefined_naked_function_abi             = "deny"
 unexpected_cfgs                          = "deny"
 ungated_async_fn_track_caller            = "deny"
 uninhabited_static                       = "deny"

@@ -4,12 +4,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use snafu::ResultExt;
 use tokio::runtime::Runtime;
 
-use crate::{
-    config::Config,
-    error::{self, Error},
-    pid_file::PidFile,
-    shadow,
-};
+use crate::{config::Config, error, error::Error, pid_file::PidFile, shadow};
 
 #[derive(Parser)]
 #[command(
@@ -145,8 +140,6 @@ impl Cli {
 
 #[allow(clippy::cognitive_complexity)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
-    config.log.registry();
-
     let pid_file = PidFile::from(config.pid_file.clone());
     if pid_file.exists() {
         let pid = pid_file.try_load()?;
@@ -155,7 +148,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
                 tracing::warn!(
                     "Error occurs while trying to terminate another instance, error: {err}"
                 );
-            };
+            }
 
             let polling_interval = Duration::from_millis(200);
             while pid_file.exists() {

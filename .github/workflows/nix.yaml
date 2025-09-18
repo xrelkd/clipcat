@@ -28,10 +28,10 @@ jobs:
     name: Build Nix Flake
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v16
+        uses: DeterminateSystems/nix-installer-action@v20
 
       - name: Build Nix Flake
         run: nix build

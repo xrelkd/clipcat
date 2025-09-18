@@ -36,6 +36,8 @@ use crate::{
     Subscriber,
 };
 
+// SAFETY: We need the `clipboard_` prefix.
+#[allow(clippy::struct_field_names)]
 #[derive(Clone)]
 pub struct Clipboard {
     listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,
@@ -103,7 +105,7 @@ impl Clipboard {
                 tracing::info!(
                     "Build Wayland listener ({clipboard_kind}) with display `{display_name}`"
                 );
-                Arc::new(WaylandListener::new(clipboard_kind)?)
+                Arc::new(WaylandListener::new(clipboard_kind, clip_filter)?)
             } else {
                 match std::env::var("DISPLAY") {
                     Ok(display_name) => {

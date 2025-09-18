@@ -1,7 +1,6 @@
 # Installation
 
 - Table of contents
-
   - [Install the pre-built binaries](#install-the-pre-built-binaries)
   - [Build from source](#build-from-source)
   - [Install via Package Manager](#install-via-package-manager)
