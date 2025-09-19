@@ -617,9 +617,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.47"
+version = "4.5.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7eac00902d9d136acd712710d71823fb8ac8004ca445a89e73a41d45aa712931"
+checksum = "e2134bb3ea021b78629caa971416385309e0131b351b25e01dc16fb54e1b5fae"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -627,9 +627,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.47"
+version = "4.5.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ad9bbf750e73b5884fb8a211a9424a1906c1e156724260fdae972f31d70e1d6"
+checksum = "c2ba64afa3c0a6df7fa517765e31314e983f51dda798ffba27b988194fb65dc9"
 dependencies = [
  "anstream",
  "anstyle",
@@ -643,7 +643,7 @@ version = "4.5.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75bf0b32ad2e152de789bb635ea4d3078f6b838ad7974143e99b99f45a04af4a"
 dependencies = [
- "clap 4.5.47",
+ "clap 4.5.48",
 ]
 
 [[package]]
@@ -776,7 +776,7 @@ dependencies = [
 name = "clipcat-menu"
 version = "0.21.1"
 dependencies = [
- "clap 4.5.47",
+ "clap 4.5.48",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -816,7 +816,7 @@ dependencies = [
 name = "clipcat-notify"
 version = "0.21.1"
 dependencies = [
- "clap 4.5.47",
+ "clap 4.5.48",
  "clap_complete",
  "clipcat-base",
  "clipcat-server",
@@ -884,7 +884,7 @@ name = "clipcatctl"
 version = "0.21.1"
 dependencies = [
  "bytes",
- "clap 4.5.47",
+ "clap 4.5.48",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
@@ -910,7 +910,7 @@ dependencies = [
 name = "clipcatd"
 version = "0.21.1"
 dependencies = [
- "clap 4.5.47",
+ "clap 4.5.48",
  "clap_complete",
  "clipcat-base",
  "clipcat-cli",
