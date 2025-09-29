@@ -244,7 +244,9 @@ impl Cli {
         let fut = async move {
             let client = {
                 let access_token = config.access_token();
-                Client::new(config.server_endpoint, access_token).await?
+                Client::new(config.server_endpoint, access_token)
+                    .await?
+                    .with_max_decoding_message_size(config.grpc_max_message_size)
             };
             let server_version = client
                 .get_version()
