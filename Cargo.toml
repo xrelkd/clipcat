@@ -80,7 +80,7 @@ bytes = "1"
 clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
 daemonize = "0.5"
-directories = "5"
+directories = "6"
 exitcode = "1"
 hex = "0.4"
 http = "1"
