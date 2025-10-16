@@ -61,7 +61,7 @@ arboard = { version = "3", default-features = false, features = [
 
 axum       = "0.7"
 tower      = { version = "0.5", features = ["timeout"] }
-tower-http = { version = "0.5", features = ["trace"] }
+tower-http = { version = "0.6", features = ["trace"] }
 hyper-util = "0.1"
 
 prost = "0.13"
