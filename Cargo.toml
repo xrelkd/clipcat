@@ -65,7 +65,7 @@ tower-http = { version = "0.5", features = ["trace"] }
 hyper-util = "0.1"
 
 prost = "0.13"
-prost-build = "0.13"
+prost-build = "0.14"
 prost-types = "0.13"
 tonic = { version = "0.12", features = ["gzip"] }
 tonic-build = { version = "0.12", default-features = false, features = [
