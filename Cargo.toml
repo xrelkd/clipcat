@@ -64,7 +64,7 @@ tower      = { version = "0.5", features = ["timeout"] }
 tower-http = { version = "0.6", features = ["trace"] }
 hyper-util = "0.1"
 
-prost = "0.13"
+prost = "0.14"
 prost-build = "0.13"
 prost-types = "0.13"
 tonic = { version = "0.12", features = ["gzip"] }
