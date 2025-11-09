@@ -39,7 +39,7 @@ async fn load(config: &config::SnippetConfig) -> HashMap<ClipEntry, Option<PathB
                 clipcat_base::utils::fs::read_dir_recursively_async(&path)
                     .await
                     .into_iter()
-                    .map(|file| (async move { (tokio::fs::read(&file).await.ok(), file) })),
+                    .map(|file| async move { (tokio::fs::read(&file).await.ok(), file) }),
             )
             .await
             .into_iter()
