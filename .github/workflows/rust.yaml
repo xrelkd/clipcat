@@ -36,7 +36,7 @@ jobs:
     name: Check Rust format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v20
@@ -57,7 +57,7 @@ jobs:
     needs:
       - rustfmt
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v20
@@ -103,7 +103,7 @@ jobs:
         mode:
           - release
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v20
@@ -144,7 +144,7 @@ jobs:
       - clippy
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: "true"
 
