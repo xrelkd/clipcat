@@ -801,7 +801,7 @@ version = "0.21.1"
 dependencies = [
  "clipcat-base",
  "mime",
- "prost 0.13.5",
+ "prost 0.14.3",
  "prost-build 0.14.3",
  "prost-types 0.13.5",
  "time",
