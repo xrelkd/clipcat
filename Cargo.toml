@@ -99,7 +99,7 @@ semver = "1"
 sha2 = "0.10"
 shadow-rs = "1.6"
 simdutf8 = "0.1"
-skim = "0.15"
+skim = "1.9"
 snafu = "0.8"
 time = { version = "0.3", features = [
   "formatting",
