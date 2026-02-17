@@ -84,16 +84,21 @@ fn build_thread(
     thread::Builder::new()
         .name(format!("{clipboard_type:?}-listener"))
         .spawn(move || {
+            let mut last_is_sensitive = false;
+            let mut current_is_sensitive;
             while is_running.load(Ordering::Relaxed) {
                 tracing::trace!("Wait for readiness events");
 
-                match wl_clipboard_get_mime_types(clipboard_type, Seat::Unspecified) {
-                    Ok(mime_types) => {
-                        if clip_filter.filter_sensitive_mime_type(mime_types.iter()) {
-                            tracing::info!("Sensitive content detected, ignore it");
-                            continue;
-                        }
+                current_is_sensitive = false;
 
+                match wl_clipboard_get_mime_types(clipboard_type, Seat::Unspecified) {
+                    Ok(mime_types) if clip_filter.filter_sensitive_mime_type(mime_types.iter()) => {
+                        if !last_is_sensitive {
+                            tracing::info!("Sensitive content detected, ignore it");
+                        };
+                        current_is_sensitive = true;
+                    }
+                    Ok(mime_types) => {
                         let mut mime_types = mime_types.into_iter().collect::<Vec<_>>();
                         mime_types.sort_unstable_by_key(|format| {
                             if format.starts_with("image") {
@@ -126,6 +131,8 @@ fn build_thread(
                         "Error occurs while listening to clipboard of Wayland, error: {err}"
                     ),
                 }
+
+                last_is_sensitive = current_is_sensitive;
 
                 // Sleep for a while there is no content or error occurred
                 thread::sleep(POLLING_INTERVAL);
