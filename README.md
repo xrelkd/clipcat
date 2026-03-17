@@ -13,7 +13,7 @@
     <a href="https://github.com/xrelkd/clipcat/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
 </p>
 
-**[Installation](#installation) | [Usage](#usage) | [Integration](#integration)**
+**[Installation](#installation) | [Usage](#usage) | [Integration](#integration) | [Contributing](#contributing)**
 
 <details>
 <summary>Table of contents</summary>
@@ -25,6 +25,7 @@
 - [Configuration](#configuration)
 - [Integration](#integration)
 - [Programs in this Repository](#programs-in-this-repository)
+- [Contributing](#contributing)
 - [License](#license)
 
 </details>
@@ -581,6 +582,10 @@ systemctl --user status clipcat.service
 
 > [!Note]
 > clipcat-notify does not interact with `clipcatd`, `clipcatctl`, or `clipcat-menu`; it is simply a tool for monitoring the clipboard.
+
+## Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](docs/CONTRIBUTING.md) for details on development setup, code style, and pull request process.
 
 ## License
 
