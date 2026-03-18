@@ -161,7 +161,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Rofi {
     #[serde(default = "default_line_length")]
     pub line_length: usize,
@@ -176,7 +176,7 @@ pub struct Rofi {
     pub extra_arguments: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Dmenu {
     #[serde(default = "default_line_length")]
     pub line_length: usize,
@@ -191,7 +191,7 @@ pub struct Dmenu {
     pub extra_arguments: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Fuzzel {
     #[serde(default = "default_line_length")]
     pub line_length: usize,
@@ -206,7 +206,7 @@ pub struct Fuzzel {
     pub extra_arguments: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Choose {
     #[serde(default = "default_line_length")]
     pub line_length: usize,
@@ -221,7 +221,7 @@ pub struct Choose {
     pub extra_arguments: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CustomFinder {
     pub program: String,
 

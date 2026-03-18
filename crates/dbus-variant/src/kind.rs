@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
 #[derive(
-    Clone, Copy, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Type,
+    Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize, Type,
 )]
 pub enum Kind {
     #[default]

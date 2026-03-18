@@ -44,7 +44,7 @@ pub enum MultiSelectionResult {
     Cancel,
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, Deserialize, Serialize)]
 pub enum FinderType {
     #[default]
     #[serde(rename = "builtin")]
