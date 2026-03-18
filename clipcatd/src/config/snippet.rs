@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::{Error, resolve_path};
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum SnippetConfig {
     Text { name: String, content: String },
     File { name: String, path: PathBuf },

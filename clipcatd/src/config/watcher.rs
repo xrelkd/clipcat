@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 // SAFETY: user may use bool to enable/disable the functions
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WatcherConfig {
     #[serde(default)]
     pub enable_clipboard: bool,

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, Type)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, Type)]
 pub enum WatcherState {
     Enabled = 0,
     Disabled = 1,
