@@ -12,5 +12,8 @@ pub enum Error {
     ParseConfig { filename: PathBuf, source: toml::de::Error },
 
     #[snafu(display("Could not resolve file path {}, error: {source}", file_path.display()))]
-    ResolveFilePath { file_path: PathBuf, source: std::io::Error },
+    ResolveFilePath {
+        file_path: PathBuf,
+        source: shellexpand::path::LookupError<std::env::VarError>,
+    },
 }
