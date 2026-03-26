@@ -29,8 +29,8 @@ clap_complete = { workspace = true }
 directories   = { workspace = true }
 http          = { workspace = true }
 mime          = { workspace = true }
-resolve-path  = { workspace = true }
 shadow-rs     = { workspace = true }
+shellexpand   = { workspace = true }
 simdutf8      = { workspace = true }
 snafu         = { workspace = true }
 
