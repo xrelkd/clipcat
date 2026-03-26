@@ -9,7 +9,6 @@ mod watcher;
 use std::path::{Path, PathBuf};
 
 use directories::BaseDirs;
-use resolve_path::PathResolveExt;
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -159,11 +158,7 @@ impl Config {
                 .context(error::ParseConfigSnafu { filename: path.as_ref().to_path_buf() })?
         };
 
-        config.log.file_path = match config.log.file_path.map(|path| {
-            path.try_resolve()
-                .map(|path| path.to_path_buf())
-                .with_context(|_| error::ResolveFilePathSnafu { file_path: path.clone() })
-        }) {
+        config.log.file_path = match config.log.file_path.map(|p| expand_path(&p)) {
             Some(Ok(path)) => Some(path),
             Some(Err(err)) => return Err(err),
             None => None,
@@ -182,13 +177,13 @@ impl Config {
             .collect();
 
         config.grpc.access_token_file_path =
-            match config.grpc.access_token_file_path.map(resolve_path) {
+            match config.grpc.access_token_file_path.map(expand_path) {
                 Some(Ok(path)) => Some(path),
                 Some(Err(err)) => return Err(err),
                 None => None,
             };
 
-        config.history_file_path = resolve_path(&config.history_file_path)?;
+        config.history_file_path = expand_path(&config.history_file_path)?;
 
         if let Some(x11_atoms) = config.watcher.sensitive_x11_atoms {
             tracing::warn!(
@@ -261,12 +256,11 @@ impl From<Config> for clipcat_server::Config {
     }
 }
 
-fn resolve_path<P>(path: P) -> Result<PathBuf, Error>
+fn expand_path<P>(path: P) -> Result<PathBuf, Error>
 where
     P: AsRef<Path>,
 {
-    path.as_ref()
-        .try_resolve()
-        .map(|path| path.to_path_buf())
+    shellexpand::path::full(path.as_ref())
+        .map(|p| PathBuf::from(p.as_ref()))
         .with_context(|_| error::ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() })
 }

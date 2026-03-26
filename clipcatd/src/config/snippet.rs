@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{Error, resolve_path};
+use crate::config::{Error, expand_path};
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum SnippetConfig {
@@ -15,9 +15,9 @@ impl SnippetConfig {
     pub fn try_resolve_path(self) -> Result<Self, Error> {
         match self {
             Self::Text { name, content } => Ok(Self::Text { name, content }),
-            Self::File { name, path } => Ok(Self::File { name, path: resolve_path(path)? }),
+            Self::File { name, path } => Ok(Self::File { name, path: expand_path(path)? }),
             Self::Directory { name, path } => {
-                Ok(Self::Directory { name, path: resolve_path(path)? })
+                Ok(Self::Directory { name, path: expand_path(path)? })
             }
         }
     }
