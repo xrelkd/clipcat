@@ -91,7 +91,7 @@ image = "0.25"
 libc = "0.2"
 linicon = "2"
 mime = "0.3"
-mio = { version = "1.1", features = ["os-ext"] }
+mio = { version = "1.2", features = ["os-ext"] }
 notify = "8"
 notify-rust = "4"
 parking_lot = "0.12"
