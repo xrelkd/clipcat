@@ -27,7 +27,7 @@ jobs:
         run: nix profile add 'nixpkgs#treefmt'
 
       - name: Install prettier
-        run: nix profile add 'nixpkgs#nodePackages.prettier'
+        run: nix profile add 'nixpkgs#prettier'
 
       - name: Install nixfmt
         run: nix profile add 'nixpkgs#nixpkgs-fmt'
