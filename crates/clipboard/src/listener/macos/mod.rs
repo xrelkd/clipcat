@@ -52,9 +52,7 @@ impl Drop for Listener {
     }
 }
 
-// SAFETY: We have to use unsafe code here because we are interacting with
-// macOS.
-#[allow(unsafe_code)]
+#[expect(unsafe_code, reason = "macOS API requires unsafe code for clipboard access")]
 fn build_thread(
     is_running: Arc<AtomicBool>,
     notifier: pubsub::Publisher,

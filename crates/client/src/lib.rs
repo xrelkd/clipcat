@@ -71,8 +71,6 @@ impl ClientBuilder {
     /// # Errors
     ///
     /// This function will an error if the server is not connected.
-    // SAFETY: it will never panic because `grpc_endpoint` is a valid URL.
-    #[allow(clippy::missing_panics_doc)]
     async fn connect_http(grpc_endpoint: http::Uri) -> Result<tonic::transport::Channel> {
         let channel = tonic::transport::Endpoint::from_shared(grpc_endpoint.to_string())
             .expect("`grpc_endpoint` is a valid URL; qed")
@@ -87,8 +85,6 @@ impl ClientBuilder {
     /// # Errors
     ///
     /// This function will an error if the server is not connected.
-    // SAFETY: it will never panic because `uri` is a valid URL.
-    #[allow(clippy::missing_panics_doc)]
     async fn connect_local_socket(uri: http::Uri) -> Result<tonic::transport::Channel> {
         let socket_path = uri.path();
 

@@ -1,6 +1,5 @@
 mod utils;
 mod proto {
-    // SAFETY: allow: prost
     #![allow(
         unreachable_pub,
         unused_qualifications,

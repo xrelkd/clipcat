@@ -5,7 +5,6 @@ use tokio::process::Command;
 
 use crate::{error, error::Error};
 
-#[allow(clippy::module_name_repetitions)]
 pub struct ExternalEditor {
     editor: String,
 }

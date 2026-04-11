@@ -207,7 +207,10 @@ impl Cli {
         config
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "CLI run function contains many statements; refactoring would reduce readability"
+    )]
     pub fn run(self) -> Result<i32, Error> {
         let client_version = Self::command().get_version().unwrap_or_default().to_string();
         match self.commands {

@@ -26,6 +26,10 @@ pub struct FileSystemDriver {
 }
 
 impl FileSystemDriver {
+    #[expect(
+        clippy::collapsible_if,
+        reason = "Nested if-lets handle separate error cases; collapsing would reduce readability"
+    )]
     pub async fn new<P>(file_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path> + Send,

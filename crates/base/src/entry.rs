@@ -174,11 +174,11 @@ impl Entry {
 
     #[inline]
     #[must_use]
-    pub fn is_empty(&self) -> bool { self.content.is_empty() }
+    pub const fn is_empty(&self) -> bool { self.content.is_empty() }
 
     #[inline]
     #[must_use]
-    pub fn len(&self) -> usize { self.content.len() }
+    pub const fn len(&self) -> usize { self.content.len() }
 
     #[inline]
     #[must_use]

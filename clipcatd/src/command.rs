@@ -138,7 +138,10 @@ impl Cli {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Main function contains many branches; refactoring would reduce readability"
+)]
 fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     let pid_file = PidFile::from(config.pid_file.clone());
     if pid_file.exists() {
@@ -200,7 +203,7 @@ fn run_clipcatd(config: Config, replace: bool) -> Result<(), Error> {
     exit_status
 }
 
-#[allow(unsafe_code)]
+#[expect(unsafe_code, reason = "Process signal requires unsafe syscall")]
 #[inline]
 fn kill_other(pid: libc::pid_t) -> Result<(), Error> {
     tracing::info!("Try to terminate another instance (PID: {pid})");

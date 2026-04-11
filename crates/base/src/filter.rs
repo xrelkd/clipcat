@@ -2,8 +2,10 @@ use std::collections::HashSet;
 
 use crate::ClipboardContent;
 
-// SAFETY: We need the prefix `filter_`.
-#[allow(clippy::struct_field_names)]
+#[expect(
+    clippy::struct_field_names,
+    reason = "Field prefix `filter_` required for API compatibility"
+)]
 #[derive(Clone, Debug)]
 pub struct Filter {
     regex_set: regex::RegexSet,
