@@ -1,5 +1,7 @@
 # Contributing to Clipcat
 
+> **Note**: For detailed coding conventions, see [conventions.md](conventions.md).
+
 ## Nix Flake (Recommended)
 
 This project uses [Nix Flakes](https://nixos.wiki/wiki/Flakes) for development environment. We **strongly recommend** using Nix to ensure consistent tooling across all contributors.

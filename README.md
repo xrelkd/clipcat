@@ -490,7 +490,7 @@ bindsym $mod+o exec $launcher-clipboard-remove
 
 ```
 
-**NOTE**: You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
+> [!Note] You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
 
 </details>
 
@@ -514,7 +514,7 @@ Add the following keybindings to your `leftwm` configuration file (`$XDG_CONFIG_
 )
 ```
 
-**NOTE**: You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
+> [!Note] You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
 
 Add the following commands to your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
 
@@ -585,7 +585,23 @@ systemctl --user status clipcat.service
 
 ## Contributing
 
-Contributions are welcome! Please read our [contributing guidelines](docs/CONTRIBUTING.md) for details on development setup, code style, and pull request process.
+Contributions are welcome! Before you start, please read:
+
+- **[Contributing Guide](CONTRIBUTING.md)** — Development workflow, git conventions, commit message format, and PR process
+- **[Coding Conventions](conventions.md)** — Rust coding standards covering imports, attributes, error handling, async patterns, and testing
+
+Quick start:
+
+```bash
+# Enter development environment
+nix develop
+
+# Or without Nix
+cargo build
+cargo nextest run
+cargo fmt
+cargo clippy
+```
 
 ## License
 
