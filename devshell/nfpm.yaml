@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/schema.json
+
+name: "@NAME@"
+arch: "@ARCH@"
+platform: "linux"
+version: "@VERSION@"
+section: "admin"
+priority: "optional"
+maintainer: "xrelkd"
+description: |
+  Clipcat - Clipboard manager written in Rust Programming Language.
+  Statically linked binary.
+vendor: "Clipcat"
+homepage: "https://github.com/xrelkd/clipcat"
+license: "GPL-3.0"
+
+contents:
+  - src: ./usr/bin/clipcatd
+    dst: /usr/bin/clipcatd
+  - src: ./usr/bin/clipcatctl
+    dst: /usr/bin/clipcatctl
+  - src: ./usr/bin/clipcat-menu
+    dst: /usr/bin/clipcat-menu
+  - src: ./usr/bin/clipcat-notify
+    dst: /usr/bin/clipcat-notify
+
+overrides:
+  deb:
+    depends:
+      - bash-completion
+  rpm:
+    depends:
+      - bash-completion
+  apk:
+    depends:
+      - bash-completion
