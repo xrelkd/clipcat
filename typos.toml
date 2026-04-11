@@ -1,0 +1,27 @@
+[default]
+extend-ignore-identifiers-re = [
+  # long base64 strings
+  "[a-zA-Z0-9+/]{50,}",
+]
+
+[default.extend-words]
+# Rust keywords and common abbreviations
+crate = "crate"
+Crate = "Crate"
+de    = "de"
+ser   = "ser"
+
+# Cloud provider abbreviations
+AKS = "AKS"
+aks = "aks"
+AWS = "AWS"
+aws = "aws"
+EKS = "EKS"
+eks = "eks"
+GKE = "GKE"
+gke = "gke"
+LKE = "LKE"
+lke = "LKE"
+
+[files]
+extend-exclude = ["target/", "Cargo.lock", "flake.lock"]
