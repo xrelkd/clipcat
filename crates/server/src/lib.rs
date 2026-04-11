@@ -254,13 +254,12 @@ fn create_grpc_local_socket_server_future(
     move |signal| {
         async move {
             tracing::info!("Listen Clipcat gRPC endpoint on {}", local_socket.display());
-            if let Some(local_socket_parent) = local_socket.parent() {
-                if let Err(err) = tokio::fs::create_dir_all(&local_socket_parent)
+            if let Some(local_socket_parent) = local_socket.parent()
+                && let Err(err) = tokio::fs::create_dir_all(&local_socket_parent)
                     .await
                     .context(error::CreateUnixListenerSnafu { socket_path: local_socket.clone() })
-                {
-                    return ExitStatus::FatalError(err);
-                }
+            {
+                return ExitStatus::FatalError(err);
             }
 
             let uds_stream = match UnixListener::bind(&local_socket)
@@ -539,15 +538,15 @@ async fn serve_worker(
                     kind = clip.kind(),
                     basic_info = clip.basic_information()
                 );
+
                 {
                     let mut clipboard_manager = clipboard_manager.lock().await;
                     let id = clipboard_manager.insert(clip.clone());
                     if synchronize_selection_with_clipboard
                         && clip.kind() == ClipboardKind::Clipboard
+                        && let Err(err) = clipboard_manager.mark(id, ClipboardKind::Primary).await
                     {
-                        if let Err(err) = clipboard_manager.mark(id, ClipboardKind::Primary).await {
-                            tracing::warn!("{err}");
-                        }
+                        tracing::warn!("{err}");
                     }
                 }
 

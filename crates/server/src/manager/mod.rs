@@ -138,21 +138,18 @@ where
             ClipboardContent::Plaintext(text) => {
                 self.notification.on_plaintext_fetched(text.chars().count());
 
-                if let Some(id) = self.current_clips[usize::from(entry.kind())] {
-                    if let Some(current_clip) = self.clips.get(&id) {
-                        if entry.timestamp() - current_clip.timestamp() < self.primary_threshold {
-                            if let ClipboardContent::Plaintext(current_text) = current_clip.as_ref()
-                            {
-                                let text = text.as_bytes();
-                                let current_text = current_text.as_bytes();
-                                let len = text.len().min(current_text.len());
-                                if text[..len] == current_text[..len] {
-                                    if let Some(clip) = self.clips.remove(&id) {
-                                        let _id = self.timestamp_to_id.remove(&clip.timestamp());
-                                    }
-                                }
-                            }
-                        }
+                if let Some(id) = self.current_clips[usize::from(entry.kind())]
+                    && let Some(current_clip) = self.clips.get(&id)
+                    && entry.timestamp() - current_clip.timestamp() < self.primary_threshold
+                    && let ClipboardContent::Plaintext(current_text) = current_clip.as_ref()
+                {
+                    let text = text.as_bytes();
+                    let current_text = current_text.as_bytes();
+                    let len = text.len().min(current_text.len());
+                    if text[..len] == current_text[..len]
+                        && let Some(clip) = self.clips.remove(&id)
+                    {
+                        let _id = self.timestamp_to_id.remove(&clip.timestamp());
                     }
                 }
             }
