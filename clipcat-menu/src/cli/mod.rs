@@ -56,7 +56,6 @@ pub struct Cli {
     custom_finder_config: config::CustomFinderConfig,
 }
 
-#[allow(variant_size_differences)]
 #[derive(Subcommand)]
 pub enum Commands {
     #[clap(about = "Print the client and server version information")]
@@ -103,7 +102,10 @@ impl Default for Cli {
 }
 
 impl Cli {
-    #[allow(clippy::too_many_lines)]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "CLI entry point contains many statements; refactoring would reduce readability"
+    )]
     pub fn run(self) -> Result<(), Error> {
         let Self {
             commands,
