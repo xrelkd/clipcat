@@ -72,7 +72,11 @@ impl Drop for Listener {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Function contains complex wayland protocol handling; refactoring would reduce \
+              readability"
+)]
 fn build_thread(
     is_running: Arc<AtomicBool>,
     clipboard_type: wl_clipboard_rs::paste::ClipboardType,

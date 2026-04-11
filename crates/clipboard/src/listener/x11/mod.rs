@@ -77,7 +77,10 @@ impl Drop for Listener {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Function handles complex X11 protocol; refactoring would reduce readability"
+)]
 fn build_thread(
     is_running: Arc<AtomicBool>,
     mut context: Context,
@@ -171,8 +174,10 @@ fn build_thread(
         .expect("build thread for listening X11 clipboard")
 }
 
-// SAFETY: the function is complex because of `tracing`
-#[allow(clippy::cognitive_complexity)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Reconnection contains many steps; refactoring would reduce readability"
+)]
 #[inline]
 fn try_reconnect(
     poll: &mio::Poll,

@@ -36,8 +36,7 @@ use crate::{
     traits::EventObserver,
 };
 
-// SAFETY: We need the `clipboard_` prefix.
-#[allow(clippy::struct_field_names)]
+#[expect(clippy::struct_field_names, reason = "Field prefix `clipboard_` required for clarity")]
 #[derive(Clone)]
 pub struct Clipboard {
     listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,
