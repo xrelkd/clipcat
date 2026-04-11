@@ -13,9 +13,6 @@ pub fn timestamp_to_datetime(timestamp: &Timestamp) -> Result<OffsetDateTime, Ti
     Ok(datetime + nanos)
 }
 
-// SAFETY: it will never panic because nanos may not exceed 999_999_999 which is
-// less than i32::MAX
-#[allow(clippy::missing_panics_doc)]
 #[inline]
 #[must_use]
 pub fn datetime_to_timestamp(dt: &OffsetDateTime) -> Timestamp {
