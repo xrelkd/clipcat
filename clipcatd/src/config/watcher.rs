@@ -2,8 +2,10 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-// SAFETY: user may use bool to enable/disable the functions
-#[allow(clippy::struct_excessive_bools)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "Config struct intentionally has multiple bools for user customization"
+)]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct WatcherConfig {
     #[serde(default)]
