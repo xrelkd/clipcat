@@ -10,11 +10,11 @@ where
     while let Some(current_entry) = stack.pop() {
         if current_entry.is_file() {
             files.push(current_entry);
-        } else if current_entry.is_dir() {
-            if let Ok(dir_entry) = current_entry.read_dir() {
-                for entry in dir_entry.flatten() {
-                    stack.push([&dir_path, &entry.path()].iter().collect());
-                }
+        } else if current_entry.is_dir()
+            && let Ok(dir_entry) = current_entry.read_dir()
+        {
+            for entry in dir_entry.flatten() {
+                stack.push([&dir_path, &entry.path()].iter().collect());
             }
         }
     }
