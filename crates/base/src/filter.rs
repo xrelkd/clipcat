@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::ClipboardContent;
 
-// SAFETY: We need the prefix `fitler_`.
+// SAFETY: We need the prefix `filter_`.
 #[allow(clippy::struct_field_names)]
 #[derive(Clone, Debug)]
 pub struct Filter {

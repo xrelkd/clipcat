@@ -50,6 +50,8 @@ pkgs.mkShell {
 
       pkg-config
       libgit2
+
+      typos
     ]
     ++ lib.optionals stdenv.isLinux [
       xvfb-run
@@ -60,5 +62,13 @@ pkgs.mkShell {
 
     # This allows the compiled build-script-build to find libgit2 at runtime
     export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.libgit2 ]}:$LD_LIBRARY_PATH"
+
+    mkdir -p .cargo
+    if [ ! -f .cargo/config.toml ] || ! grep -q 'x86_64-unknown-linux-musl' .cargo/config.toml 2>/dev/null; then
+      cat >> .cargo/config.toml << EOF
+    [target.x86_64-unknown-linux-musl]
+    linker = "${pkgs.pkgsStatic.stdenv.cc}/bin/${pkgs.pkgsStatic.stdenv.cc.targetPrefix}cc"
+    EOF
+    fi
   '';
 }

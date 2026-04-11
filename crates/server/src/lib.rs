@@ -494,7 +494,7 @@ async fn serve_worker(
             }
         }
     });
-    let clip_reciever_handle = tokio::spawn({
+    let clip_receiver_handle = tokio::spawn({
         let send = send.clone();
         async move {
             let mut clip_recv = clipboard_watcher.subscribe();
@@ -572,7 +572,7 @@ async fn serve_worker(
     }
 
     snippets_event_handle.abort();
-    clip_reciever_handle.abort();
+    clip_receiver_handle.abort();
     shutdown_handle.abort();
 
     Ok(())

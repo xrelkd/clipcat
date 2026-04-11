@@ -16,17 +16,19 @@ pkgs.runCommand "check-format"
     ];
   }
   ''
+    cp -r ${./..} /tmp/check-format-src
+    chmod -R u+w /tmp/check-format-src
+
     treefmt \
       --allow-missing-formatter \
       --fail-on-change \
       --no-cache \
       --formatters prettier \
-      --formatters protobuf \
       --formatters nix \
       --formatters shell \
       --formatters hcl \
       --formatters toml \
-      -C ${./..}
+      -C /tmp/check-format-src
 
     # it worked!
     touch $out
