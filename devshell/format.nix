@@ -9,7 +9,7 @@ pkgs.runCommand "check-format"
 
       buf
       nixfmt
-      nodePackages.prettier
+      prettier
       shfmt
       taplo
       treefmt
