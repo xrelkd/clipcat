@@ -338,7 +338,6 @@ mod tests {
         assert_eq!(exported, clips);
     }
 
-    #[allow(clippy::mutable_key_type)]
     #[test]
     fn test_insert() {
         let n = 20;

@@ -11,7 +11,7 @@ impl SystemService {
 
 #[interface(name = "org.clipcat.clipcat.System")]
 impl SystemService {
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self, reason = "DBus interface requires self reference")]
     #[zbus(property)]
     fn get_version(&self) -> &str {
         metrics::dbus::REQUESTS_TOTAL.inc();

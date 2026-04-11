@@ -3,8 +3,7 @@ use std::collections::HashSet;
 use clipcat_base::{ClipFilter, ClipboardKind};
 use snafu::Snafu;
 
-// SAFETY: user may use bool to enable/disable the functions
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools, reason = "Option struct intentionally has many bools")]
 #[derive(Clone, Debug)]
 pub struct Options {
     pub enable_clipboard: bool,

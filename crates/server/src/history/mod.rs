@@ -32,20 +32,19 @@ impl HistoryManager {
         self.driver.put(data).await
     }
 
-    #[allow(dead_code)]
     #[inline]
     pub async fn clear(&mut self) -> Result<(), Error> { self.driver.clear().await }
 
     #[inline]
     pub async fn load(&mut self) -> Result<Vec<ClipEntry>, Error> { self.driver.load().await }
 
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "Kept for future save functionality")]
     #[inline]
     pub async fn save(&mut self, data: &[ClipEntry]) -> Result<(), Error> {
         self.driver.save(data).await
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code, reason = "Kept for future shrink functionality")]
     #[inline]
     pub async fn shrink_to(&mut self, min_capacity: usize) -> Result<(), Error> {
         self.driver.shrink_to(min_capacity).await

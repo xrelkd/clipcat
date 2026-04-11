@@ -50,7 +50,11 @@ use crate::snippets::SnippetWatcherEventReceiver;
 /// # Errors
 ///
 /// This function will return an error if the server fails to start.
-#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+#[expect(
+    clippy::cognitive_complexity,
+    clippy::too_many_lines,
+    reason = "Main event loop contains many branches; refactoring would reduce readability"
+)]
 pub async fn serve_with_shutdown(
     Config {
         grpc_listen_address,
@@ -463,7 +467,10 @@ where
     }
 }
 
-#[allow(clippy::cognitive_complexity, clippy::redundant_pub_crate)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Event handling loop contains many branches; refactoring would reduce readability"
+)]
 async fn serve_worker(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,

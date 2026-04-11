@@ -70,7 +70,10 @@ pub struct Worker {
 
 impl Worker {
     /// # Errors
-    #[allow(clippy::cognitive_complexity, clippy::redundant_pub_crate)]
+    #[expect(
+        clippy::cognitive_complexity,
+        reason = "Watcher serves many branches; refactoring would reduce readability"
+    )]
     pub async fn serve(self, shutdown_signal: sigfinn::Shutdown) -> Result<(), Error> {
         let enabled_kinds = self.opts.get_enable_kinds();
         let Self { backend, is_watching, clip_sender, clip_filter, .. } = self;

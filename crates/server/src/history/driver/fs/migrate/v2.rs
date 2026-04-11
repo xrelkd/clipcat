@@ -14,8 +14,10 @@ use crate::history::{
     error,
 };
 
-// SAFETY: Migrating requires many steps.
-#[allow(clippy::cognitive_complexity)]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Migration function contains many steps; refactoring would reduce readability"
+)]
 pub async fn migrate_to<P, Q, R>(
     file_path: P,
     header_file_path: Q,
