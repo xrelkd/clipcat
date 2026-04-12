@@ -772,7 +772,6 @@ dependencies = [
 name = "clipcat-client"
 version = "0.24.1"
 dependencies = [
- "async-trait",
  "clipcat-base",
  "clipcat-proto",
  "http",
