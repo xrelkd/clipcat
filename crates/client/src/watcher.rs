@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use clipcat_base::ClipboardWatcherState;
 use clipcat_proto as proto;
 use tonic::Request;
@@ -8,7 +7,6 @@ use crate::{
     error::{DisableWatcherError, EnableWatcherError, GetWatcherStateError, ToggleWatcherError},
 };
 
-#[async_trait]
 pub trait Watcher {
     async fn enable_watcher(&self) -> Result<ClipboardWatcherState, EnableWatcherError>;
 
@@ -19,7 +17,6 @@ pub trait Watcher {
     async fn get_watcher_state(&self) -> Result<ClipboardWatcherState, GetWatcherStateError>;
 }
 
-#[async_trait]
 impl Watcher for Client {
     async fn enable_watcher(&self) -> Result<ClipboardWatcherState, EnableWatcherError> {
         let proto::WatcherStateReply { state } =

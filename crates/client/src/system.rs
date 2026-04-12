@@ -1,15 +1,12 @@
-use async_trait::async_trait;
 use clipcat_proto as proto;
 use tonic::Request;
 
 use crate::{Client, error::GetSystemVersionError};
 
-#[async_trait]
 pub trait System {
     async fn get_version(&self) -> Result<semver::Version, GetSystemVersionError>;
 }
 
-#[async_trait]
 impl System for Client {
     async fn get_version(&self) -> Result<semver::Version, GetSystemVersionError> {
         let proto::GetSystemVersionResponse { major, minor, patch } =
