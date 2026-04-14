@@ -2,6 +2,8 @@ use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use crate::ClipboardWatcherOptions;
 
+pub const DEFAULT_MAX_HISTORY: usize = 50;
+
 #[derive(Clone, Debug)]
 pub struct Config {
     pub grpc_listen_address: Option<SocketAddr>,
