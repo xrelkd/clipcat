@@ -19,46 +19,35 @@ use self::{
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Config {
     pub daemonize: bool,
 
-    #[serde(default = "Config::default_pid_file_path")]
     pub pid_file: PathBuf,
 
-    #[serde(default = "Config::default_primary_threshold_ms")]
     pub primary_threshold_ms: i64,
 
-    #[serde(default = "Config::default_max_history")]
     pub max_history: usize,
 
-    #[serde(default)]
     pub clear_history_on_start: bool,
 
-    #[serde(default = "Config::default_synchronize_selection_with_clipboard")]
     pub synchronize_selection_with_clipboard: bool,
 
-    #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
-    #[serde(default)]
     pub log: clipcat_cli::config::LogConfig,
 
-    #[serde(default, alias = "monitor")]
+    #[serde(alias = "monitor")]
     pub watcher: WatcherConfig,
 
-    #[serde(default)]
     pub grpc: GrpcConfig,
 
-    #[serde(default)]
     pub dbus: DBusConfig,
 
-    #[serde(default)]
     pub metrics: MetricsConfig,
 
-    #[serde(default)]
     pub desktop_notification: DesktopNotificationConfig,
 
-    #[serde(default)]
     pub snippets: Vec<SnippetConfig>,
 }
 
@@ -268,10 +257,36 @@ mod tests {
 
     #[test]
     fn test_max_history_zero_disables_history() {
-        let toml_str = "daemonize = false
-max_history = 0
-";
+        let toml_str = "daemonize = false\nmax_history = 0\n";
         let config: Config = toml::from_str(toml_str).unwrap();
-        assert_eq!(config.max_history, 0, "max_history should remain 0 to disable history");
+        assert_eq!(config.max_history, 0);
+    }
+
+    #[test]
+    fn test_serialization_roundtrip() {
+        let config = Config::default();
+        let serialized = toml::to_string_pretty(&config).expect("Config should serialize");
+        let deserialized: Config = toml::from_str(&serialized).expect("Config should deserialize");
+        assert_eq!(config.daemonize, deserialized.daemonize);
+        assert_eq!(config.max_history, deserialized.max_history);
+        assert_eq!(config.primary_threshold_ms, deserialized.primary_threshold_ms);
+        assert_eq!(config.clear_history_on_start, deserialized.clear_history_on_start);
+        assert_eq!(
+            config.synchronize_selection_with_clipboard,
+            deserialized.synchronize_selection_with_clipboard
+        );
+        assert_eq!(config.snippets.len(), deserialized.snippets.len());
+    }
+
+    #[test]
+    fn test_partial_config_uses_defaults() {
+        let toml_str = r"max_history = 100";
+        let config: Config = toml::from_str(toml_str).expect("Should parse partial config");
+        assert_eq!(config.max_history, 100);
+        assert!(config.daemonize);
+        assert_eq!(config.primary_threshold_ms, 5000);
+        assert!(!config.clear_history_on_start);
+        assert!(config.synchronize_selection_with_clipboard);
+        assert!(config.snippets.is_empty());
     }
 }
