@@ -127,11 +127,23 @@ Clipcat can watch any combination of these selections using `enable_clipboard` a
 
 0. Setup configurations for `clipcat`. Read [configuration](#configuration) section for more details.
 
+> [!IMPORTANT]
+> Each program has its own separate configuration file. Use the correct `default-config` command for each program:
+>
+> - `clipcatd default-config` → `clipcatd.toml` (server config)
+> - `clipcatctl default-config` → `clipcatctl.toml` (client config)
+> - `clipcat-menu default-config` → `clipcat-menu.toml` (client config)
+>
+> Using the wrong config file (e.g., using `clipcatctl` config for `clipcatd`) will result in parse errors.
+
 ```bash
-mkdir -p                       $XDG_CONFIG_HOME/clipcat
-clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
-clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
-clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
+# Create the config directory first
+mkdir -p "$XDG_CONFIG_HOME/clipcat"
+
+# Generate default configs for each program
+clipcatd default-config      > "$XDG_CONFIG_HOME/clipcat/clipcatd.toml"
+clipcatctl default-config    > "$XDG_CONFIG_HOME/clipcat/clipcatctl.toml"
+clipcat-menu default-config  > "$XDG_CONFIG_HOME/clipcat/clipcat-menu.toml"
 ```
 
 1. Start `clipcatd` for watching clipboard events.
