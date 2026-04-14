@@ -7,11 +7,10 @@ use serde::{Deserialize, Serialize};
     reason = "Config struct intentionally has multiple bools for user customization"
 )]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct WatcherConfig {
-    #[serde(default)]
     pub enable_clipboard: bool,
 
-    #[serde(default)]
     pub enable_primary: bool,
 
     #[serde(default = "WatcherConfig::default_enable_secondary")]
@@ -28,10 +27,8 @@ pub struct WatcherConfig {
     #[serde(default = "WatcherConfig::default_filter_text_max_length")]
     pub filter_text_max_length: usize,
 
-    #[serde(default)]
     pub denied_text_regex_patterns: HashSet<String>,
 
-    #[serde(default)]
     pub capture_image: bool,
 
     #[serde(default = "WatcherConfig::default_filter_image_max_size")]
@@ -98,5 +95,45 @@ impl WatcherConfig {
 
     pub fn default_sensitive_mime_types() -> HashSet<String> {
         HashSet::from(["x-kde-passwordManagerHint".to_string()])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WatcherConfig;
+
+    #[test]
+    fn test_partial_config_preserves_defaults() {
+        let toml_str = r"
+enable_primary = false
+";
+        let config: WatcherConfig = toml::from_str(toml_str).unwrap();
+        assert!(config.enable_clipboard, "enable_clipboard should default to true");
+        assert!(!config.enable_primary, "enable_primary explicitly set to false");
+        assert!(config.capture_image, "capture_image should default to true");
+    }
+
+    #[test]
+    fn test_all_fields_set() {
+        let toml_str = r"
+enable_clipboard = false
+enable_primary = false
+enable_secondary = true
+capture_image = false
+";
+        let config: WatcherConfig = toml::from_str(toml_str).unwrap();
+        assert!(!config.enable_clipboard);
+        assert!(!config.enable_primary);
+        assert!(config.enable_secondary);
+        assert!(!config.capture_image);
+    }
+
+    #[test]
+    fn test_default_implementation() {
+        let defaults = WatcherConfig::default();
+        assert!(defaults.enable_clipboard);
+        assert!(defaults.enable_primary);
+        assert!(!defaults.enable_secondary);
+        assert!(defaults.capture_image);
     }
 }
