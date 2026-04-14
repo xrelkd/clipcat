@@ -165,9 +165,6 @@ impl Config {
         };
         config.log.registry();
 
-        config.max_history =
-            if config.max_history == 0 { Self::default_max_history() } else { config.max_history };
-
         config.snippets = config
             .snippets
             .into_iter()
@@ -263,4 +260,18 @@ where
     shellexpand::path::full(path.as_ref())
         .map(|p| PathBuf::from(p.as_ref()))
         .with_context(|_| error::ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Config;
+
+    #[test]
+    fn test_max_history_zero_disables_history() {
+        let toml_str = "daemonize = false
+max_history = 0
+";
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.max_history, 0, "max_history should remain 0 to disable history");
+    }
 }
