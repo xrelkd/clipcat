@@ -6,6 +6,7 @@ use snafu::{ResultExt, Snafu};
 use crate::finder::FinderType;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Config {
     #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
     pub server_endpoint: http::Uri,
@@ -14,10 +15,8 @@ pub struct Config {
 
     pub access_token_file_path: Option<PathBuf>,
 
-    #[serde(default)]
     pub finder: FinderType,
 
-    #[serde(default)]
     pub preview_length: usize,
 
     #[serde(default = "default_grpc_max_message_size")]
@@ -332,4 +331,35 @@ fn expand_path<P: AsRef<Path>>(path: P) -> Result<PathBuf, Error> {
     shellexpand::path::full(path.as_ref())
         .map(|p| PathBuf::from(p.as_ref()))
         .with_context(|_| ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Config, FinderType};
+
+    #[test]
+    fn test_partial_config_preserves_defaults() {
+        let toml_str = r#"
+finder = "rofi"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.preview_length, 80, "preview_length should default to 80");
+    }
+
+    #[test]
+    fn test_all_fields_set() {
+        let toml_str = r#"
+preview_length = 100
+finder = "dmenu"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.preview_length, 100);
+        assert_eq!(config.finder, FinderType::Dmenu);
+    }
+
+    #[test]
+    fn test_default_implementation() {
+        let defaults = Config::default();
+        assert_eq!(defaults.preview_length, 80);
+    }
 }
