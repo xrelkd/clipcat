@@ -48,7 +48,7 @@
 
 - Demonstration with [Rofi](https://github.com/davatorium/rofi)
 
-  https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30
+  <https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30>
 
 - Use [Rofi](https://github.com/davatorium/rofi) to select clip
 
@@ -99,6 +99,21 @@ A `clipcat` client sends requests to the server for the following operations:
 - `List`: list the cached clips from server.
 - `Insert`: replace the current content of `clipboard` with a clip.
 - `Remove`: remove the cached clips from server.
+
+### Understanding X11/Wayland Clipboard Selections
+
+On X11 and Wayland, there are multiple clipboard-like selections:
+
+| Selection   | Description                                                                    | How to Copy                        |
+| ----------- | ------------------------------------------------------------------------------ | ---------------------------------- |
+| `Clipboard` | Standard clipboard (Ctrl+C / Ctrl+V)                                           | Copy with Ctrl+C                   |
+| `Primary`   | Mouse selection - text highlighted with mouse (paste with middle mouse button) | Select text with mouse             |
+| `Secondary` | Rarely used, historical X11 feature                                            | Rarely used in modern applications |
+
+Clipcat can watch any combination of these selections using `enable_clipboard` and `enable_primary` in the `[watcher]` section of your configuration.
+
+> [!Tip]
+> If you want to track only standard Ctrl+C copying, set `enable_primary = false` and `synchronize_selection_with_clipboard = false`.
 
 ### List of Implementations
 
@@ -178,6 +193,12 @@ daemonize = true
 # Maximum number of clips in history.
 max_history = 50
 
+# Synchronize the primary selection with clipboard selection.
+# When enabled, copying to clipboard will also update the primary selection,
+# and vice versa. This is useful for X11 environments where both selections
+# are commonly used together.
+synchronize_selection_with_clipboard = true
+
 # Clears the history on startup when set to true
 clear_history_on_start = false
 
@@ -213,8 +234,15 @@ level = "INFO"
 
 [watcher]
 # Enable watching the X11/Wayland clipboard selection.
+# This is the standard clipboard - content copied with Ctrl+C / Ctrl+V (or Cmd+C / Cmd+V on macOS).
 enable_clipboard = true
+
 # Enable watching the X11/Wayland primary selection.
+# This is the "primary" selection - text highlighted with mouse selection.
+# In X11, there are three selections: clipboard, primary, and secondary.
+# - Primary: text highlighted with mouse (paste with middle mouse button)
+# - Secondary: less commonly used, rarely used in practice
+# - Clipboard: standard clipboard (paste with Ctrl+V)
 enable_primary = true
 
 # Ignore clips that match any of the MIME types.
@@ -478,7 +506,7 @@ For `i3` window manager users, it is useful to integrate `clipcat` with `i3`.
 
 Add the following options to your `i3` configuration file (`$XDG_CONFIG_HOME/i3/config`):
 
-```
+```text
 
 exec_always --no-startup-id clipcatd # start clipcatd at startup
 
@@ -545,7 +573,7 @@ pkill clipcatd
 
 Put the following snippet in `$XDG_CONFIG_HOME/systemd/user/clipcat.service`:
 
-```
+```text
 [Unit]
 Description=Clipcat Daemon
 PartOf=graphical-session.target
@@ -581,7 +609,13 @@ systemctl --user status clipcat.service
 - `clipcat-notify`: A tool for monitoring clipboard events. It watches the clipboard and exits when a change is detected, returning an exit code of 0 for success and 1 for errors.
 
 > [!Note]
-> clipcat-notify does not interact with `clipcatd`, `clipcatctl`, or `clipcat-menu`; it is simply a tool for monitoring the clipboard.
+> `clipcat-notify` is a standalone tool that does NOT read the `clipcatd.toml` configuration file. By default, it monitors all clipboard selections (clipboard, primary, and secondary). Use command-line flags to filter which selections to watch:
+>
+> - `--no-clipboard`: Don't watch the clipboard selection
+> - `--no-primary`: Don't watch the primary selection
+> - `--no-secondary`: Don't watch the secondary selection
+>
+> Example: `clipcat-notify --no-primary` to only watch the clipboard selection.
 
 ## Contributing
 
