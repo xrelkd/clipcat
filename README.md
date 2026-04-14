@@ -186,10 +186,6 @@ The following finders are supported by `clipcat-menu`:
 <details>
     <summary>Configuration for <b>clipcatd</b></summary>
 
-> [!WARNING]
-> Setting `max_history = 0` will disable history storage. No clips will be stored or
-> retrievable, and `clipcat-menu`/`clipcatctl` will display an empty list.
-
 ```toml
 # Run as a traditional UNIX daemon.
 daemonize = true
@@ -370,6 +366,10 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 }
 '''
 ```
+
+> [!WARNING]
+> Setting `max_history = 0` will disable history storage. No clips will be stored or
+> retrievable, and `clipcat-menu`/`clipcatctl` will display an empty list.
 
 </details>
 
