@@ -10,7 +10,14 @@ pub trait FinderStream: Send + Sync {
         clips
             .iter()
             .enumerate()
-            .map(|(i, ClipEntryMetadata { preview, .. })| format!("{i}{INDEX_SEPARATOR} {preview}"))
+            .map(|(i, ClipEntryMetadata { preview, kind, .. })| {
+                let prefix = if self.show_source_prefix() {
+                    format!("{} ", kind.prefix())
+                } else {
+                    String::new()
+                };
+                format!("{i}{INDEX_SEPARATOR} {prefix}{preview}")
+            })
             .collect::<Vec<_>>()
             .join(ENTRY_SEPARATOR)
     }
@@ -39,6 +46,10 @@ pub trait FinderStream: Send + Sync {
     fn set_line_length(&mut self, _line_length: usize) {}
 
     fn set_menu_length(&mut self, _menu_length: usize) {}
+
+    fn set_show_source_prefix(&mut self, _show: bool) {}
+
+    fn show_source_prefix(&self) -> bool { false }
 }
 
 #[cfg(test)]

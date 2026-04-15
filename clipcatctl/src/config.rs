@@ -171,7 +171,6 @@ grpc_max_message_size = 16777216
     #[test]
     fn test_comprehensive_toml_defaults_match_config_default() {
         let toml_str = r#"
-server_endpoint = "/run/user/1000/clipcat/grpc.sock"
 preview_length = 100
 grpc_max_message_size = 8388608
 

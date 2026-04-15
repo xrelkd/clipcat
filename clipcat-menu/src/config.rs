@@ -153,6 +153,8 @@ pub struct Rofi {
     pub menu_prompt: String,
 
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -165,6 +167,8 @@ pub struct Dmenu {
     pub menu_prompt: String,
 
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -177,6 +181,8 @@ pub struct Fuzzel {
     pub menu_prompt: String,
 
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -189,6 +195,8 @@ pub struct Choose {
     pub menu_prompt: String,
 
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -205,6 +213,7 @@ impl Default for Rofi {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -216,6 +225,7 @@ impl Default for Dmenu {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -227,6 +237,7 @@ impl Default for Fuzzel {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -238,6 +249,7 @@ impl Default for Choose {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
