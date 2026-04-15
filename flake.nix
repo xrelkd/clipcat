@@ -142,12 +142,9 @@
             clipcat = pkgs.callPackage ./devshell/package.nix {
               inherit name version rustPlatform;
             };
-            completions = pkgs.runCommand "clipcat-completions" { } ''
-              mkdir -p $out/share/{bash-completion/completions,fish/vendor_completions.d,zsh/site-functions}
-              ${clipcat}/bin/clipcatd completions bash  > $out/share/bash-completion/completions/clipcatd
-              ${clipcat}/bin/clipcatd completions fish  > $out/share/fish/vendor_completions.d/clipcatd.fish
-              ${clipcat}/bin/clipcatd completions zsh   > $out/share/zsh/site-functions/_clipcatd
-            '';
+            completions = pkgs.callPackage ./devshell/package-completions.nix {
+              inherit clipcat;
+            };
             clipcat-static = pkgs.pkgsStatic.callPackage ./devshell/package-static.nix {
               inherit name version completions;
               rustPlatform = rustPlatformMusl;
