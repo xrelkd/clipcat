@@ -36,32 +36,12 @@ stdenv.mkDerivation {
     mkdir -p "$staging/usr/share/fish/vendor_completions.d"
     mkdir -p "$staging/usr/share/zsh/site-functions"
 
-    for bin in ${clipcat-static}/bin/*; do
-      binname=$(basename "$bin")
-      cp "$bin" "$staging/usr/bin/$binname"
-    done
+    cp ${clipcat-static}/bin/clipcatd       "$staging/usr/bin/"
+    cp ${clipcat-static}/bin/clipcatctl     "$staging/usr/bin/"
+    cp ${clipcat-static}/bin/clipcat-menu   "$staging/usr/bin/"
+    cp ${clipcat-static}/bin/clipcat-notify "$staging/usr/bin/"
 
-    for f in ${clipcat-static}/share/bash-completion/completions/*; do
-      base=$(basename "$f")
-      case "$base" in
-        clipcatd)
-          cp "$f" "$staging/usr/share/bash-completion/completions/clipcatd.bash"
-          ;;
-        clipcatctl)
-          cp "$f" "$staging/usr/share/bash-completion/completions/clipcatctl.bash"
-          ;;
-        clipcat-menu)
-          cp "$f" "$staging/usr/share/bash-completion/completions/clipcat-menu.bash"
-          ;;
-        clipcat-notify)
-          cp "$f" "$staging/usr/share/bash-completion/completions/clipcat-notify.bash"
-          ;;
-        *)
-          cp "$f" "$staging/usr/share/bash-completion/completions/"
-          ;;
-      esac
-    done
-
+    cp ${clipcat-static}/share/bash-completion/completions/* "$staging/usr/share/bash-completion/completions/"
     cp ${clipcat-static}/share/fish/vendor_completions.d/* "$staging/usr/share/fish/vendor_completions.d/"
     cp ${clipcat-static}/share/zsh/site-functions/* "$staging/usr/share/zsh/site-functions/"
 
