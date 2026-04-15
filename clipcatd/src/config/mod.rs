@@ -9,7 +9,6 @@ mod watcher;
 use std::path::{Path, PathBuf};
 
 use directories::BaseDirs;
-use resolve_path::PathResolveExt;
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -20,46 +19,35 @@ use self::{
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Config {
     pub daemonize: bool,
 
-    #[serde(default = "Config::default_pid_file_path")]
     pub pid_file: PathBuf,
 
-    #[serde(default = "Config::default_primary_threshold_ms")]
     pub primary_threshold_ms: i64,
 
-    #[serde(default = "Config::default_max_history")]
     pub max_history: usize,
 
-    #[serde(default)]
     pub clear_history_on_start: bool,
 
-    #[serde(default = "Config::default_synchronize_selection_with_clipboard")]
     pub synchronize_selection_with_clipboard: bool,
 
-    #[serde(default = "Config::default_history_file_path")]
     pub history_file_path: PathBuf,
 
-    #[serde(default)]
     pub log: clipcat_cli::config::LogConfig,
 
-    #[serde(default, alias = "monitor")]
+    #[serde(alias = "monitor")]
     pub watcher: WatcherConfig,
 
-    #[serde(default)]
     pub grpc: GrpcConfig,
 
-    #[serde(default)]
     pub dbus: DBusConfig,
 
-    #[serde(default)]
     pub metrics: MetricsConfig,
 
-    #[serde(default)]
     pub desktop_notification: DesktopNotificationConfig,
 
-    #[serde(default)]
     pub snippets: Vec<SnippetConfig>,
 }
 
@@ -159,19 +147,12 @@ impl Config {
                 .context(error::ParseConfigSnafu { filename: path.as_ref().to_path_buf() })?
         };
 
-        config.log.file_path = match config.log.file_path.map(|path| {
-            path.try_resolve()
-                .map(|path| path.to_path_buf())
-                .with_context(|_| error::ResolveFilePathSnafu { file_path: path.clone() })
-        }) {
+        config.log.file_path = match config.log.file_path.map(|p| expand_path(&p)) {
             Some(Ok(path)) => Some(path),
             Some(Err(err)) => return Err(err),
             None => None,
         };
         config.log.registry();
-
-        config.max_history =
-            if config.max_history == 0 { Self::default_max_history() } else { config.max_history };
 
         config.snippets = config
             .snippets
@@ -182,13 +163,13 @@ impl Config {
             .collect();
 
         config.grpc.access_token_file_path =
-            match config.grpc.access_token_file_path.map(resolve_path) {
+            match config.grpc.access_token_file_path.map(expand_path) {
                 Some(Ok(path)) => Some(path),
                 Some(Err(err)) => return Err(err),
                 None => None,
             };
 
-        config.history_file_path = resolve_path(&config.history_file_path)?;
+        config.history_file_path = expand_path(&config.history_file_path)?;
 
         if let Some(x11_atoms) = config.watcher.sensitive_x11_atoms {
             tracing::warn!(
@@ -261,12 +242,51 @@ impl From<Config> for clipcat_server::Config {
     }
 }
 
-fn resolve_path<P>(path: P) -> Result<PathBuf, Error>
+fn expand_path<P>(path: P) -> Result<PathBuf, Error>
 where
     P: AsRef<Path>,
 {
-    path.as_ref()
-        .try_resolve()
-        .map(|path| path.to_path_buf())
+    shellexpand::path::full(path.as_ref())
+        .map(|p| PathBuf::from(p.as_ref()))
         .with_context(|_| error::ResolveFilePathSnafu { file_path: path.as_ref().to_path_buf() })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Config;
+
+    #[test]
+    fn test_max_history_zero_disables_history() {
+        let toml_str = "daemonize = false\nmax_history = 0\n";
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.max_history, 0);
+    }
+
+    #[test]
+    fn test_serialization_roundtrip() {
+        let config = Config::default();
+        let serialized = toml::to_string_pretty(&config).expect("Config should serialize");
+        let deserialized: Config = toml::from_str(&serialized).expect("Config should deserialize");
+        assert_eq!(config.daemonize, deserialized.daemonize);
+        assert_eq!(config.max_history, deserialized.max_history);
+        assert_eq!(config.primary_threshold_ms, deserialized.primary_threshold_ms);
+        assert_eq!(config.clear_history_on_start, deserialized.clear_history_on_start);
+        assert_eq!(
+            config.synchronize_selection_with_clipboard,
+            deserialized.synchronize_selection_with_clipboard
+        );
+        assert_eq!(config.snippets.len(), deserialized.snippets.len());
+    }
+
+    #[test]
+    fn test_partial_config_uses_defaults() {
+        let toml_str = r"max_history = 100";
+        let config: Config = toml::from_str(toml_str).expect("Should parse partial config");
+        assert_eq!(config.max_history, 100);
+        assert!(config.daemonize);
+        assert_eq!(config.primary_threshold_ms, 5000);
+        assert!(!config.clear_history_on_start);
+        assert!(config.synchronize_selection_with_clipboard);
+        assert!(config.snippets.is_empty());
+    }
 }

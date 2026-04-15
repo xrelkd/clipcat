@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use clipcat_proto as proto;
 use tonic::Request;
@@ -11,7 +10,6 @@ use crate::{
     },
 };
 
-#[async_trait]
 pub trait Manager {
     async fn get(&self, id: u64) -> Result<ClipEntry, GetClipError>;
 
@@ -57,7 +55,6 @@ pub trait Manager {
     async fn clear(&self) -> Result<(), ClearClipError>;
 }
 
-#[async_trait]
 impl Manager for Client {
     async fn get(&self, id: u64) -> Result<ClipEntry, GetClipError> {
         proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())

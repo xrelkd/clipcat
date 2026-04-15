@@ -39,7 +39,7 @@ impl BuiltinFinder {
             let items = item_reader.of_bufread(Cursor::new(input));
 
             // `run_with` would read and show items from the stream
-            let selected_items = Skim::run_with(&options, Some(items))
+            let selected_items = Skim::run_with(options, Some(items))
                 .map(|out| out.selected_items)
                 .unwrap_or_default();
 

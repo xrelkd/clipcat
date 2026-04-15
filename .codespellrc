@@ -1,5 +1,0 @@
-[codespell]
-skip = .git,./target,Cargo.lock,flake.lock
-ignore-words = ./dev-support/codespell-ignore
-check-filenames =
-check-hidden =

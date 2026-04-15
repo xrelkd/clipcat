@@ -21,7 +21,7 @@ impl Custom {
 impl ExternalProgram for Custom {
     fn program(&self) -> String { self.program.clone() }
 
-    fn args(&self, _seletion_mode: SelectionMode) -> Vec<String> { self.args.clone() }
+    fn args(&self, _selection_mode: SelectionMode) -> Vec<String> { self.args.clone() }
 
     fn set_program_path(&mut self, program: PathBuf) {
         self.program = program.display().to_string();

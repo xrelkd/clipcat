@@ -6,7 +6,7 @@ use zvariant::Type;
 
 use crate::ClipboardKind;
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, Type)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize, Type)]
 pub struct Entry {
     id: u64,
 
@@ -40,7 +40,7 @@ impl From<Entry> for clipcat_base::ClipEntry {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Type)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, Type)]
 pub struct EntryMetadata {
     id: u64,
     mime: String,

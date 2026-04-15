@@ -13,7 +13,7 @@
     <a href="https://github.com/xrelkd/clipcat/blob/main/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/xrelkd/clipcat"></a>
 </p>
 
-**[Installation](#installation) | [Usage](#usage) | [Integration](#integration)**
+**[Installation](#installation) | [Usage](#usage) | [Integration](#integration) | [Contributing](#contributing)**
 
 <details>
 <summary>Table of contents</summary>
@@ -25,6 +25,7 @@
 - [Configuration](#configuration)
 - [Integration](#integration)
 - [Programs in this Repository](#programs-in-this-repository)
+- [Contributing](#contributing)
 - [License](#license)
 
 </details>
@@ -47,7 +48,7 @@
 
 - Demonstration with [Rofi](https://github.com/davatorium/rofi)
 
-  https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30
+  <https://github.com/xrelkd/clipcat/assets/46590321/606a6a3a-6d7d-49d1-98c7-988e3d72df30>
 
 - Use [Rofi](https://github.com/davatorium/rofi) to select clip
 
@@ -99,6 +100,21 @@ A `clipcat` client sends requests to the server for the following operations:
 - `Insert`: replace the current content of `clipboard` with a clip.
 - `Remove`: remove the cached clips from server.
 
+### Understanding X11/Wayland Clipboard Selections
+
+On X11 and Wayland, there are multiple clipboard-like selections:
+
+| Selection   | Description                                                                    | How to Copy                        |
+| ----------- | ------------------------------------------------------------------------------ | ---------------------------------- |
+| `Clipboard` | Standard clipboard (Ctrl+C / Ctrl+V)                                           | Copy with Ctrl+C                   |
+| `Primary`   | Mouse selection - text highlighted with mouse (paste with middle mouse button) | Select text with mouse             |
+| `Secondary` | Rarely used, historical X11 feature                                            | Rarely used in modern applications |
+
+Clipcat can watch any combination of these selections using `enable_clipboard` and `enable_primary` in the `[watcher]` section of your configuration.
+
+> [!Tip]
+> If you want to track only standard Ctrl+C copying, set `enable_primary = false` and `synchronize_selection_with_clipboard = false`.
+
 ### List of Implementations
 
 | Program        | Role Type | Comment                                                                                      |
@@ -111,11 +127,23 @@ A `clipcat` client sends requests to the server for the following operations:
 
 0. Setup configurations for `clipcat`. Read [configuration](#configuration) section for more details.
 
+> [!IMPORTANT]
+> Each program has its own separate configuration file. Use the correct `default-config` command for each program:
+>
+> - `clipcatd default-config` → `clipcatd.toml` (server config)
+> - `clipcatctl default-config` → `clipcatctl.toml` (client config)
+> - `clipcat-menu default-config` → `clipcat-menu.toml` (client config)
+>
+> Using the wrong config file (e.g., using `clipcatctl` config for `clipcatd`) will result in parse errors.
+
 ```bash
-mkdir -p                       $XDG_CONFIG_HOME/clipcat
-clipcatd default-config      > $XDG_CONFIG_HOME/clipcat/clipcatd.toml
-clipcatctl default-config    > $XDG_CONFIG_HOME/clipcat/clipcatctl.toml
-clipcat-menu default-config  > $XDG_CONFIG_HOME/clipcat/clipcat-menu.toml
+# Create the config directory first
+mkdir -p "$XDG_CONFIG_HOME/clipcat"
+
+# Generate default configs for each program
+clipcatd default-config      > "$XDG_CONFIG_HOME/clipcat/clipcatd.toml"
+clipcatctl default-config    > "$XDG_CONFIG_HOME/clipcat/clipcatctl.toml"
+clipcat-menu default-config  > "$XDG_CONFIG_HOME/clipcat/clipcat-menu.toml"
 ```
 
 1. Start `clipcatd` for watching clipboard events.
@@ -177,6 +205,12 @@ daemonize = true
 # Maximum number of clips in history.
 max_history = 50
 
+# Synchronize the primary selection with clipboard selection.
+# When enabled, copying to clipboard will also update the primary selection,
+# and vice versa. This is useful for X11 environments where both selections
+# are commonly used together.
+synchronize_selection_with_clipboard = true
+
 # Clears the history on startup when set to true
 clear_history_on_start = false
 
@@ -212,8 +246,15 @@ level = "INFO"
 
 [watcher]
 # Enable watching the X11/Wayland clipboard selection.
+# This is the standard clipboard - content copied with Ctrl+C / Ctrl+V (or Cmd+C / Cmd+V on macOS).
 enable_clipboard = true
+
 # Enable watching the X11/Wayland primary selection.
+# This is the "primary" selection - text highlighted with mouse selection.
+# In X11, there are three selections: clipboard, primary, and secondary.
+# - Primary: text highlighted with mouse (paste with middle mouse button)
+# - Secondary: less commonly used, rarely used in practice
+# - Clipboard: standard clipboard (paste with Ctrl+V)
 enable_primary = true
 
 # Ignore clips that match any of the MIME types.
@@ -337,6 +378,10 @@ fn sieve_primes(n: usize) -> Vec<usize> {
 }
 '''
 ```
+
+> [!WARNING]
+> Setting `max_history = 0` will disable history storage. No clips will be stored or
+> retrievable, and `clipcat-menu`/`clipcatctl` will display an empty list.
 
 </details>
 
@@ -477,7 +522,7 @@ For `i3` window manager users, it is useful to integrate `clipcat` with `i3`.
 
 Add the following options to your `i3` configuration file (`$XDG_CONFIG_HOME/i3/config`):
 
-```
+```text
 
 exec_always --no-startup-id clipcatd # start clipcatd at startup
 
@@ -489,7 +534,7 @@ bindsym $mod+o exec $launcher-clipboard-remove
 
 ```
 
-**NOTE**: You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
+> [!Note] You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
 
 </details>
 
@@ -513,7 +558,7 @@ Add the following keybindings to your `leftwm` configuration file (`$XDG_CONFIG_
 )
 ```
 
-**NOTE**: You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
+> [!Note] You can use `rofi`, `dmenu` or `fuzzel` as the default finder.
 
 Add the following commands to your `$XDG_CONFIG_HOME/leftwm/themes/current/up`:
 
@@ -544,7 +589,7 @@ pkill clipcatd
 
 Put the following snippet in `$XDG_CONFIG_HOME/systemd/user/clipcat.service`:
 
-```
+```text
 [Unit]
 Description=Clipcat Daemon
 PartOf=graphical-session.target
@@ -580,7 +625,33 @@ systemctl --user status clipcat.service
 - `clipcat-notify`: A tool for monitoring clipboard events. It watches the clipboard and exits when a change is detected, returning an exit code of 0 for success and 1 for errors.
 
 > [!Note]
-> clipcat-notify does not interact with `clipcatd`, `clipcatctl`, or `clipcat-menu`; it is simply a tool for monitoring the clipboard.
+> `clipcat-notify` is a standalone tool that does NOT read the `clipcatd.toml` configuration file. By default, it monitors all clipboard selections (clipboard, primary, and secondary). Use command-line flags to filter which selections to watch:
+>
+> - `--no-clipboard`: Don't watch the clipboard selection
+> - `--no-primary`: Don't watch the primary selection
+> - `--no-secondary`: Don't watch the secondary selection
+>
+> Example: `clipcat-notify --no-primary` to only watch the clipboard selection.
+
+## Contributing
+
+Contributions are welcome! Before you start, please read:
+
+- **[Contributing Guide](CONTRIBUTING.md)** — Development workflow, git conventions, commit message format, and PR process
+- **[Coding Conventions](conventions.md)** — Rust coding standards covering imports, attributes, error handling, async patterns, and testing
+
+Quick start:
+
+```bash
+# Enter development environment
+nix develop
+
+# Or without Nix
+cargo build
+cargo nextest run
+cargo fmt
+cargo clippy
+```
 
 ## License
 

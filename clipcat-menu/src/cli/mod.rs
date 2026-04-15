@@ -56,7 +56,6 @@ pub struct Cli {
     custom_finder_config: config::CustomFinderConfig,
 }
 
-#[allow(variant_size_differences)]
 #[derive(Subcommand)]
 pub enum Commands {
     #[clap(about = "Print the client and server version information")]
@@ -103,7 +102,10 @@ impl Default for Cli {
 }
 
 impl Cli {
-    #[allow(clippy::too_many_lines)]
+    #[expect(
+        clippy::too_many_lines,
+        reason = "CLI entry point contains many statements; refactoring would reduce readability"
+    )]
     pub fn run(self) -> Result<(), Error> {
         let Self {
             commands,
@@ -320,6 +322,10 @@ fn build_finder(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
             }
+
+            if let Some(show_source_prefix) = rofi_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
+            }
         }
         FinderType::Dmenu => {
             if let Some(line_length) = dmenu_config.line_length {
@@ -335,6 +341,10 @@ fn build_finder(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
             }
+
+            if let Some(show_source_prefix) = dmenu_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
+            }
         }
         FinderType::Fuzzel => {
             if let Some(line_length) = fuzzel_config.line_length {
@@ -349,6 +359,10 @@ fn build_finder(
                 finder.set_extra_arguments(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
+            }
+
+            if let Some(show_source_prefix) = fuzzel_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
             }
         }
         FinderType::Custom => {

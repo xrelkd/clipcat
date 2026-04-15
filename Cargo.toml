@@ -1,12 +1,12 @@
 [workspace.package]
-version      = "0.24.1"
+version      = "0.25.0"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
 readme       = "README.md"
 license      = "GPL-3.0-only"
 edition      = "2024"
-rust-version = "1.85"
+rust-version = "1.93"
 description  = "Clipboard manager written in Rust Programming Language."
 categories   = ["clipboard manager"]
 keywords     = ["clipboard"]
@@ -43,7 +43,7 @@ http-serde = "2"
 serde      = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_with = "3"
-toml       = "1.0"
+toml       = "1.1"
 
 async-trait = "0.1"
 futures = "0.3"
@@ -91,19 +91,19 @@ image = "0.25"
 libc = "0.2"
 linicon = "2"
 mime = "0.3"
-mio = { version = "1.1", features = ["os-ext"] }
+mio = { version = "1.2", features = ["os-ext"] }
 notify = "8"
 notify-rust = "4"
 parking_lot = "0.12"
 prometheus = "0.14"
 regex = "1"
-resolve-path = "0.1"
 semver = "1"
-sha2 = "0.10"
+sha2 = "0.11"
 shadow-rs = "1.7"
+shellexpand = { version = "3", features = ["path"] }
 simdutf8 = "0.1"
-skim = "0.15"
-snafu = "0.8"
+skim = "4.6"
+snafu = "0.9"
 time = { version = "0.3", features = [
   "formatting",
   "local-offset",
@@ -235,6 +235,7 @@ tyvar_behind_raw_pointer                = "deny"
 uncommon_codepoints                     = "deny"
 unconditional_recursion                 = "deny"
 unexpected_cfgs                         = "deny"
+unfulfilled_lint_expectations           = "deny"
 ungated_async_fn_track_caller           = "deny"
 uninhabited_static                      = "deny"
 unnameable_test_items                   = "deny"

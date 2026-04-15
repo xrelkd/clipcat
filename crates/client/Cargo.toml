@@ -15,9 +15,8 @@ keywords.workspace     = true
 [dependencies]
 tracing = { workspace = true }
 
-async-trait = { workspace = true }
-hyper-util  = { workspace = true }
-tokio       = { workspace = true }
+hyper-util = { workspace = true }
+tokio      = { workspace = true }
 
 http  = { workspace = true }
 tower = { workspace = true }

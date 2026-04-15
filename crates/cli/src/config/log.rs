@@ -83,7 +83,10 @@ enum LogDriver {
 }
 
 impl LogDriver {
-    #[allow(clippy::type_repetition_in_bounds)]
+    #[expect(
+        clippy::type_repetition_in_bounds,
+        reason = "Generic bounds required for tracing layer"
+    )]
     fn layer<S>(self) -> Option<Box<dyn Layer<S> + Send + Sync + 'static>>
     where
         S: tracing::Subscriber,

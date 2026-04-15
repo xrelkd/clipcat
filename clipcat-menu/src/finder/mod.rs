@@ -44,7 +44,7 @@ pub enum MultiSelectionResult {
     Cancel,
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq, Deserialize, Serialize)]
 pub enum FinderType {
     #[default]
     #[serde(rename = "builtin")]
@@ -262,6 +262,13 @@ impl FinderRunner {
     pub fn set_extra_arguments(&mut self, arguments: &[String]) {
         if let Some(external) = self.external.as_mut() {
             external.set_extra_arguments(arguments);
+        }
+    }
+
+    #[inline]
+    pub fn set_show_source_prefix(&mut self, show: bool) {
+        if let Some(external) = self.external.as_mut() {
+            external.set_show_source_prefix(show);
         }
     }
 }

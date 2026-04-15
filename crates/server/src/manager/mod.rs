@@ -12,6 +12,7 @@ use time::OffsetDateTime;
 pub use self::error::Error;
 use crate::{backend::ClipboardBackend, notification};
 
+#[cfg(test)]
 const DEFAULT_CAPACITY: usize = 40;
 
 pub struct ClipboardManager<Notification> {
@@ -45,7 +46,6 @@ where
         primary_threshold: time::Duration,
         notification: Notification,
     ) -> Self {
-        let capacity = if capacity == 0 { DEFAULT_CAPACITY } else { capacity };
         Self {
             backend,
             primary_threshold,
@@ -138,21 +138,18 @@ where
             ClipboardContent::Plaintext(text) => {
                 self.notification.on_plaintext_fetched(text.chars().count());
 
-                if let Some(id) = self.current_clips[usize::from(entry.kind())] {
-                    if let Some(current_clip) = self.clips.get(&id) {
-                        if entry.timestamp() - current_clip.timestamp() < self.primary_threshold {
-                            if let ClipboardContent::Plaintext(current_text) = current_clip.as_ref()
-                            {
-                                let text = text.as_bytes();
-                                let current_text = current_text.as_bytes();
-                                let len = text.len().min(current_text.len());
-                                if text[..len] == current_text[..len] {
-                                    if let Some(clip) = self.clips.remove(&id) {
-                                        let _id = self.timestamp_to_id.remove(&clip.timestamp());
-                                    }
-                                }
-                            }
-                        }
+                if let Some(id) = self.current_clips[usize::from(entry.kind())]
+                    && let Some(current_clip) = self.clips.get(&id)
+                    && entry.timestamp() - current_clip.timestamp() < self.primary_threshold
+                    && let ClipboardContent::Plaintext(current_text) = current_clip.as_ref()
+                {
+                    let text = text.as_bytes();
+                    let current_text = current_text.as_bytes();
+                    let len = text.len().min(current_text.len());
+                    if text[..len] == current_text[..len]
+                        && let Some(clip) = self.clips.remove(&id)
+                    {
+                        let _id = self.timestamp_to_id.remove(&clip.timestamp());
                     }
                 }
             }
@@ -341,7 +338,6 @@ mod tests {
         assert_eq!(exported, clips);
     }
 
-    #[allow(clippy::mutable_key_type)]
     #[test]
     fn test_insert() {
         let n = 20;
@@ -453,5 +449,27 @@ mod tests {
         mgr.clear();
         assert!(mgr.is_empty());
         assert_eq!(mgr.len(), 0);
+    }
+
+    #[test]
+    fn test_capacity_zero_disables_history() {
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let cap = 0;
+        let mut mgr = ClipboardManager::with_capacity(
+            backend,
+            cap,
+            time::Duration::milliseconds(0),
+            notification,
+        );
+        assert_eq!(mgr.capacity(), cap);
+
+        let clips = create_clips(5);
+        for clip in clips {
+            let _ = mgr.insert(clip);
+        }
+
+        assert_eq!(mgr.len(), 0, "With capacity 0, clips should be immediately evicted");
+        assert!(mgr.export(false).is_empty());
     }
 }

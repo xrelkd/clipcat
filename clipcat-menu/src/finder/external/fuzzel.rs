@@ -1,6 +1,12 @@
+use clipcat_base::ClipEntryMetadata;
+
 use crate::{
     config,
-    finder::{FinderStream, external::ExternalProgram, finder_stream::INDEX_SEPARATOR},
+    finder::{
+        FinderStream,
+        external::ExternalProgram,
+        finder_stream::{ENTRY_SEPARATOR, INDEX_SEPARATOR},
+    },
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -9,13 +15,20 @@ pub struct Fuzzel {
     menu_length: usize,
     menu_prompt: String,
     extra_arguments: Vec<String>,
+    show_source_prefix: bool,
 }
 
 impl From<config::Fuzzel> for Fuzzel {
     fn from(
-        config::Fuzzel { line_length, menu_length, menu_prompt, extra_arguments }: config::Fuzzel,
+        config::Fuzzel {
+            line_length,
+            menu_length,
+            menu_prompt,
+            extra_arguments,
+            show_source_prefix,
+        }: config::Fuzzel,
     ) -> Self {
-        Self { line_length, menu_length, menu_prompt, extra_arguments }
+        Self { line_length, menu_length, menu_prompt, extra_arguments, show_source_prefix }
     }
 }
 
@@ -37,6 +50,21 @@ impl ExternalProgram for Fuzzel {
 }
 
 impl FinderStream for Fuzzel {
+    fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
+        clips
+            .iter()
+            .map(|clip| {
+                let prefix = if self.show_source_prefix {
+                    format!("{} ", clip.kind.prefix())
+                } else {
+                    String::new()
+                };
+                format!("{prefix}{}", clip.preview)
+            })
+            .collect::<Vec<_>>()
+            .join(ENTRY_SEPARATOR)
+    }
+
     fn set_extra_arguments(&mut self, arguments: &[String]) {
         self.extra_arguments = arguments.to_vec();
     }
@@ -44,6 +72,10 @@ impl FinderStream for Fuzzel {
     fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length; }
 
     fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }
+
+    fn set_show_source_prefix(&mut self, show: bool) { self.show_source_prefix = show; }
+
+    fn show_source_prefix(&self) -> bool { self.show_source_prefix }
 
     fn parse_output(&self, data: &[u8]) -> Vec<usize> {
         String::from_utf8_lossy(data)
@@ -76,6 +108,7 @@ mod tests {
             menu_length,
             menu_prompt,
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         };
         let fuzzel = Fuzzel::from(config.clone());
         assert_eq!(

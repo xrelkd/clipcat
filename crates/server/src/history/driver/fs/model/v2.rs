@@ -16,7 +16,7 @@ impl FileHeader {
     pub const SCHEMA_VERSION: u64 = 2;
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Serialize)]
+#[derive(Clone, Debug, Eq, Deserialize, Serialize)]
 pub struct ClipboardValue {
     pub timestamp: OffsetDateTime,
 

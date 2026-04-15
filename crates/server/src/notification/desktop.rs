@@ -99,7 +99,6 @@ pub struct Worker {
 }
 
 impl Worker {
-    #[allow(clippy::redundant_pub_crate)]
     pub async fn serve(self, shutdown_signal: sigfinn::Shutdown) {
         let mut shutdown_signal = shutdown_signal.into_stream();
         let Self { mut event_receiver, ref icon, timeout, long_plaintext_length } = self;

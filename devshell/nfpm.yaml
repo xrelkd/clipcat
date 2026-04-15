@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://nfpm.goreleaser.com/schema.json
+
+name: "@NAME@"
+arch: "@ARCH@"
+platform: "linux"
+version: "@VERSION@"
+section: "admin"
+priority: "optional"
+maintainer: "xrelkd"
+description: |
+  Clipcat - Clipboard manager written in Rust Programming Language.
+  Statically linked binary.
+vendor: "Clipcat"
+homepage: "https://github.com/xrelkd/clipcat"
+license: "GPL-3.0"
+
+contents:
+  - src: ./usr/bin/clipcatd
+    dst: /usr/bin/clipcatd
+  - src: ./usr/bin/clipcatctl
+    dst: /usr/bin/clipcatctl
+  - src: ./usr/bin/clipcat-menu
+    dst: /usr/bin/clipcat-menu
+  - src: ./usr/bin/clipcat-notify
+    dst: /usr/bin/clipcat-notify
+  - src: ./usr/share/bash-completion/completions/clipcatd.bash
+    dst: /usr/share/bash-completion/completions/clipcatd.bash
+  - src: ./usr/share/bash-completion/completions/clipcatctl.bash
+    dst: /usr/share/bash-completion/completions/clipcatctl.bash
+  - src: ./usr/share/bash-completion/completions/clipcat-menu.bash
+    dst: /usr/share/bash-completion/completions/clipcat-menu.bash
+  - src: ./usr/share/bash-completion/completions/clipcat-notify.bash
+    dst: /usr/share/bash-completion/completions/clipcat-notify.bash
+  - src: ./usr/share/fish/vendor_completions.d/clipcatd.fish
+    dst: /usr/share/fish/vendor_completions.d/clipcatd.fish
+  - src: ./usr/share/fish/vendor_completions.d/clipcatctl.fish
+    dst: /usr/share/fish/vendor_completions.d/clipcatctl.fish
+  - src: ./usr/share/fish/vendor_completions.d/clipcat-menu.fish
+    dst: /usr/share/fish/vendor_completions.d/clipcat-menu.fish
+  - src: ./usr/share/fish/vendor_completions.d/clipcat-notify.fish
+    dst: /usr/share/fish/vendor_completions.d/clipcat-notify.fish
+  - src: ./usr/share/zsh/site-functions/_clipcatd
+    dst: /usr/share/zsh/site-functions/_clipcatd
+  - src: ./usr/share/zsh/site-functions/_clipcatctl
+    dst: /usr/share/zsh/site-functions/_clipcatctl
+  - src: ./usr/share/zsh/site-functions/_clipcat-menu
+    dst: /usr/share/zsh/site-functions/_clipcat-menu
+  - src: ./usr/share/zsh/site-functions/_clipcat-notify
+    dst: /usr/share/zsh/site-functions/_clipcat-notify

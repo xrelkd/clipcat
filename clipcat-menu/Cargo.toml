@@ -26,8 +26,8 @@ tokio = { workspace = true }
 clap          = { workspace = true }
 clap_complete = { workspace = true }
 http          = { workspace = true }
-resolve-path  = { workspace = true }
 shadow-rs     = { workspace = true }
+shellexpand   = { workspace = true }
 skim          = { workspace = true }
 snafu         = { workspace = true }
 
