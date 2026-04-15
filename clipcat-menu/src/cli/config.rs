@@ -27,6 +27,14 @@ pub struct RofiConfig {
         help = "Extra arguments pass to Rofi, use ',' to separate arguments"
     )]
     pub extra_arguments: Option<String>,
+
+    #[clap(
+        name = "rofi-show-source-prefix",
+        long = "rofi-show-source-prefix",
+        env = "CLIPCAT_MENU_ROFI_SHOW_SOURCE_PREFIX",
+        help = "Show source prefix (e.g. [P], [S], [C]) in Rofi menu"
+    )]
+    pub show_source_prefix: Option<bool>,
 }
 
 #[derive(Args)]
@@ -54,6 +62,14 @@ pub struct DmenuConfig {
         help = "Extra arguments pass to dmenu, use ',' to separate arguments"
     )]
     pub extra_arguments: Option<String>,
+
+    #[clap(
+        name = "dmenu-show-source-prefix",
+        long = "dmenu-show-source-prefix",
+        env = "CLIPCAT_MENU_DMENU_SHOW_SOURCE_PREFIX",
+        help = "Show source prefix (e.g. [P], [S], [C]) in dmenu"
+    )]
+    pub show_source_prefix: Option<bool>,
 }
 
 #[derive(Args)]
@@ -81,6 +97,14 @@ pub struct FuzzelConfig {
         help = "Extra arguments pass to fuzzel, use ',' to separate arguments"
     )]
     pub extra_arguments: Option<String>,
+
+    #[clap(
+        name = "fuzzel-show-source-prefix",
+        long = "fuzzel-show-source-prefix",
+        env = "CLIPCAT_MENU_FUZZEL_SHOW_SOURCE_PREFIX",
+        help = "Show source prefix (e.g. [P], [S], [C]) in fuzzel"
+    )]
+    pub show_source_prefix: Option<bool>,
 }
 
 #[derive(Args)]

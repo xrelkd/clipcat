@@ -275,10 +275,12 @@ impl Cli {
                     return Ok(0);
                 }
                 None => {
-                    print_list(&client, config.preview_length, false).await?;
+                    print_list(&client, config.preview_length, false, config.show_source_prefix)
+                        .await?;
                 }
                 Some(Commands::List { no_id }) => {
-                    print_list(&client, config.preview_length, no_id).await?;
+                    print_list(&client, config.preview_length, no_id, config.show_source_prefix)
+                        .await?;
                 }
                 Some(Commands::Get { id }) => {
                     let data = if let Some(id) = id {
@@ -463,11 +465,21 @@ fn print_watcher_state(state: ClipboardWatcherState) {
     println!("{msg}");
 }
 
-async fn print_list(client: &Client, preview_length: usize, no_id: bool) -> Result<(), Error> {
+async fn print_list(
+    client: &Client,
+    preview_length: usize,
+    no_id: bool,
+    show_source_prefix: bool,
+) -> Result<(), Error> {
     let metadata_list = client.list(preview_length).await?;
     for metadata in metadata_list {
-        let ClipEntryMetadata { id, preview, .. } = metadata;
-        let output = if no_id { format!("{preview}\n") } else { format!("{id:016x}: {preview}\n") };
+        let ClipEntryMetadata { id, preview, kind, .. } = metadata;
+        let prefix = if show_source_prefix { format!("{} ", kind.prefix()) } else { String::new() };
+        let output = if no_id {
+            format!("{prefix}{preview}\n")
+        } else {
+            format!("{id:016x}: {prefix}{preview}\n")
+        };
         tokio::io::stdout().write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
     }
     Ok(())

@@ -8,7 +8,7 @@ use crate::finder::FinderType;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
-    #[serde(default = "clipcat_base::config::default_server_endpoint", with = "http_serde::uri")]
+    #[serde(with = "http_serde::uri")]
     pub server_endpoint: http::Uri,
 
     pub access_token: Option<String>,
@@ -19,25 +19,18 @@ pub struct Config {
 
     pub preview_length: usize,
 
-    #[serde(default = "default_grpc_max_message_size")]
     pub grpc_max_message_size: usize,
 
-    #[serde(default)]
     pub rofi: Option<Rofi>,
 
-    #[serde(default)]
     pub dmenu: Option<Dmenu>,
 
-    #[serde(default)]
     pub fuzzel: Option<Fuzzel>,
 
-    #[serde(default)]
     pub choose: Option<Choose>,
 
-    #[serde(default)]
     pub custom_finder: Option<CustomFinder>,
 
-    #[serde(default)]
     pub log: clipcat_cli::config::LogConfig,
 }
 
@@ -151,63 +144,59 @@ impl Default for Config {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Rofi {
-    #[serde(default = "default_line_length")]
     pub line_length: usize,
 
-    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
 
-    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 
-    #[serde(default)]
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Dmenu {
-    #[serde(default = "default_line_length")]
     pub line_length: usize,
 
-    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
 
-    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 
-    #[serde(default)]
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Fuzzel {
-    #[serde(default = "default_line_length")]
     pub line_length: usize,
 
-    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
 
-    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 
-    #[serde(default)]
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Choose {
-    #[serde(default = "default_line_length")]
     pub line_length: usize,
 
-    #[serde(default = "default_menu_length")]
     pub menu_length: usize,
 
-    #[serde(default = "default_menu_prompt")]
     pub menu_prompt: String,
 
-    #[serde(default)]
     pub extra_arguments: Vec<String>,
+
+    pub show_source_prefix: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
@@ -224,6 +213,7 @@ impl Default for Rofi {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -235,6 +225,7 @@ impl Default for Dmenu {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -246,6 +237,7 @@ impl Default for Fuzzel {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -257,6 +249,7 @@ impl Default for Choose {
             menu_length: default_menu_length(),
             line_length: default_line_length(),
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         }
     }
 }
@@ -361,5 +354,145 @@ finder = "dmenu"
     fn test_default_implementation() {
         let defaults = Config::default();
         assert_eq!(defaults.preview_length, 80);
+    }
+
+    #[test]
+    fn test_empty_toml_defaults_match_config_default() {
+        let toml_str = "";
+        let from_toml: Config = toml::from_str(toml_str).unwrap();
+        let from_default = Config::default();
+        assert_eq!(from_toml.preview_length, from_default.preview_length);
+        assert_eq!(from_toml.finder, from_default.finder);
+        assert_eq!(from_toml.grpc_max_message_size, from_default.grpc_max_message_size);
+        assert_eq!(from_toml.log.level, from_default.log.level);
+    }
+
+    #[test]
+    fn test_comprehensive_toml_defaults_match_config_default() {
+        let toml_str = r#"
+preview_length = 80
+finder = "rofi"
+grpc_max_message_size = 8388608
+
+[rofi]
+line_length = 100
+menu_length = 30
+menu_prompt = "Clipcat"
+extra_arguments = []
+
+[dmenu]
+line_length = 100
+menu_length = 30
+menu_prompt = "Clipcat"
+extra_arguments = []
+
+[fuzzel]
+line_length = 100
+menu_length = 30
+menu_prompt = "Clipcat"
+extra_arguments = []
+
+[choose]
+line_length = 100
+menu_length = 30
+menu_prompt = "Clipcat"
+extra_arguments = []
+
+[custom_finder]
+program = "fzf"
+args = []
+
+[log]
+emit_journald = false
+emit_stdout = false
+emit_stderr = false
+level = "INFO"
+"#;
+        let from_toml: Config = toml::from_str(toml_str).unwrap();
+        let from_default = Config::default();
+        assert_eq!(from_toml.preview_length, from_default.preview_length);
+        assert_eq!(from_toml.finder, from_default.finder);
+        assert_eq!(from_toml.grpc_max_message_size, from_default.grpc_max_message_size);
+        assert_eq!(from_toml.rofi, from_default.rofi);
+        assert_eq!(from_toml.dmenu, from_default.dmenu);
+        assert_eq!(from_toml.fuzzel, from_default.fuzzel);
+        assert_eq!(from_toml.choose, from_default.choose);
+        assert_eq!(from_toml.custom_finder, from_default.custom_finder);
+        assert_eq!(from_toml.log.level, from_default.log.level);
+    }
+
+    #[test]
+    fn test_finder_defaults() {
+        let config: Config = toml::from_str("finder = \"rofi\"").unwrap();
+        assert_eq!(config.rofi.as_ref().unwrap().menu_length, 30);
+        assert_eq!(config.rofi.as_ref().unwrap().line_length, 100);
+
+        let config: Config = toml::from_str("finder = \"dmenu\"").unwrap();
+        assert_eq!(config.dmenu.as_ref().unwrap().menu_length, 30);
+        assert_eq!(config.dmenu.as_ref().unwrap().line_length, 100);
+
+        let config: Config = toml::from_str("finder = \"fuzzel\"").unwrap();
+        assert_eq!(config.fuzzel.as_ref().unwrap().menu_length, 30);
+        assert_eq!(config.fuzzel.as_ref().unwrap().line_length, 100);
+
+        let config: Config = toml::from_str("finder = \"choose\"").unwrap();
+        assert_eq!(config.choose.as_ref().unwrap().menu_length, 30);
+        assert_eq!(config.choose.as_ref().unwrap().line_length, 100);
+    }
+
+    #[test]
+    fn test_config_fields() {
+        let config = Config::default();
+        assert_eq!(config.grpc_max_message_size, 8 * 1024 * 1024);
+        assert_eq!(config.log.level, tracing::Level::INFO);
+
+        let custom = crate::config::CustomFinder::default();
+        assert_eq!(custom.program, "fzf");
+        assert!(custom.args.is_empty());
+
+        assert!(config.access_token().is_none());
+        let mut config = config;
+        config.access_token = Some("test_token".to_string());
+        assert_eq!(config.access_token(), Some("test_token".to_string()));
+    }
+
+    #[test]
+    fn test_path_functions() {
+        let path = Config::default_path();
+        assert!(path.to_string_lossy().contains("clipcat-menu"));
+
+        let path = Config::search_config_file_path();
+        assert!(path.to_string_lossy().contains("clipcat-menu"));
+    }
+
+    #[test]
+    fn test_toml_parsing() {
+        let result: Result<Config, _> = toml::from_str("invalid toml [[[");
+        assert!(result.is_err());
+
+        let test_cases = vec![
+            ("\"rofi\"", FinderType::Rofi),
+            ("\"dmenu\"", FinderType::Dmenu),
+            ("\"fuzzel\"", FinderType::Fuzzel),
+            ("\"choose\"", FinderType::Choose),
+            ("\"custom\"", FinderType::Custom),
+            ("\"fzf\"", FinderType::Fzf),
+            ("\"skim\"", FinderType::Skim),
+            ("\"builtin\"", FinderType::Builtin),
+        ];
+        for (input, expected) in test_cases {
+            let toml_str = format!("finder = {input}");
+            let config: Config = toml::from_str(&toml_str).unwrap();
+            assert_eq!(config.finder, expected, "Failed for input: {input}");
+        }
+
+        let toml_str = r#"
+server_endpoint = "http://localhost:8080"
+preview_length = 100
+finder = "rofi"
+"#;
+        let config: Config = toml::from_str(toml_str).unwrap();
+        assert_eq!(config.preview_length, 100);
+        assert_eq!(config.finder, FinderType::Rofi);
     }
 }

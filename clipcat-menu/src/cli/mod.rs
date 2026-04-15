@@ -322,6 +322,10 @@ fn build_finder(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
             }
+
+            if let Some(show_source_prefix) = rofi_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
+            }
         }
         FinderType::Dmenu => {
             if let Some(line_length) = dmenu_config.line_length {
@@ -337,6 +341,10 @@ fn build_finder(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
             }
+
+            if let Some(show_source_prefix) = dmenu_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
+            }
         }
         FinderType::Fuzzel => {
             if let Some(line_length) = fuzzel_config.line_length {
@@ -351,6 +359,10 @@ fn build_finder(
                 finder.set_extra_arguments(
                     &args.split(',').map(ToString::to_string).collect::<Vec<_>>(),
                 );
+            }
+
+            if let Some(show_source_prefix) = fuzzel_config.show_source_prefix {
+                finder.set_show_source_prefix(show_source_prefix);
             }
         }
         FinderType::Custom => {

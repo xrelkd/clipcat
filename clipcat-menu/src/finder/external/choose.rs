@@ -13,13 +13,20 @@ pub struct Choose {
     menu_length: usize,
     menu_prompt: String,
     extra_arguments: Vec<String>,
+    show_source_prefix: bool,
 }
 
 impl From<config::Choose> for Choose {
     fn from(
-        config::Choose { menu_length, line_length, menu_prompt, extra_arguments }: config::Choose,
+        config::Choose {
+            menu_length,
+            line_length,
+            menu_prompt,
+            extra_arguments,
+            show_source_prefix,
+        }: config::Choose,
     ) -> Self {
-        Self { line_length, menu_length, menu_prompt, extra_arguments }
+        Self { line_length, menu_length, menu_prompt, extra_arguments, show_source_prefix }
     }
 }
 
@@ -45,7 +52,18 @@ impl ExternalProgram for Choose {
 
 impl FinderStream for Choose {
     fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
-        clips.iter().map(|clip| clip.preview.clone()).collect::<Vec<_>>().join(ENTRY_SEPARATOR)
+        clips
+            .iter()
+            .map(|clip| {
+                let prefix = if self.show_source_prefix {
+                    format!("{} ", clip.kind.prefix())
+                } else {
+                    String::new()
+                };
+                format!("{prefix}{}", clip.preview)
+            })
+            .collect::<Vec<_>>()
+            .join(ENTRY_SEPARATOR)
     }
 
     fn parse_output(&self, data: &[u8]) -> Vec<usize> {
@@ -63,6 +81,10 @@ impl FinderStream for Choose {
     fn set_extra_arguments(&mut self, arguments: &[String]) {
         self.extra_arguments = arguments.to_vec();
     }
+
+    fn set_show_source_prefix(&mut self, show: bool) { self.show_source_prefix = show; }
+
+    fn show_source_prefix(&self) -> bool { self.show_source_prefix }
 }
 
 #[cfg(test)]
@@ -81,6 +103,7 @@ mod tests {
             menu_length,
             menu_prompt,
             extra_arguments: Vec::new(),
+            show_source_prefix: false,
         };
         let choose = Choose::from(config.clone());
         assert_eq!(

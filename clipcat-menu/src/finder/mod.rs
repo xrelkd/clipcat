@@ -264,4 +264,11 @@ impl FinderRunner {
             external.set_extra_arguments(arguments);
         }
     }
+
+    #[inline]
+    pub fn set_show_source_prefix(&mut self, show: bool) {
+        if let Some(external) = self.external.as_mut() {
+            external.set_show_source_prefix(show);
+        }
+    }
 }

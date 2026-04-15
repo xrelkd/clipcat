@@ -28,6 +28,16 @@ impl Kind {
     pub const fn all_kinds() -> [Self; Self::MAX_LENGTH] {
         [Self::Clipboard, Self::Primary, Self::Secondary]
     }
+
+    #[inline]
+    #[must_use]
+    pub const fn prefix(&self) -> &'static str {
+        match self {
+            Self::Clipboard => "[C]",
+            Self::Primary => "[P]",
+            Self::Secondary => "[S]",
+        }
+    }
 }
 
 impl FromStr for Kind {
