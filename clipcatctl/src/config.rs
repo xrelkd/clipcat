@@ -15,6 +15,8 @@ pub struct Config {
 
     pub preview_length: usize,
 
+    pub show_source_prefix: bool,
+
     pub grpc_max_message_size: usize,
 
     pub log: clipcat_cli::config::LogConfig,
@@ -27,6 +29,7 @@ impl Default for Config {
             access_token: None,
             access_token_file_path: None,
             preview_length: 100,
+            show_source_prefix: false,
             grpc_max_message_size: default_grpc_max_message_size(),
             log: clipcat_cli::config::LogConfig::default(),
         }
@@ -146,13 +149,13 @@ access_token = "test_token"
 
     #[test]
     fn test_all_fields_set() {
-        let toml_str = r#"
+        let toml_str = r"
 preview_length = 50
 grpc_max_message_size = 16777216
-"#;
+";
         let config: Config = toml::from_str(toml_str).unwrap();
         assert_eq!(config.preview_length, 50);
-        assert_eq!(config.grpc_max_message_size, 16777216);
+        assert_eq!(config.grpc_max_message_size, 16_777_216);
     }
 
     #[test]
