@@ -2,7 +2,7 @@ use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
-use clipcat_client::{Client, Manager as _, System, Watcher as _};
+use clipcat_client::{Client, History, Manager as _, System, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
 use tokio::{
@@ -336,6 +336,7 @@ impl Cli {
                 }
                 Some(Commands::Clear) => {
                     client.clear().await?;
+                    client.clear_history().await?;
                 }
                 Some(Commands::Edit { id, editor }) => {
                     let data = client.get(id).await?;
