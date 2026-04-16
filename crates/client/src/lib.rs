@@ -1,4 +1,5 @@
 pub mod error;
+mod history;
 mod interceptor;
 mod manager;
 mod system;
@@ -12,6 +13,7 @@ use tokio::net::UnixStream;
 use self::interceptor::Interceptor;
 pub use self::{
     error::{Error, Result},
+    history::History,
     manager::Manager,
     system::System,
     watcher::Watcher,
