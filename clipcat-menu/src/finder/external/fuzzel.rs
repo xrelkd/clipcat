@@ -53,13 +53,14 @@ impl FinderStream for Fuzzel {
     fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
         clips
             .iter()
-            .map(|clip| {
+            .enumerate()
+            .map(|(i, clip)| {
                 let prefix = if self.show_source_prefix {
                     format!("{} ", clip.kind.prefix())
                 } else {
                     String::new()
                 };
-                format!("{prefix}{}", clip.preview)
+                format!("{i}{INDEX_SEPARATOR} {prefix}{}", clip.preview)
             })
             .collect::<Vec<_>>()
             .join(ENTRY_SEPARATOR)
