@@ -22,7 +22,7 @@ mod watcher;
 use std::{future::Future, net::SocketAddr, path::PathBuf, pin::Pin, sync::Arc};
 
 use clipcat_base::ClipboardKind;
-use clipcat_proto::{ManagerServer, SystemServer, WatcherServer};
+use clipcat_proto::{HistoryServer, ManagerServer, SystemServer, WatcherServer};
 use futures::FutureExt;
 use notification::Notification;
 use sigfinn::{ExitStatus, Handle, LifecycleManager, Shutdown};
@@ -143,7 +143,7 @@ pub async fn serve_with_shutdown(
 
         (
             Arc::new(Mutex::new(clipboard_manager)),
-            history_manager,
+            Arc::new(Mutex::new(history_manager)),
             snippets_watcher,
             snippet_event_receiver,
         )
@@ -180,6 +180,7 @@ pub async fn serve_with_shutdown(
             create_dbus_service_future(
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
+                history_manager.clone(),
                 dbus.identifier,
             ),
         );
@@ -208,6 +209,7 @@ pub async fn serve_with_shutdown(
                 grpc_access_token,
                 clipboard_watcher.get_toggle(),
                 clipboard_manager.clone(),
+                history_manager.clone(),
             ),
         );
     }
@@ -254,6 +256,7 @@ fn create_grpc_local_socket_server_future(
     grpc_access_token: Option<String>,
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+    history_manager: Arc<Mutex<HistoryManager>>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
@@ -285,6 +288,10 @@ fn create_grpc_local_socket_server_future(
                 ))
                 .add_service(ManagerServer::with_interceptor(
                     grpc::ManagerService::new(clipboard_manager),
+                    interceptor.clone(),
+                ))
+                .add_service(HistoryServer::with_interceptor(
+                    grpc::HistoryService::new(history_manager),
                     interceptor,
                 ))
                 .serve_with_incoming_shutdown(uds_stream, signal)
@@ -320,11 +327,19 @@ fn create_grpc_local_socket_server_future(
 fn create_dbus_service_future(
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+    clipboard_history: Arc<Mutex<HistoryManager>>,
     identifier: Option<String>,
 ) -> impl FnOnce(Shutdown) -> Pin<Box<dyn Future<Output = ExitStatus<Error>> + Send>> {
     move |signal| {
         async move {
-            match serve_dbus(clipboard_watcher_toggle, clipboard_manager, identifier, signal).await
+            match serve_dbus(
+                clipboard_watcher_toggle,
+                clipboard_manager,
+                clipboard_history,
+                identifier,
+                signal,
+            )
+            .await
             {
                 Ok(()) => {
                     tracing::info!("D-Bus service is shut down gracefully");
@@ -414,7 +429,7 @@ fn create_grpc_http_server_future(
 fn create_clipboard_worker_future(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
-    history_manager: HistoryManager,
+    history_manager: Arc<Mutex<HistoryManager>>,
     synchronize_selection_with_clipboard: bool,
     snippet_event_receiver: SnippetWatcherEventReceiver,
     handle: Handle<Error>,
@@ -474,7 +489,7 @@ where
 async fn serve_worker(
     clipboard_watcher: ClipboardWatcher<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
-    mut history_manager: HistoryManager,
+    history_manager: Arc<Mutex<HistoryManager>>,
     synchronize_selection_with_clipboard: bool,
     mut snippet_event_receiver: SnippetWatcherEventReceiver,
     handle: Handle<Error>,
@@ -557,6 +572,7 @@ async fn serve_worker(
                     }
                 }
 
+                let mut history_manager = history_manager.lock().await;
                 if let Err(err) = history_manager.put(&clip).await {
                     tracing::error!("{err}");
                 }
@@ -571,10 +587,12 @@ async fn serve_worker(
 
     {
         tracing::info!("Save history and shrink to capacity {history_capacity}");
+        let mut history_manager = history_manager.lock().await;
         if let Err(err) = history_manager.save_and_shrink_to(&clips, history_capacity).await {
             tracing::warn!("Failed to save history, error: {err}");
         }
         tracing::info!("Clips are stored in `{path}`", path = history_manager.path().display());
+        drop(history_manager);
     }
 
     snippets_event_handle.abort();
@@ -596,6 +614,7 @@ async fn serve_worker(
 async fn serve_dbus(
     clipboard_watcher_toggle: ClipboardWatcherToggle<notification::DesktopNotification>,
     clipboard_manager: Arc<Mutex<ClipboardManager<notification::DesktopNotification>>>,
+    clipboard_history: Arc<Mutex<HistoryManager>>,
     identifier: Option<String>,
     signal: Shutdown,
 ) -> Result<()> {
@@ -609,11 +628,13 @@ async fn serve_dbus(
     let system = dbus::SystemService::new();
     let watcher = dbus::WatcherService::new(clipboard_watcher_toggle);
     let manager = dbus::ManagerService::new(clipboard_manager);
+    let history = dbus::HistoryService::new(clipboard_history);
     let _conn = zbus::connection::Builder::session()?
         .name(dbus_service_name)?
         .serve_at(clipcat_base::DBUS_SYSTEM_OBJECT_PATH, system)?
         .serve_at(clipcat_base::DBUS_WATCHER_OBJECT_PATH, watcher)?
         .serve_at(clipcat_base::DBUS_MANAGER_OBJECT_PATH, manager)?
+        .serve_at(clipcat_base::DBUS_HISTORY_OBJECT_PATH, history)?
         .build()
         .await?;
 

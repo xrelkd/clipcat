@@ -230,3 +230,16 @@ impl fmt::Display for GetSystemVersionError {
         }
     }
 }
+
+#[derive(Debug)]
+pub enum ClearHistoryError {
+    Status { source: tonic::Status },
+}
+
+impl fmt::Display for ClearHistoryError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Status { source } => source.fmt(f),
+        }
+    }
+}
