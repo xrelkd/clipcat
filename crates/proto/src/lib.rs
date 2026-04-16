@@ -32,6 +32,8 @@ pub use self::proto::{
     GetSystemVersionResponse, InsertRequest, InsertResponse, LengthResponse, ListRequest,
     ListResponse, MarkRequest, MarkResponse, RemoveRequest, RemoveResponse, UpdateRequest,
     UpdateResponse, WatcherState, WatcherStateReply,
+    history_client::HistoryClient,
+    history_server::{History, HistoryServer},
     manager_client::ManagerClient,
     manager_server::{Manager, ManagerServer},
     system_client::SystemClient,
