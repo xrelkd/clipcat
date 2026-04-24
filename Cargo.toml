@@ -99,7 +99,7 @@ prometheus = "0.14"
 regex = "1"
 semver = "1"
 sha2 = "0.11"
-shadow-rs = "1.7"
+shadow-rs = "2.0"
 shellexpand = { version = "3", features = ["path"] }
 simdutf8 = "0.1"
 skim = "4.6"
