@@ -8,9 +8,12 @@ use std::{
 use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardContent, ClipboardKind};
 use snafu::ResultExt;
 use time::OffsetDateTime;
+use tokio::sync::broadcast;
 
 pub use self::error::Error;
 use crate::{backend::ClipboardBackend, notification};
+
+const CLIP_EVENT_CHANNEL_CAPACITY: usize = 64;
 
 #[cfg(test)]
 const DEFAULT_CAPACITY: usize = 40;
@@ -34,6 +37,8 @@ pub struct ClipboardManager<Notification> {
     snippet_ids: HashSet<u64>,
 
     notification: Notification,
+
+    clip_sender: broadcast::Sender<ClipEntry>,
 }
 
 impl<Notification> ClipboardManager<Notification>
@@ -46,6 +51,7 @@ where
         primary_threshold: time::Duration,
         notification: Notification,
     ) -> Self {
+        let (clip_sender, _) = broadcast::channel(CLIP_EVENT_CHANNEL_CAPACITY);
         Self {
             backend,
             primary_threshold,
@@ -55,8 +61,12 @@ where
             timestamp_to_id: BTreeMap::new(),
             snippet_ids: HashSet::new(),
             notification,
+            clip_sender,
         }
     }
+
+    #[inline]
+    pub fn subscribe(&self) -> broadcast::Receiver<ClipEntry> { self.clip_sender.subscribe() }
 
     #[cfg(test)]
     #[inline]
@@ -157,9 +167,10 @@ where
 
         let (id, timestamp) = (entry.id(), entry.timestamp());
         self.current_clips[usize::from(entry.kind())] = Some(id);
-        drop(self.clips.insert(id, entry));
+        drop(self.clips.insert(id, entry.clone()));
         let _unused = self.timestamp_to_id.insert(timestamp, id);
         self.remove_oldest();
+        let _unused = self.clip_sender.send(entry);
         id
     }
 
@@ -256,10 +267,11 @@ mod tests {
     use std::{collections::HashSet, sync::Arc, time::Duration};
 
     use clipcat_base::{ClipEntry, ClipboardKind};
+    use tokio::sync::broadcast::error::TryRecvError;
 
     use crate::{
         backend::LocalClipboardBackend,
-        manager::{ClipboardManager, DEFAULT_CAPACITY},
+        manager::{CLIP_EVENT_CHANNEL_CAPACITY, ClipboardManager, DEFAULT_CAPACITY},
         notification::DummyNotification,
     };
 
@@ -471,5 +483,79 @@ mod tests {
 
         assert_eq!(mgr.len(), 0, "With capacity 0, clips should be immediately evicted");
         assert!(mgr.export(false).is_empty());
+    }
+
+    #[test]
+    fn test_subscribe_receives_inserted_clips() {
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
+        let mut rx = mgr.subscribe();
+
+        let clips = create_clips(3);
+        let ids: Vec<u64> = clips.iter().map(ClipEntry::id).collect();
+        for clip in clips {
+            let _ = mgr.insert(clip);
+        }
+
+        for expected_id in ids {
+            let received = rx.try_recv().expect("subscriber should receive event");
+            assert_eq!(received.id(), expected_id);
+        }
+        assert_eq!(rx.try_recv().unwrap_err(), TryRecvError::Empty);
+    }
+
+    #[test]
+    fn test_subscribe_no_subscriber_does_not_panic() {
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
+
+        for clip in create_clips(5) {
+            let _ = mgr.insert(clip);
+        }
+        assert_eq!(mgr.len(), 5);
+    }
+
+    #[test]
+    fn test_subscribe_receives_replaced_clip() {
+        const MIME: mime::Mime = mime::TEXT_PLAIN_UTF_8;
+
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let mut mgr = ClipboardManager::new(backend, notification);
+        let old_id =
+            mgr.insert(ClipEntry::new(b"original", &MIME, ClipboardKind::Clipboard, None).unwrap());
+
+        let mut rx = mgr.subscribe();
+        let (ok, new_id) = mgr.replace(old_id, b"transformed", &MIME);
+        assert!(ok);
+
+        let received = rx.try_recv().expect("subscriber should receive replace event");
+        assert_eq!(received.id(), new_id);
+        assert_eq!(received.as_bytes(), b"transformed");
+        assert_eq!(rx.try_recv().unwrap_err(), TryRecvError::Empty);
+    }
+
+    #[test]
+    fn test_subscribe_lagged_when_overrun() {
+        let backend = Arc::new(LocalClipboardBackend::new());
+        let notification = DummyNotification::default();
+        let mut mgr = ClipboardManager::with_capacity(
+            backend,
+            CLIP_EVENT_CHANNEL_CAPACITY * 2,
+            time::Duration::milliseconds(0),
+            notification,
+        );
+        let mut rx = mgr.subscribe();
+
+        for clip in create_clips(CLIP_EVENT_CHANNEL_CAPACITY + 5) {
+            let _ = mgr.insert(clip);
+        }
+
+        match rx.try_recv() {
+            Err(TryRecvError::Lagged(_)) => {}
+            other => panic!("expected Lagged error, got {other:?}"),
+        }
     }
 }
