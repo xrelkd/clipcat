@@ -102,6 +102,12 @@ impl From<clipcat_client::error::ListClipError> for Error {
     }
 }
 
+impl From<clipcat_client::error::SubscribeClipError> for Error {
+    fn from(err: clipcat_client::error::SubscribeClipError) -> Self {
+        Self::Operation { error: err.to_string() }
+    }
+}
+
 impl From<clipcat_client::error::EnableWatcherError> for Error {
     fn from(err: clipcat_client::error::EnableWatcherError) -> Self {
         Self::Operation { error: err.to_string() }

@@ -27,7 +27,9 @@ bytes         = { workspace = true }
 clap          = { workspace = true }
 clap_complete = { workspace = true }
 directories   = { workspace = true }
+futures       = { workspace = true }
 http          = { workspace = true }
+lru           = { workspace = true }
 mime          = { workspace = true }
 shadow-rs     = { workspace = true }
 shellexpand   = { workspace = true }

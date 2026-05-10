@@ -156,7 +156,7 @@ dependencies = [
  "objc2-foundation",
  "parking_lot",
  "percent-encoding",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
  "wl-clipboard-rs",
  "x11rb 0.13.2",
 ]
@@ -799,6 +799,7 @@ version = "0.26.0"
 dependencies = [
  "clipcat-base",
  "clipcat-proto",
+ "futures",
  "http",
  "hyper-util",
  "mime",
@@ -969,8 +970,10 @@ dependencies = [
  "clipcat-client",
  "clipcat-external-editor",
  "directories",
+ "futures",
  "http",
  "http-serde",
+ "lru",
  "mime",
  "serde",
  "shadow-rs",
@@ -5093,6 +5096,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]
