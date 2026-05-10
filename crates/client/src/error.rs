@@ -170,6 +170,21 @@ impl fmt::Display for ListClipError {
 }
 
 #[derive(Debug)]
+pub enum SubscribeClipError {
+    Status { source: tonic::Status },
+}
+
+impl fmt::Display for SubscribeClipError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Status { source } => source.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for SubscribeClipError {}
+
+#[derive(Debug)]
 pub enum EnableWatcherError {
     Status { source: tonic::Status },
 }
