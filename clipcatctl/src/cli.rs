@@ -473,6 +473,7 @@ async fn print_list(
     show_source_prefix: bool,
 ) -> Result<(), Error> {
     let metadata_list = client.list(preview_length).await?;
+    let mut stdout = tokio::io::stdout();
     for metadata in metadata_list {
         let ClipEntryMetadata { id, preview, kind, .. } = metadata;
         let prefix = if show_source_prefix { format!("{} ", kind.prefix()) } else { String::new() };
@@ -481,7 +482,7 @@ async fn print_list(
         } else {
             format!("{id:016x}: {prefix}{preview}\n")
         };
-        tokio::io::stdout().write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
+        stdout.write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
     }
     Ok(())
 }
