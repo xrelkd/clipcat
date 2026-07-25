@@ -36,7 +36,6 @@ use crate::{
     traits::EventObserver,
 };
 
-#[expect(clippy::struct_field_names, reason = "Field prefix `clipboard_` required for clarity")]
 #[derive(Clone)]
 pub struct Clipboard {
     listener: Arc<dyn ClipboardSubscribe<Subscriber = Subscriber>>,
@@ -52,6 +51,10 @@ pub struct Clipboard {
             target_os = "emscripten"
         ))
     ))]
+    #[expect(
+        clippy::struct_field_names,
+        reason = "Field prefix `clipboard_` required for clarity"
+    )]
     clipboard_kind: arboard::LinuxClipboardKind,
 }
 
