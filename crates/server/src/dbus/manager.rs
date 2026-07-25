@@ -1,5 +1,3 @@
-#![allow(clippy::ignored_unit_patterns)]
-
 use std::{str::FromStr, sync::Arc};
 
 use clipcat_dbus_variant as dbus_variant;

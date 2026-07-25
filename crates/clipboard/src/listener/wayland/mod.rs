@@ -45,10 +45,10 @@ impl Listener {
         if clipboard_type == wl_clipboard_rs::paste::ClipboardType::Primary {
             if let Ok(supported) = wl_clipboard_rs::utils::is_primary_selection_supported() {
                 if !supported {
-                    return Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
+                    Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
                 }
             } else {
-                return Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
+                Err(Error::ClipboardKindNotSupported { kind: clipboard_kind })?;
             }
         }
 

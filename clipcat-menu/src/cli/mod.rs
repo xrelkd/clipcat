@@ -287,7 +287,7 @@ async fn print_version(client: &Client) {
         .await
         .map_or_else(|_err| "unknown".to_string(), |version| version.to_string());
 
-    let info = format!("Client Version: {client_version}\nServer Version: {server_version}\n",);
+    let info = format!("Client Version: {client_version}\nServer Version: {server_version}\n");
     std::io::stdout()
         .write_all(Cli::command().render_long_version().as_bytes())
         .expect("Failed to write to stdout");

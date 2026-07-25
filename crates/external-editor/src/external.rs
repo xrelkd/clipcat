@@ -69,7 +69,11 @@ impl ExternalEditor {
 
 #[cfg(test)]
 mod tests {
-    #![allow(unsafe_code)]
+    #![expect(
+        unsafe_code,
+        reason = "Test module requires unsafe for std::env::set_var to test env-based \
+                  configuration"
+    )]
     use crate::ExternalEditor;
 
     #[test]

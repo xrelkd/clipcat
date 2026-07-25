@@ -20,7 +20,10 @@ use crate::{
 };
 
 // FIXME: use `OPENMETRICS_TEXT`
-#[allow(dead_code)]
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "Kept for future use when OpenMetrics format is supported")
+)]
 static OPENMETRICS_TEXT: LazyLock<Mime> = LazyLock::new(|| {
     Mime::from_str("application/openmetrics-text; version=1.0.0; charset=utf-8")
         .expect("is valid mime type; qed")
