@@ -1,8 +1,4 @@
-mod common;
-
-use std::sync::Arc;
-
-#[cfg(all(
+#![cfg(all(
     unix,
     not(any(
         target_os = "macos",
@@ -11,8 +7,11 @@ use std::sync::Arc;
         target_os = "emscripten"
     ))
 ))]
-use clipcat_clipboard::X11ListenerError;
-use clipcat_clipboard::{Clipboard, ClipboardKind, Error};
+mod common;
+
+use std::sync::Arc;
+
+use clipcat_clipboard::{Clipboard, ClipboardKind, Error, X11ListenerError};
 
 use self::common::ClipboardTester;
 
@@ -35,15 +34,6 @@ impl ClipboardTester for Tester {
     }
 }
 
-#[cfg(all(
-    unix,
-    not(any(
-        target_os = "macos",
-        target_os = "ios",
-        target_os = "android",
-        target_os = "emscripten"
-    ))
-))]
 #[test]
 fn test_x11_clipboard() -> Result<(), Error> {
     match Tester::new(ClipboardKind::Clipboard).run() {
@@ -55,15 +45,6 @@ fn test_x11_clipboard() -> Result<(), Error> {
     }
 }
 
-#[cfg(all(
-    unix,
-    not(any(
-        target_os = "macos",
-        target_os = "ios",
-        target_os = "android",
-        target_os = "emscripten"
-    ))
-))]
 #[test]
 fn test_x11_primary() -> Result<(), Error> {
     match Tester::new(ClipboardKind::Primary).run() {
