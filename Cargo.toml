@@ -1,5 +1,5 @@
 [workspace.package]
-version      = "0.25.0"
+version      = "0.26.0"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
@@ -65,7 +65,7 @@ arboard = { version = "3", default-features = false, features = [
 
 axum       = "0.8"
 tower      = { version = "0.5", features = ["timeout"] }
-tower-http = { version = "0.6", features = ["trace"] }
+tower-http = { version = "0.7", features = ["trace"] }
 hyper-util = "0.1"
 
 prost             = "0.14"
@@ -99,10 +99,10 @@ prometheus = "0.14"
 regex = "1"
 semver = "1"
 sha2 = "0.11"
-shadow-rs = "1.7"
+shadow-rs = "2.0"
 shellexpand = { version = "3", features = ["path"] }
 simdutf8 = "0.1"
-skim = "4.6"
+skim = "5.0"
 snafu = "0.9"
 time = { version = "0.3", features = [
   "formatting",

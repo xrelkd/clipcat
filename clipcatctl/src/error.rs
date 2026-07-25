@@ -129,3 +129,9 @@ impl From<clipcat_client::error::GetWatcherStateError> for Error {
 impl From<clipcat_base::ClipEntryError> for Error {
     fn from(error: clipcat_base::ClipEntryError) -> Self { Self::EncodeData { error } }
 }
+
+impl From<clipcat_client::error::ClearHistoryError> for Error {
+    fn from(err: clipcat_client::error::ClearHistoryError) -> Self {
+        Self::Operation { error: err.to_string() }
+    }
+}

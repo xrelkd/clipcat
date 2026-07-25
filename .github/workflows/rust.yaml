@@ -36,12 +36,12 @@ jobs:
     name: Check Rust format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Show rustfmt version
         run: |
@@ -52,24 +52,40 @@ jobs:
           nix develop --command cargo fmt --all --verbose --check
 
   clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
+    name: Clippy (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs:
       - rustfmt
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Nix
+        if: runner.os == 'Linux'
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
+        if: runner.os == 'Linux'
+
+      - name: Setup Rust toolchain
+        if: runner.os == 'macOS'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: false
+
+      - name: Install build dependencies
+        if: runner.os == 'macOS'
+        run: brew install protobuf
 
       - name: Pre Cache
         run: |
           rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/ ./target/
 
       - name: Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -79,15 +95,27 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Show cargo clippy version
+        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy --version
 
+      - name: Show cargo clippy version (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cargo clippy --version
+
       - name: Run cargo clippy
+        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy-all
+
+      - name: Run cargo clippy (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cargo clippy --workspace --bins --examples --tests --benches --all-targets
 
   test:
     name: Test
@@ -103,19 +131,19 @@ jobs:
         mode:
           - release
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Pre Cache
         run: |
           rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/ ./target/
 
       - name: Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -125,7 +153,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.mode }}-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Show cargo-nextest version
         run: |
@@ -144,21 +172,21 @@ jobs:
       - clippy
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "true"
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Pre Cache
         run: |
           rm -rf ~/.cargo/registry/index/ ~/.cargo/registry/cache/ ~/.cargo/git/db/ ./target/
 
       - name: Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -168,7 +196,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Run cargo doc
         run: |

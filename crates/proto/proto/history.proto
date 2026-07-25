@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package clipcat;
+
+import "google/protobuf/empty.proto";
+
+service History {
+  rpc Clear(google.protobuf.Empty) returns (google.protobuf.Empty);
+}

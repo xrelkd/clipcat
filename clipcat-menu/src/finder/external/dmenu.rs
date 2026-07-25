@@ -1,10 +1,6 @@
-use clipcat_base::ClipEntryMetadata;
-
 use crate::{
     config,
-    finder::{
-        FinderStream, SelectionMode, external::ExternalProgram, finder_stream::ENTRY_SEPARATOR,
-    },
+    finder::{FinderStream, SelectionMode, external::ExternalProgram},
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,21 +37,6 @@ impl ExternalProgram for Dmenu {
 }
 
 impl FinderStream for Dmenu {
-    fn generate_input(&self, clips: &[ClipEntryMetadata]) -> String {
-        clips
-            .iter()
-            .map(|clip| {
-                let prefix = if self.show_source_prefix {
-                    format!("{} ", clip.kind.prefix())
-                } else {
-                    String::new()
-                };
-                format!("{prefix}{}", clip.preview)
-            })
-            .collect::<Vec<_>>()
-            .join(ENTRY_SEPARATOR)
-    }
-
     fn set_line_length(&mut self, line_length: usize) { self.line_length = line_length }
 
     fn set_menu_length(&mut self, menu_length: usize) { self.menu_length = menu_length; }

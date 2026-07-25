@@ -3,7 +3,7 @@ mod config;
 mod error;
 mod pid_file;
 mod shadow {
-    #![allow(clippy::needless_raw_string_hashes)]
+
     use shadow_rs::shadow;
     shadow!(build);
 

@@ -2,7 +2,7 @@ use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
-use clipcat_client::{Client, Manager as _, System, Watcher as _};
+use clipcat_client::{Client, History, Manager as _, System, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
 use snafu::ResultExt;
 use tokio::{
@@ -336,6 +336,7 @@ impl Cli {
                 }
                 Some(Commands::Clear) => {
                     client.clear().await?;
+                    client.clear_history().await?;
                 }
                 Some(Commands::Edit { id, editor }) => {
                     let data = client.get(id).await?;
@@ -472,6 +473,7 @@ async fn print_list(
     show_source_prefix: bool,
 ) -> Result<(), Error> {
     let metadata_list = client.list(preview_length).await?;
+    let mut stdout = tokio::io::stdout();
     for metadata in metadata_list {
         let ClipEntryMetadata { id, preview, kind, .. } = metadata;
         let prefix = if show_source_prefix { format!("{} ", kind.prefix()) } else { String::new() };
@@ -480,7 +482,7 @@ async fn print_list(
         } else {
             format!("{id:016x}: {prefix}{preview}\n")
         };
-        tokio::io::stdout().write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
+        stdout.write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
     }
     Ok(())
 }

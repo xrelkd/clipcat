@@ -1,4 +1,7 @@
-#![allow(clippy::module_name_repetitions)]
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Error type naming matches crate naming convention for clarity"
+)]
 
 use std::{fmt, path::PathBuf};
 
@@ -224,6 +227,19 @@ pub enum GetSystemVersionError {
 }
 
 impl fmt::Display for GetSystemVersionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Status { source } => source.fmt(f),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum ClearHistoryError {
+    Status { source: tonic::Status },
+}
+
+impl fmt::Display for ClearHistoryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Status { source } => source.fmt(f),
