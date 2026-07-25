@@ -22,7 +22,7 @@ use crate::{
     listener::x11::{Error, error},
 };
 
-const LONG_TIMEOUT_DUR: Duration = Duration::from_millis(1000);
+const LONG_TIMEOUT_DUR: Duration = Duration::from_secs(1);
 
 #[derive(Debug)]
 pub struct Context {

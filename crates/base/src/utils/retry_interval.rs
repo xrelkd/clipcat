@@ -31,7 +31,7 @@ impl RetryInterval {
 
 impl Default for RetryInterval {
     fn default() -> Self {
-        Self::new(10000, Duration::from_millis(5000))
+        Self::new(10000, Duration::from_secs(5))
             .add_phase(10, Duration::from_millis(100))
             .add_phase(50, Duration::from_millis(500))
             .add_phase(100, Duration::from_millis(2500))

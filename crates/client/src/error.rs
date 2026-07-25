@@ -1,4 +1,7 @@
-#![allow(clippy::module_name_repetitions)]
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Error type naming matches crate naming convention for clarity"
+)]
 
 use std::{fmt, path::PathBuf};
 
