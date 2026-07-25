@@ -52,17 +52,33 @@ jobs:
           nix develop --command cargo fmt --all --verbose --check
 
   clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
+    name: Clippy (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs:
       - rustfmt
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
 
       - name: Install Nix
+        if: runner.os == 'Linux'
         uses: DeterminateSystems/nix-installer-action@v22
 
       - uses: DeterminateSystems/magic-nix-cache-action@v14
+        if: runner.os == 'Linux'
+
+      - name: Setup Rust toolchain
+        if: runner.os == 'macOS'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: false
+
+      - name: Install build dependencies
+        if: runner.os == 'macOS'
+        run: brew install protobuf
 
       - name: Pre Cache
         run: |
@@ -82,12 +98,24 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Show cargo clippy version
+        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy --version
 
+      - name: Show cargo clippy version (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cargo clippy --version
+
       - name: Run cargo clippy
+        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy-all
+
+      - name: Run cargo clippy (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cargo clippy --workspace --bins --examples --tests --benches --all-targets
 
   test:
     name: Test
