@@ -56,7 +56,7 @@ tokio = { version = "1", features = [
   "sync",
   "process",
 ] }
-tokio-stream = { version = "0.1", features = ["net"] }
+tokio-stream = { version = "0.1", features = ["net", "sync"] }
 
 arboard = { version = "3", default-features = false, features = [
   "image-data",
@@ -90,6 +90,7 @@ humansize = "2"
 image = "0.25"
 libc = "0.2"
 linicon = "2"
+lru = "0.18"
 mime = "0.3"
 mio = { version = "1.2", features = ["os-ext"] }
 notify = "8"

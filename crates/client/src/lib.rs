@@ -14,7 +14,7 @@ use self::interceptor::Interceptor;
 pub use self::{
     error::{Error, Result},
     history::History,
-    manager::Manager,
+    manager::{Manager, SubscribeStream},
     system::System,
     watcher::Watcher,
 };

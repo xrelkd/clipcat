@@ -21,6 +21,8 @@ service Manager {
   rpc Mark(MarkRequest) returns (MarkResponse);
 
   rpc Length(google.protobuf.Empty) returns (LengthResponse);
+
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeEvent);
 }
 
 enum ClipboardKind {
@@ -109,4 +111,11 @@ message BatchRemoveRequest {
 }
 message BatchRemoveResponse {
   repeated uint64 ids = 1;
+}
+
+message SubscribeRequest {
+  uint64 preview_length = 1;
+}
+message SubscribeEvent {
+  ClipEntryMetadata metadata = 1;
 }

@@ -15,6 +15,7 @@ keywords.workspace     = true
 [dependencies]
 tracing = { workspace = true }
 
+futures    = { workspace = true }
 hyper-util = { workspace = true }
 tokio      = { workspace = true }
 

@@ -1,7 +1,12 @@
-use std::{str::FromStr, sync::Arc};
+use std::{pin::Pin, str::FromStr, sync::Arc};
 
 use clipcat_proto as proto;
+use futures::Stream;
 use tokio::sync::Mutex;
+use tokio_stream::{
+    StreamExt,
+    wrappers::{BroadcastStream, errors::BroadcastStreamRecvError},
+};
 use tonic::{Request, Response, Status};
 
 use crate::{ClipboardManager, notification};
@@ -21,6 +26,9 @@ impl<Notification> proto::Manager for ManagerService<Notification>
 where
     Notification: notification::Notification + 'static,
 {
+    type SubscribeStream =
+        Pin<Box<dyn Stream<Item = Result<proto::SubscribeEvent, Status>> + Send + 'static>>;
+
     async fn insert(
         &self,
         request: Request<proto::InsertRequest>,
@@ -145,5 +153,29 @@ where
             manager.len() as u64
         };
         Ok(Response::new(proto::LengthResponse { length }))
+    }
+
+    async fn subscribe(
+        &self,
+        request: Request<proto::SubscribeRequest>,
+    ) -> Result<Response<Self::SubscribeStream>, Status> {
+        let proto::SubscribeRequest { preview_length } = request.into_inner();
+        let preview_length = usize::try_from(preview_length).unwrap_or(30);
+        let receiver = {
+            let manager = self.manager.lock().await;
+            manager.subscribe()
+        };
+        let stream = BroadcastStream::new(receiver).filter_map(move |result| match result {
+            Ok(entry) => {
+                let metadata = proto::ClipEntryMetadata::from(entry.metadata(Some(preview_length)));
+                Some(Ok(proto::SubscribeEvent { metadata: Some(metadata) }))
+            }
+            Err(BroadcastStreamRecvError::Lagged(skipped)) => {
+                tracing::warn!("Subscriber lagged, skipped {skipped} clip events");
+                None
+            }
+        });
+        let stream: Self::SubscribeStream = Box::pin(stream);
+        Ok(Response::new(stream))
     }
 }
