@@ -21,13 +21,13 @@ http-serde = { workspace = true }
 serde      = { workspace = true }
 toml       = { workspace = true }
 
-tokio = { workspace = true }
+futures = { workspace = true }
+tokio   = { workspace = true }
 
 bytes         = { workspace = true }
 clap          = { workspace = true }
 clap_complete = { workspace = true }
 directories   = { workspace = true }
-futures       = { workspace = true }
 http          = { workspace = true }
 lru           = { workspace = true }
 mime          = { workspace = true }
