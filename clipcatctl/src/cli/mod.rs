@@ -1,16 +1,11 @@
-use std::{
-    io::Write,
-    num::{NonZeroUsize, ParseIntError},
-    path::PathBuf,
-    time::Duration,
-};
+mod tail;
+
+use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clipcat_base::{ClipEntryMetadata, ClipboardKind, ClipboardWatcherState};
 use clipcat_client::{Client, History, Manager as _, System, Watcher as _};
 use clipcat_external_editor::ExternalEditor;
-use futures::StreamExt;
-use lru::LruCache;
 use snafu::ResultExt;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -242,13 +237,6 @@ impl Cli {
     pub fn run(self) -> Result<i32, Error> {
         let client_version = Self::command().get_version().unwrap_or_default().to_string();
         match self.commands {
-            Some(Commands::Tail { no_id, lines, follow }) => {
-                let config = self.load_config();
-                config.log.registry();
-                return Runtime::new()
-                    .context(error::InitializeTokioRuntimeSnafu)?
-                    .block_on(run_tail(config, no_id, lines, follow));
-            }
             Some(Commands::Version { client }) if client => {
                 std::io::stdout()
                     .write_all(Self::command().render_long_version().as_bytes())
@@ -331,6 +319,17 @@ impl Cli {
                     };
 
                     println!("{data}");
+                }
+                Some(Commands::Tail { no_id, lines, follow }) => {
+                    return tail::run(
+                        &client,
+                        config.preview_length,
+                        config.show_source_prefix,
+                        no_id,
+                        lines,
+                        follow,
+                    )
+                    .await;
                 }
                 Some(Commands::Insert { kinds, data }) => {
                     for kind in kinds {
@@ -528,141 +527,3 @@ async fn print_list(
 
 #[inline]
 const fn parse_hex(src: &str) -> Result<u64, ParseIntError> { u64::from_str_radix(src, 16) }
-
-const TAIL_BACKOFF_INITIAL: Duration = Duration::from_millis(100);
-const TAIL_BACKOFF_MAX: Duration = Duration::from_secs(5);
-const TAIL_PRINTED_IDS_CAP: NonZeroUsize = NonZeroUsize::new(1024).unwrap();
-
-struct TailState {
-    printed_ids: LruCache<u64, ()>,
-    is_first_session: bool,
-    backoff: Duration,
-}
-
-impl TailState {
-    fn new() -> Self {
-        Self {
-            printed_ids: LruCache::new(TAIL_PRINTED_IDS_CAP),
-            is_first_session: true,
-            backoff: TAIL_BACKOFF_INITIAL,
-        }
-    }
-
-    fn next_backoff(&mut self) -> Duration {
-        let current = self.backoff;
-        self.backoff = std::cmp::min(self.backoff.saturating_mul(2), TAIL_BACKOFF_MAX);
-        current
-    }
-
-    const fn reset_backoff(&mut self) { self.backoff = TAIL_BACKOFF_INITIAL; }
-}
-
-async fn write_metadata_line(
-    metadata: &ClipEntryMetadata,
-    no_id: bool,
-    show_source_prefix: bool,
-) -> Result<(), Error> {
-    let line = format_metadata_line(metadata, no_id, show_source_prefix);
-    tokio::io::stdout().write_all(line.as_bytes()).await.context(error::WriteStdoutSnafu)?;
-    Ok(())
-}
-
-async fn run_tail(config: Config, no_id: bool, lines: u64, follow: bool) -> Result<i32, Error> {
-    let preview_length = config.preview_length;
-    let show_source_prefix = config.show_source_prefix;
-    let mut state = TailState::new();
-    if !follow {
-        // Single-shot: fail fast if the daemon is unreachable.
-        return run_tail_session(
-            &config,
-            no_id,
-            lines,
-            preview_length,
-            show_source_prefix,
-            &mut state,
-            false,
-        )
-        .await
-        .map(|()| 0);
-    }
-    loop {
-        match run_tail_session(
-            &config,
-            no_id,
-            lines,
-            preview_length,
-            show_source_prefix,
-            &mut state,
-            true,
-        )
-        .await
-        {
-            Ok(()) => return Ok(0),
-            Err(err) => {
-                let delay = state.next_backoff();
-                tracing::debug!(
-                    "tail session ended ({err}); reconnecting in {} ms",
-                    delay.as_millis()
-                );
-                tokio::time::sleep(delay).await;
-            }
-        }
-    }
-}
-
-async fn run_tail_session(
-    config: &Config,
-    no_id: bool,
-    lines: u64,
-    preview_length: usize,
-    show_source_prefix: bool,
-    state: &mut TailState,
-    follow: bool,
-) -> Result<(), Error> {
-    let client = Client::builder()
-        .grpc_endpoint(config.server_endpoint.clone())
-        .access_token(config.access_token())
-        .max_decoding_message_size(config.grpc_max_message_size)
-        .build()
-        .await?;
-
-    // Subscribe before listing so events from the gap between the two are
-    // buffered in the receiver and deduped via `printed_ids`. On reconnect we
-    // skip the list entirely; only entries arriving on the new stream are
-    // emitted.
-    let stream = if follow { Some(client.subscribe(preview_length).await?) } else { None };
-
-    if state.is_first_session {
-        let take = usize::try_from(lines).unwrap_or(0);
-        if take > 0 {
-            let snapshot = client.list(preview_length).await?;
-            // `client.list` returns newest first; take the most recent `take`
-            // entries, then iterate in reverse so output reads oldest -> newest,
-            // matching the chronological order of streamed events under `-f`.
-            let recent: Vec<_> = snapshot.into_iter().take(take).collect();
-            for metadata in recent.iter().rev() {
-                if state.printed_ids.contains(&metadata.id) {
-                    continue;
-                }
-                write_metadata_line(metadata, no_id, show_source_prefix).await?;
-                let _ = state.printed_ids.put(metadata.id, ());
-            }
-        }
-        state.is_first_session = false;
-    }
-
-    let Some(mut stream) = stream else {
-        return Ok(());
-    };
-    while let Some(item) = stream.next().await {
-        let metadata = item?;
-        if state.printed_ids.contains(&metadata.id) {
-            continue;
-        }
-        write_metadata_line(&metadata, no_id, show_source_prefix).await?;
-        let _ = state.printed_ids.put(metadata.id, ());
-        state.reset_backoff();
-    }
-
-    Err(Error::Operation { error: "subscription stream ended".to_owned() })
-}

@@ -175,7 +175,7 @@ where
                 None
             }
         });
-        let stream: Self::SubscribeStream = Box::pin(stream);
-        Ok(Response::new(stream))
+
+        Ok(Response::new(Box::pin(stream)))
     }
 }
