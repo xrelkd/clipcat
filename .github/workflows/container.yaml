@@ -84,7 +84,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           pull: true
-          push: true
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           set: |
             clipcat.args.SCCACHE_GHA_ENABLED=on
             clipcat.args.ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
