@@ -18,7 +18,7 @@ pub enum Error {
          error: {source}"
     ))]
     ConnectToClipcatServerViaHttp {
-        endpoint: http::Uri,
+        endpoint: Box<http::Uri>,
         source: tonic::transport::Error,
         backtrace: Backtrace,
     },

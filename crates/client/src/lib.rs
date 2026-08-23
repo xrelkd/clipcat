@@ -79,7 +79,7 @@ impl ClientBuilder {
             .connect()
             .await
             .with_context(|_| error::ConnectToClipcatServerViaHttpSnafu {
-                endpoint: grpc_endpoint.clone(),
+                endpoint: Box::new(grpc_endpoint.clone()),
             })?;
         Ok(channel)
     }
