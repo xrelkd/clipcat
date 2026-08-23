@@ -225,7 +225,6 @@ private_interfaces                      = "deny"
 redundant_semicolons                    = "deny"
 refining_impl_trait                     = { level = "deny", priority = -1 }
 renamed_and_removed_lints               = "deny"
-repr_transparent_non_zst_fields         = "deny"
 semicolon_in_expressions_from_macros    = "deny"
 special_module_name                     = "deny"
 stable_features                         = "deny"
