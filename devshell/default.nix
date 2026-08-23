@@ -53,7 +53,7 @@ pkgs.mkShell {
 
       typos
     ]
-    ++ lib.optionals stdenv.isLinux [
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       xvfb-run
     ];
 
