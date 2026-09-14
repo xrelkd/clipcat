@@ -41,7 +41,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Show rustfmt version
         run: |
@@ -67,7 +67,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
         if: runner.os == 'Linux'
 
       - name: Setup Rust toolchain
@@ -136,7 +136,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Pre Cache
         run: |
@@ -179,7 +179,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
-      - uses: DeterminateSystems/magic-nix-cache-action@v14
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
 
       - name: Pre Cache
         run: |
