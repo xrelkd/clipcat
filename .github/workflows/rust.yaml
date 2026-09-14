@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - uses: DeterminateSystems/magic-nix-cache-action@v15
 
@@ -65,7 +65,7 @@ jobs:
 
       - name: Install Nix
         if: runner.os == 'Linux'
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - uses: DeterminateSystems/magic-nix-cache-action@v15
         if: runner.os == 'Linux'
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - uses: DeterminateSystems/magic-nix-cache-action@v15
 
@@ -177,7 +177,7 @@ jobs:
           submodules: "true"
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - uses: DeterminateSystems/magic-nix-cache-action@v15
 
