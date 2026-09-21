@@ -110,7 +110,13 @@ impl Context {
         Ok(())
     }
 
-    pub fn get_available_formats(&self) -> Result<Vec<String>, Error> {
+    /// Get available clipboard formats. Any `XfixesSelectionNotify` events
+    /// encountered while waiting for the `SelectionNotify` reply are collected
+    /// into `pending_events` so the caller can re-process them.
+    pub fn get_available_formats(
+        &self,
+        pending_events: &mut Vec<x11rb::protocol::Event>,
+    ) -> Result<Vec<String>, Error> {
         drop(
             self.connection
                 .delete_property(self.window, self.atom_cache.clipcat_clipboard)
@@ -169,6 +175,10 @@ impl Context {
                 }
                 return Ok(formats);
             }
+
+            // Preserve any other events (especially XfixesSelectionNotify)
+            // so they are not lost.
+            pending_events.push(event);
         }
         Ok(Vec::new())
     }
