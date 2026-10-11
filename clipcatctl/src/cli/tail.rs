@@ -66,9 +66,9 @@ async fn run_session(
     state: &mut TailState,
     follow: bool,
 ) -> Result<(), Error> {
-    // Subscribe before listing so events in the gap are buffered and deduped via
-    // printed_ids. On reconnect, we skip listing entirely and only emit entries
-    // from the new stream.
+    // Subscribe before listing so events in the gap are buffered and deduped
+    // via printed_ids. On reconnect, we skip listing entirely and only emit
+    // entries from the new stream.
     let stream = if follow { Some(client.subscribe(preview_length).await?) } else { None };
 
     if state.is_first_session {
@@ -76,9 +76,10 @@ async fn run_session(
         if take > 0 {
             let snapshot = client.list(preview_length).await?;
 
-            // `client.list` returns newest first. We take the most recent `take` entries
-            // and iterate in reverse so output reads oldest -> newest, matching the
-            // chronological order of streamed events under `-f`.
+            // `client.list` returns newest first. We take the most recent
+            // `take` entries and iterate in reverse so output reads
+            // oldest -> newest, matching the chronological order of
+            // streamed events under `-f`.
             let recent: Vec<_> = snapshot.into_iter().take(take).collect();
             for metadata in recent.iter().rev() {
                 if state.printed_ids.contains(&metadata.id) {
