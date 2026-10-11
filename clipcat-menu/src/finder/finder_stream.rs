@@ -88,19 +88,19 @@ mod tests {
         let d = Dummy;
         let output = "";
         let v = d.parse_output(output.as_bytes());
-        assert!(v.is_empty());
+        assert!(v.is_empty(), "expected empty parse output: {v:?}");
 
         let output = ":";
         let v = d.parse_output(output.as_bytes());
-        assert!(v.is_empty());
+        assert!(v.is_empty(), "expected empty parse output: {v:?}");
 
         let output = "::::::::";
         let v = d.parse_output(output.as_bytes());
-        assert!(v.is_empty());
+        assert!(v.is_empty(), "expected empty parse output: {v:?}");
 
         let output = "\n\n\n\n\n";
         let v = d.parse_output(output.as_bytes());
-        assert!(v.is_empty());
+        assert!(v.is_empty(), "expected empty parse output: {v:?}");
 
         let output = "9\n3\n0\n4\n1\n";
         let v = d.parse_output(output.as_bytes());

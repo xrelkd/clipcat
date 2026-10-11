@@ -49,12 +49,12 @@ pub async fn run(
                 }
             }
         }
-    } else {
-        // Single-shot: fail fast if the daemon is unreachable.
-        run_session(client, no_id, lines, preview_length, show_source_prefix, &mut state, false)
-            .await
-            .map(|()| 0)
     }
+
+    // Single-shot: fail fast if the daemon is unreachable.
+    run_session(client, no_id, lines, preview_length, show_source_prefix, &mut state, false)
+        .await
+        .map(|()| 0)
 }
 
 async fn run_session(
