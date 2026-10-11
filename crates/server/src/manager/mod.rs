@@ -482,7 +482,7 @@ mod tests {
         }
 
         assert_eq!(mgr.len(), 0, "With capacity 0, clips should be immediately evicted");
-        assert!(mgr.export(false).is_empty());
+        assert!(mgr.export(false).is_empty(), "exported clips should be empty");
     }
 
     #[test]

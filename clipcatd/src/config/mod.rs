@@ -287,6 +287,6 @@ mod tests {
         assert_eq!(config.primary_threshold_ms, 5000);
         assert!(!config.clear_history_on_start);
         assert!(config.synchronize_selection_with_clipboard);
-        assert!(config.snippets.is_empty());
+        assert!(config.snippets.is_empty(), "expected default config to have no snippets");
     }
 }

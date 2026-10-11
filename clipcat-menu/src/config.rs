@@ -448,7 +448,7 @@ level = "INFO"
 
         let custom = crate::config::CustomFinder::default();
         assert_eq!(custom.program, "fzf");
-        assert!(custom.args.is_empty());
+        assert!(custom.args.is_empty(), "expected custom finder to have no default args");
 
         assert!(config.access_token().is_none());
         let mut config = config;
