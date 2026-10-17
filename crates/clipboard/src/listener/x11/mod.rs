@@ -107,6 +107,8 @@ fn build_thread(
                 )
                 .context(error::RegisterIoResourceSnafu)?;
 
+            let mut pending_events: Vec<X11Event> = Vec::new();
+
             while is_running.load(Ordering::Relaxed) {
                 tracing::trace!("Wait for readiness events");
 
@@ -119,31 +121,22 @@ fn build_thread(
                     );
                 }
 
-                for event in &events {
-                    if event.token() == CONTEXT_TOKEN {
-                        match context.poll_for_event() {
-                            Ok(X11Event::XfixesSelectionNotify(_event)) => {
-                                match context.get_available_formats() {
-                                    Ok(mut formats) => {
-                                        // filter sensitive content
-                                        if clip_filter.filter_sensitive_mime_type(formats.iter()) {
-                                            tracing::info!("Sensitive content detected, ignore it");
-                                            continue;
-                                        }
+                let has_context_event = events.iter().any(|event| event.token() == CONTEXT_TOKEN);
+                if !has_context_event && pending_events.is_empty() {
+                    continue;
+                }
 
-                                        if let Some(mime) = extract_mime(&mut formats) {
-                                            notifier.notify_all(mime);
-                                        }
-                                    }
-                                    Err(err) => {
-                                        tracing::warn!(
-                                            "Clipboard is changed but we could not get available \
-                                             formats, error: {err}"
-                                        );
-                                    }
-                                }
-                            }
-                            Ok(_) | Err(Error::NoEvent) => {}
+                // Drain all buffered X11 events from the connection.
+                // mio only signals fd readability once; x11rb may buffer
+                // multiple events internally from a single read.
+                loop {
+                    // First process any events saved from get_available_formats()
+                    let x11_event = if let Some(evt) = pending_events.pop() {
+                        evt
+                    } else {
+                        match context.poll_for_event() {
+                            Ok(evt) => evt,
+                            Err(Error::NoEvent) => break,
                             Err(err) => {
                                 tracing::warn!("{err}, try to re-connect");
                                 if let Err(err) = try_reconnect(
@@ -162,9 +155,33 @@ fn build_thread(
                                         &context.display_name(),
                                     );
                                 }
+                                break;
+                            }
+                        }
+                    };
+
+                    if let X11Event::XfixesSelectionNotify(_) = x11_event {
+                        match context.get_available_formats(&mut pending_events) {
+                            Ok(mut formats) => {
+                                // filter sensitive content
+                                if clip_filter.filter_sensitive_mime_type(formats.iter()) {
+                                    tracing::info!("Sensitive content detected, ignore it");
+                                    continue;
+                                }
+
+                                if let Some(mime) = extract_mime(&mut formats) {
+                                    notifier.notify_all(mime);
+                                }
+                            }
+                            Err(err) => {
+                                tracing::warn!(
+                                    "Clipboard is changed but we could not get available formats, \
+                                     error: {err}"
+                                );
                             }
                         }
                     }
+                    // Other event types are intentionally ignored
                 }
             }
 
