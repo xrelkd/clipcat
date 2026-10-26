@@ -95,7 +95,7 @@ mime = "0.3"
 mio = { version = "1.2", features = ["os-ext"] }
 notify = "8"
 notify-rust = "4"
-parking_lot = "0.12"
+parking_lot = "0.13"
 prometheus = "0.14"
 regex = "1"
 semver = "1"
