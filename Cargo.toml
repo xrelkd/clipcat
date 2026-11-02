@@ -75,7 +75,7 @@ tonic             = { version = "0.14", features = ["gzip"] }
 tonic-prost       = "0.14"
 tonic-prost-build = "0.14"
 
-zbus     = { version = "5", default-features = false, features = ["tokio"] }
+zbus     = { version = "6", default-features = false, features = ["tokio"] }
 zvariant = "5"
 
 bytes = "1"
