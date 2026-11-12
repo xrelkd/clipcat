@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use zvariant::Type;
+use zbus::Type;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, Type)]
 pub enum WatcherState {

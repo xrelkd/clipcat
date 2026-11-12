@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use zvariant::Type;
+use zbus::Type;
 
 #[derive(
     Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd, Deserialize, Serialize, Type,
