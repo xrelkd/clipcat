@@ -27,8 +27,7 @@ tokio-stream = { workspace = true }
 
 tonic = { workspace = true }
 
-zbus     = { workspace = true }
-zvariant = { workspace = true }
+zbus = { workspace = true }
 
 hex         = { workspace = true }
 humansize   = { workspace = true }
