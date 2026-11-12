@@ -15,7 +15,7 @@ keywords.workspace     = true
 [dependencies]
 serde = { workspace = true }
 
-zvariant = { workspace = true }
+zbus = { workspace = true }
 
 mime = { workspace = true }
 time = { workspace = true }

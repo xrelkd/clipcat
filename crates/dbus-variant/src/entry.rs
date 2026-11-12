@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use zvariant::Type;
+use zbus::Type;
 
 use crate::ClipboardKind;
 
