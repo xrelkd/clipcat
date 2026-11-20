@@ -3,7 +3,6 @@ name                   = "clipcatctl"
 description            = "Clipcat command line interface"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true

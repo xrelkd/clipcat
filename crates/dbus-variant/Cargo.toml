@@ -3,7 +3,6 @@ name                   = "clipcat-dbus-variant"
 description            = "Clipcat D-Bus variant"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true

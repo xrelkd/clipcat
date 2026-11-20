@@ -1,13 +1,11 @@
 [workspace.package]
 version      = "0.26.0"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
-homepage     = "https://github.com/xrelkd/clipcat"
 repository   = "https://github.com/xrelkd/clipcat"
 readme       = "README.md"
 license      = "GPL-3.0-only"
 edition      = "2024"
 rust-version = "1.93"
-description  = "Clipboard manager written in Rust Programming Language."
 categories   = ["clipboard manager"]
 keywords     = ["clipboard"]
 
@@ -65,7 +63,6 @@ arboard = { version = "3", default-features = false, features = [
 
 axum       = "0.8"
 tower      = { version = "0.5", features = ["timeout"] }
-tower-http = { version = "0.7", features = ["trace"] }
 hyper-util = "0.1"
 
 prost             = "0.14"
@@ -124,6 +121,9 @@ clipcat-external-editor = { path = "./crates/external-editor" }
 clipcat-metrics         = { path = "./crates/metrics" }
 clipcat-proto           = { path = "./crates/proto" }
 clipcat-server          = { path = "./crates/server" }
+
+[workspace.lints.cargo]
+unused_workspace_dependencies = "deny"
 
 [workspace.lints.rust]
 async_fn_in_trait = "allow"
