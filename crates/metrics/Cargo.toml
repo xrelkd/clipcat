@@ -3,7 +3,6 @@ name                   = "clipcat-metrics"
 description            = "Clipcat metrics utilities"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 repository.workspace   = true
 readme.workspace       = true
 license.workspace      = true
@@ -13,12 +12,10 @@ categories.workspace   = true
 keywords.workspace     = true
 
 [dependencies]
-async-trait = { workspace = true }
-tokio       = { workspace = true }
+tokio = { workspace = true }
 
-axum       = { workspace = true }
-tower      = { workspace = true }
-tower-http = { workspace = true }
+axum  = { workspace = true }
+tower = { workspace = true }
 
 bytes      = { workspace = true }
 mime       = { workspace = true }

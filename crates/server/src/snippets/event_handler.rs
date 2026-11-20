@@ -38,7 +38,7 @@ impl EventHandler {
             // insert new snippet to clipboard manager
             if let Some(clip) = load(&file_path) {
                 let id = clip.id();
-                if let Some(id) = self.file_path_to_id.insert(file_path.clone(), id) {
+                if let Some(id) = self.file_path_to_id.insert(file_path, id) {
                     // remove old snippet from clipboard manager
                     tracing::info!("Remove clip {id}");
                     drop(self.event_sender.send(SnippetWatcherEvent::Remove(id)));

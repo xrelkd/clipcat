@@ -3,7 +3,6 @@ name                   = "clipcat-cli"
 description            = "Clipcat CLI common library"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true

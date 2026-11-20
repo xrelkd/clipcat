@@ -3,7 +3,6 @@ name                   = "clipcatd"
 description            = "Clipcat Daemon"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true
