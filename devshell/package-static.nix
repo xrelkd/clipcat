@@ -4,8 +4,6 @@
   lib,
   rustPlatform,
   installShellFiles,
-  libgit2,
-  llhttp,
   pkg-config,
   protobuf,
   completions ? null,
@@ -20,10 +18,6 @@ rustPlatform.buildRustPackage {
   cargoLock = {
     lockFile = ../Cargo.lock;
   };
-
-  buildInputs = [
-    libgit2
-  ];
 
   nativeBuildInputs = [
     pkg-config
@@ -48,8 +42,6 @@ rustPlatform.buildRustPackage {
             --zsh  <($out/bin/$cmd completions zsh)
         done
       '';
-
-  env.LIBRARY_PATH = "${lib.getLib llhttp}/lib";
 
   meta = with lib; {
     description = "Clipboard Manager written in Rust Programming Language (statically linked)";
