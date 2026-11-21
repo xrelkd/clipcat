@@ -4,7 +4,6 @@
   lib,
   stdenv,
   rustPlatform,
-  libgit2,
   pkg-config,
   protobuf,
   installShellFiles,
@@ -21,10 +20,7 @@ rustPlatform.buildRustPackage {
     lockFile = ../Cargo.lock;
   };
 
-  buildInputs = [
-    libgit2
-  ]
-  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
     darwin.apple_sdk.frameworks.Cocoa
     darwin.apple_sdk.frameworks.Security
     darwin.apple_sdk.frameworks.SystemConfiguration
