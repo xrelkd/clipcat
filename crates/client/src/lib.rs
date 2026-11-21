@@ -14,7 +14,7 @@ use self::interceptor::Interceptor;
 pub use self::{
     error::{Error, Result},
     history::History,
-    manager::Manager,
+    manager::{Manager, SubscribeStream},
     system::System,
     watcher::Watcher,
 };
@@ -79,7 +79,7 @@ impl ClientBuilder {
             .connect()
             .await
             .with_context(|_| error::ConnectToClipcatServerViaHttpSnafu {
-                endpoint: grpc_endpoint.clone(),
+                endpoint: Box::new(grpc_endpoint.clone()),
             })?;
         Ok(channel)
     }

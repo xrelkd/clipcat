@@ -15,7 +15,7 @@ in
 pkgs.mkShell {
   name = "dev-shell";
 
-  buildInputs = lib.optionals stdenv.isDarwin [
+  buildInputs = lib.optionals stdenv.hostPlatform.isDarwin [
     darwin.apple_sdk.frameworks.Cocoa
     darwin.apple_sdk.frameworks.Security
     darwin.apple_sdk.frameworks.SystemConfiguration
@@ -49,19 +49,15 @@ pkgs.mkShell {
       shellcheck
 
       pkg-config
-      libgit2
 
       typos
     ]
-    ++ lib.optionals stdenv.isLinux [
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
       xvfb-run
     ];
 
   shellHook = ''
     export NIX_PATH="nixpkgs=${pkgs.path}"
-
-    # This allows the compiled build-script-build to find libgit2 at runtime
-    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [ pkgs.libgit2 ]}:$LD_LIBRARY_PATH"
 
     mkdir -p .cargo
     if [ ! -f .cargo/config.toml ] || ! grep -q 'x86_64-unknown-linux-musl' .cargo/config.toml 2>/dev/null; then

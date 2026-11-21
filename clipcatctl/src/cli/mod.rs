@@ -1,3 +1,5 @@
+mod tail;
+
 use std::{io::Write, num::ParseIntError, path::PathBuf};
 
 use clap::{CommandFactory, Parser, Subcommand};
@@ -124,6 +126,27 @@ pub enum Commands {
     List {
         #[clap(long)]
         no_id: bool,
+    },
+
+    #[clap(about = "Print most recent clipboard entries, oldest first; `-f` to follow")]
+    Tail {
+        #[clap(long)]
+        no_id: bool,
+
+        #[clap(
+            long = "lines",
+            short = 'n',
+            default_value = "10",
+            help = "Print the most recent N entries (oldest of those first)"
+        )]
+        lines: u64,
+
+        #[clap(
+            long = "follow",
+            short = 'f',
+            help = "Follow new clipboard entries; reconnects on clipcatd restart"
+        )]
+        follow: bool,
     },
 
     #[clap(about = "Update clip with <id>")]
@@ -297,6 +320,17 @@ impl Cli {
 
                     println!("{data}");
                 }
+                Some(Commands::Tail { no_id, lines, follow }) => {
+                    return tail::run(
+                        &client,
+                        config.preview_length,
+                        config.show_source_prefix,
+                        no_id,
+                        lines,
+                        follow,
+                    )
+                    .await;
+                }
                 Some(Commands::Insert { kinds, data }) => {
                     for kind in kinds {
                         let _id =
@@ -466,6 +500,16 @@ fn print_watcher_state(state: ClipboardWatcherState) {
     println!("{msg}");
 }
 
+fn format_metadata_line(
+    metadata: &ClipEntryMetadata,
+    no_id: bool,
+    show_source_prefix: bool,
+) -> String {
+    let ClipEntryMetadata { id, preview, kind, .. } = metadata;
+    let prefix = if show_source_prefix { format!("{} ", kind.prefix()) } else { String::new() };
+    if no_id { format!("{prefix}{preview}\n") } else { format!("{id:016x}: {prefix}{preview}\n") }
+}
+
 async fn print_list(
     client: &Client,
     preview_length: usize,
@@ -475,14 +519,8 @@ async fn print_list(
     let metadata_list = client.list(preview_length).await?;
     let mut stdout = tokio::io::stdout();
     for metadata in metadata_list {
-        let ClipEntryMetadata { id, preview, kind, .. } = metadata;
-        let prefix = if show_source_prefix { format!("{} ", kind.prefix()) } else { String::new() };
-        let output = if no_id {
-            format!("{prefix}{preview}\n")
-        } else {
-            format!("{id:016x}: {prefix}{preview}\n")
-        };
-        stdout.write_all(output.as_bytes()).await.context(error::WriteStdoutSnafu)?;
+        let line = format_metadata_line(&metadata, no_id, show_source_prefix);
+        stdout.write_all(line.as_bytes()).await.context(error::WriteStdoutSnafu)?;
     }
     Ok(())
 }

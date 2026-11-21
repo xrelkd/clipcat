@@ -3,7 +3,6 @@ name                   = "clipcat-client"
 description            = "Clipcat client"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true
@@ -15,11 +14,12 @@ keywords.workspace     = true
 [dependencies]
 tracing = { workspace = true }
 
-hyper-util = { workspace = true }
-tokio      = { workspace = true }
+futures = { workspace = true }
+tokio   = { workspace = true }
 
-http  = { workspace = true }
-tower = { workspace = true }
+http       = { workspace = true }
+hyper-util = { workspace = true }
+tower      = { workspace = true }
 
 prost-types = { workspace = true }
 tonic       = { workspace = true }

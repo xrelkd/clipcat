@@ -189,8 +189,8 @@ impl Driver for FileSystemDriver {
                 let model::v2::ClipboardValue { timestamp, mime, data } = clip;
                 let data = if mime.type_() == mime::IMAGE {
                     let file_path = image_file_path_from_digest(&image_dir_path, &data);
-                    let maybe_data = std::fs::read(&file_path)
-                        .context(error::ReadFileSnafu { file_path: file_path.clone() });
+                    let maybe_data =
+                        std::fs::read(&file_path).context(error::ReadFileSnafu { file_path });
                     match maybe_data {
                         Ok(data) => data,
                         Err(err) => {
