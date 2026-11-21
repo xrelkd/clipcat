@@ -40,7 +40,6 @@ If you don't use Nix, you need to install the following tools manually:
 - cargo-nextest
 - protobuf (protoc)
 - pkg-config
-- libgit2
 
 **Optional (for formatting/linting):**
 
