@@ -91,7 +91,7 @@ pub async fn load_and_create_watcher(
         for (clip, file_path) in load(snippet).await {
             if let Some(file_path) = file_path {
                 file_paths.push(file_path.clone());
-                let _ = file_path_to_id.insert(file_path.clone(), clip.id());
+                let _ = file_path_to_id.insert(file_path, clip.id());
             }
             new_clips.push(clip);
         }

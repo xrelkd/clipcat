@@ -86,25 +86,23 @@ where
         manager.clear();
     }
 
-    async fn get(&self, id: u64) -> zvariant::Optional<dbus_variant::ClipEntry> {
+    async fn get(&self, id: u64) -> zbus::Optional<dbus_variant::ClipEntry> {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
 
         let manager = self.manager.lock().await;
-        zvariant::Optional::from(manager.get(id).map(Into::into))
+        zbus::Optional::from(manager.get(id).map(Into::into))
     }
 
     async fn get_current_clip(
         &self,
         kind: dbus_variant::ClipboardKind,
-    ) -> zvariant::Optional<dbus_variant::ClipEntry> {
+    ) -> zbus::Optional<dbus_variant::ClipEntry> {
         metrics::dbus::REQUESTS_TOTAL.inc();
         let _histogram_timer = metrics::dbus::REQUEST_DURATION_SECONDS.start_timer();
 
         let manager = self.manager.lock().await;
-        zvariant::Optional::from(
-            manager.get_current_clip(kind.into()).map(|clip| clip.clone().into()),
-        )
+        zbus::Optional::from(manager.get_current_clip(kind.into()).map(|clip| clip.clone().into()))
     }
 
     async fn list(&self, preview_length: u64) -> Vec<dbus_variant::ClipEntryMetadata> {

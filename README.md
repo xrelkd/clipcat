@@ -165,12 +165,13 @@ clipcatd --no-daemon
 
 3. You can run the following commands with `clipcatctl` or `clipcat-menu`:
 
-| Command                   | Comment                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `clipcatctl list`         | List cached clipboard history                         |
-| `clipcatctl promote <id>` | Insert cached clip with `<id>` into the X11 clipboard |
-| `clipcatctl remove [ids]` | Remove cached clips with `[ids]` from the server      |
-| `clipcatctl clear`        | Clear cached clipboard history                        |
+| Command                   | Comment                                                            |
+| ------------------------- | ------------------------------------------------------------------ |
+| `clipcatctl list`         | List cached clipboard history                                      |
+| `clipcatctl tail [-f]`    | Print the most recent entries (default 10); `-f` streams new clips |
+| `clipcatctl promote <id>` | Insert cached clip with `<id>` into the X11 clipboard              |
+| `clipcatctl remove [ids]` | Remove cached clips with `[ids]` from the server                   |
+| `clipcatctl clear`        | Clear cached clipboard history                                     |
 
 | Command               | Comment                                     |
 | --------------------- | ------------------------------------------- |
@@ -581,6 +582,53 @@ pkill clipcatd
 
 # other configurations
 ```
+
+</details>
+
+<details>
+    <summary>Reacting to new clips with <code>clipcatctl tail</code></summary>
+
+`clipcatctl tail -f` streams each new clip's id and preview as it is
+added, in the same format as `clipcatctl list`. This lets you write
+small shell hooks that mutate clips out-of-band.
+
+Run **one** hook script for every transform you want, even unrelated
+ones. Independent `tail -f` listeners each see the other listeners'
+outputs as new events, so two separate hooks can cascade-trigger each
+other indefinitely. A single script applies all transforms in one pass
+and records the result in a shared state file:
+
+```bash
+#!/usr/bin/env bash
+# `-n 0` → react only to clips added after the hook starts.
+SEEN=~/.cache/clipcat-hooks/produced-ids
+mkdir -p "$(dirname "$SEEN")" && touch "$SEEN"
+
+clipcatctl tail -f -n 0 | while IFS= read -r line; do
+    id=${line%%:*}
+    grep -qxF "$id" "$SEEN" && continue
+    raw=$(clipcatctl get "$id") || continue
+
+    # Apply your transforms here (compose as many as you need).
+    out=${raw#"${raw%%[![:space:]]*}"} # trim leading whitespace
+    out=${out%"${out##*[![:space:]]}"} # trim trailing whitespace
+    # out="[$(date -I)] $out"          # uncomment to date-stamp
+
+    [ "$raw" = "$out" ] && continue
+    new_id=$(clipcatctl update "$id" "$out") || continue
+    printf '%s\n' "$new_id" >>"$SEEN"
+
+    # Cap the state file so it does not grow without bound.
+    if [ "$(wc -l <"$SEEN")" -gt 1024 ]; then
+        tail -n 512 "$SEEN" >"$SEEN.tmp" && mv "$SEEN.tmp" "$SEEN"
+    fi
+done
+```
+
+`clipcatctl update` prints the new clip's id, which the hook records in
+`$SEEN` so it's skipped when `tail -f` re-emits it. `clipcatctl tail -f`
+also reconnects automatically on `clipcatd` restarts and resumes
+streaming new clips, so the script can run as a long-lived service.
 
 </details>
 

@@ -1,14 +1,21 @@
+use std::pin::Pin;
+
 use clipcat_base::{ClipEntry, ClipEntryMetadata, ClipboardKind};
 use clipcat_proto as proto;
+use futures::{Stream, StreamExt};
 use tonic::Request;
 
 use crate::{
     Client,
     error::{
         BatchRemoveClipError, ClearClipError, GetClipError, GetCurrentClipError, GetLengthError,
-        InsertClipError, ListClipError, MarkClipError, RemoveClipError, UpdateClipError,
+        InsertClipError, ListClipError, MarkClipError, RemoveClipError, SubscribeClipError,
+        UpdateClipError,
     },
 };
+
+pub type SubscribeStream =
+    Pin<Box<dyn Stream<Item = Result<ClipEntryMetadata, SubscribeClipError>> + Send>>;
 
 pub trait Manager {
     async fn get(&self, id: u64) -> Result<ClipEntry, GetClipError>;
@@ -47,6 +54,9 @@ pub trait Manager {
     async fn length(&self) -> Result<usize, GetLengthError>;
 
     async fn list(&self, preview_length: usize) -> Result<Vec<ClipEntryMetadata>, ListClipError>;
+
+    async fn subscribe(&self, preview_length: usize)
+    -> Result<SubscribeStream, SubscribeClipError>;
 
     async fn remove(&self, id: u64) -> Result<bool, RemoveClipError>;
 
@@ -159,6 +169,29 @@ impl Manager for Client {
                 .collect();
         list.sort_unstable();
         Ok(list)
+    }
+
+    async fn subscribe(
+        &self,
+        preview_length: usize,
+    ) -> Result<SubscribeStream, SubscribeClipError> {
+        let stream =
+            proto::ManagerClient::with_interceptor(self.channel.clone(), self.interceptor.clone())
+                .max_decoding_message_size(self.max_decoding_message_size)
+                .subscribe(Request::new(proto::SubscribeRequest {
+                    preview_length: u64::try_from(preview_length).unwrap_or(30),
+                }))
+                .await
+                .map_err(|source| SubscribeClipError::Status { source })?
+                .into_inner();
+        let mapped = stream.map(|item| match item {
+            Ok(proto::SubscribeEvent { metadata: Some(m) }) => Ok(ClipEntryMetadata::from(m)),
+            Ok(proto::SubscribeEvent { metadata: None }) => Err(SubscribeClipError::Status {
+                source: tonic::Status::data_loss("SubscribeEvent missing metadata"),
+            }),
+            Err(source) => Err(SubscribeClipError::Status { source }),
+        });
+        Ok(Box::pin(mapped))
     }
 
     async fn remove(&self, id: u64) -> Result<bool, RemoveClipError> {

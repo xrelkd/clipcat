@@ -119,50 +119,56 @@ fn build_thread(
                     );
                 }
 
-                for event in &events {
-                    if event.token() == CONTEXT_TOKEN {
-                        match context.poll_for_event() {
-                            Ok(X11Event::XfixesSelectionNotify(_event)) => {
-                                match context.get_available_formats() {
-                                    Ok(mut formats) => {
-                                        // filter sensitive content
-                                        if clip_filter.filter_sensitive_mime_type(formats.iter()) {
-                                            tracing::info!("Sensitive content detected, ignore it");
-                                            continue;
-                                        }
+                // Drain every queued event on each wake-up, the 200 ms timeout
+                // included: mio is edge-triggered and x11rb buffers every event
+                // one socket read returns (also those read while waiting for a
+                // TARGETS reply), so taking one event per readiness left the
+                // rest unseen until more X11 traffic arrived, one clipboard
+                // change late.
+                loop {
+                    match context.poll_for_event() {
+                        Ok(X11Event::XfixesSelectionNotify(_event)) => {
+                            match context.get_available_formats() {
+                                Ok(mut formats) => {
+                                    // filter sensitive content
+                                    if clip_filter.filter_sensitive_mime_type(formats.iter()) {
+                                        tracing::info!("Sensitive content detected, ignore it");
+                                        continue;
+                                    }
 
-                                        if let Some(mime) = extract_mime(&mut formats) {
-                                            notifier.notify_all(mime);
-                                        }
-                                    }
-                                    Err(err) => {
-                                        tracing::warn!(
-                                            "Clipboard is changed but we could not get available \
-                                             formats, error: {err}"
-                                        );
+                                    if let Some(mime) = extract_mime(&mut formats) {
+                                        notifier.notify_all(mime);
                                     }
                                 }
-                            }
-                            Ok(_) | Err(Error::NoEvent) => {}
-                            Err(err) => {
-                                tracing::warn!("{err}, try to re-connect");
-                                if let Err(err) = try_reconnect(
-                                    &poll,
-                                    &mut context,
-                                    retry_interval.clone(),
-                                    &is_running,
-                                ) {
-                                    drop(notifier);
-                                    return Err(err);
-                                }
-                                for observer in &event_observers {
-                                    observer.on_connected(
-                                        ListenerKind::X11,
-                                        context.clipboard_kind(),
-                                        &context.display_name(),
+                                Err(err) => {
+                                    tracing::warn!(
+                                        "Clipboard is changed but we could not get available \
+                                         formats, error: {err}"
                                     );
                                 }
                             }
+                        }
+                        Ok(_) => {}
+                        Err(Error::NoEvent) => break,
+                        Err(err) => {
+                            tracing::warn!("{err}, try to re-connect");
+                            if let Err(err) = try_reconnect(
+                                &poll,
+                                &mut context,
+                                retry_interval.clone(),
+                                &is_running,
+                            ) {
+                                drop(notifier);
+                                return Err(err);
+                            }
+                            for observer in &event_observers {
+                                observer.on_connected(
+                                    ListenerKind::X11,
+                                    context.clipboard_kind(),
+                                    &context.display_name(),
+                                );
+                            }
+                            break;
                         }
                     }
                 }

@@ -3,7 +3,6 @@ name                   = "clipcat-server"
 description            = "Clipcat server"
 version.workspace      = true
 authors.workspace      = true
-homepage.workspace     = true
 readme.workspace       = true
 repository.workspace   = true
 license.workspace      = true
@@ -27,8 +26,7 @@ tokio-stream = { workspace = true }
 
 tonic = { workspace = true }
 
-zbus     = { workspace = true }
-zvariant = { workspace = true }
+zbus = { workspace = true }
 
 hex         = { workspace = true }
 humansize   = { workspace = true }
@@ -43,11 +41,13 @@ simdutf8    = { workspace = true }
 snafu       = { workspace = true }
 time        = { workspace = true }
 
-clipcat-base         = { workspace = true }
-clipcat-clipboard    = { workspace = true }
+clipcat-base      = { workspace = true }
+clipcat-clipboard = { workspace = true }
+clipcat-metrics   = { workspace = true }
+clipcat-proto     = { workspace = true }
+
+[target.'cfg(all(unix, not(any(target_os = "macos", target_os = "ios", target_os = "android", target_os = "emscripten"))))'.dependencies]
 clipcat-dbus-variant = { workspace = true }
-clipcat-metrics      = { workspace = true }
-clipcat-proto        = { workspace = true }
 
 [lints]
 workspace = true

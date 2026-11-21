@@ -73,7 +73,8 @@ fn build_thread(
                 if count == prev_count {
                     tracing::trace!("Pasteboard is not changed, sleep for a while");
 
-                    // sleep for a while there is no new content or error occurred
+                    // sleep for a while there is no new content or error
+                    // occurred
                     thread::sleep(POLLING_INTERVAL);
                     continue;
                 }
