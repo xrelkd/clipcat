@@ -25,7 +25,6 @@ jobs:
         with:
           base: develop
           branch: chore/nix-flake-lock
-          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           pr-title: "build(nix): update `flake.lock`"
           commit-msg: "build(nix): update `flake.lock`"
           pr-body: |
