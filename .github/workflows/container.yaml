@@ -15,6 +15,7 @@ on:
       - "dev-support/containers/docker-bake.hcl"
       - Cargo.lock
       - Cargo.toml
+      - flake.lock
 
 env:
   CI: 1
