@@ -1,6 +1,7 @@
 name: Update flake.lock
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "30 0,6,12,18 * * *"
 
@@ -11,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: develop
           fetch-depth: 0
 
       - name: Install Nix
@@ -22,6 +23,7 @@ jobs:
       - name: Update flake.lock
         uses: DeterminateSystems/update-flake-lock@v29
         with:
+          base: develop
           branch: chore/nix-flake-lock
           token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
           pr-title: "build(nix): update `flake.lock`"
