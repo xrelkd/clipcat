@@ -19,6 +19,7 @@ on:
       - Cargo.lock
       - Cargo.toml
       - deny.toml
+      - flake.lock
       - rust-toolchain.toml
       - rustfmt.toml
 
