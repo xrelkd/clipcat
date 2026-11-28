@@ -2,12 +2,14 @@
   cargoArgs,
   unitTestArgs,
   lib,
+  stdenv,
   writeShellScriptBin,
 }:
 
 let
   CARGO_ARGUMENTS = lib.strings.concatMapStrings (x: x + " ") cargoArgs;
   UNIT_TEST_ARGUMENTS = lib.strings.concatMapStrings (x: x + " ") unitTestArgs;
+  test-wrapper = lib.optionalString stdenv.hostPlatform.isLinux "xvfb-run --auto-servernum ";
 in
 {
   cargo-build-all = writeShellScriptBin "cargo-build-all" ''
@@ -47,7 +49,7 @@ in
 
     cargo --version
     rustc --version
-    xvfb-run --auto-servernum cargo test ${UNIT_TEST_ARGUMENTS} --no-fail-fast "$@" -- \
+    ${test-wrapper}cargo test ${UNIT_TEST_ARGUMENTS} --no-fail-fast "$@" -- \
       --nocapture \
       --test
   '';
@@ -61,6 +63,6 @@ in
     cargo --version
     rustc --version
     cargo nextest --version
-    xvfb-run --auto-servernum cargo nextest run --workspace --no-fail-fast --no-capture "$@"
+    ${test-wrapper}cargo nextest run --workspace --no-fail-fast --no-capture "$@"
   '';
 }
