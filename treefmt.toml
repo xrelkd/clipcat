@@ -6,15 +6,19 @@ includes = ["*.rs"]
 [formatter.protobuf]
 command = "sh"
 options = ["-eucx", """
-buf format --write
-"""]
+for file in "$@"; do
+  buf format --write "$file"
+done
+""", "--"]
 includes = ["*.proto"]
 
 [formatter.protobuf-check]
 command = "sh"
 options = ["-eucx", """
-buf format --exit-code
-"""]
+for file in "$@"; do
+  buf format --exit-code "$file"
+done
+""", "--"]
 includes = ["*.proto"]
 
 [formatter.prettier]

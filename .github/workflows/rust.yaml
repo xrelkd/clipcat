@@ -19,6 +19,7 @@ on:
       - Cargo.lock
       - Cargo.toml
       - deny.toml
+      - flake.lock
       - rust-toolchain.toml
       - rustfmt.toml
 
@@ -59,26 +60,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+          - os: macos-15
     steps:
       - uses: actions/checkout@v7
 
       - name: Install Nix
-        if: runner.os == 'Linux'
         uses: DeterminateSystems/nix-installer-action@v23
 
       - uses: DeterminateSystems/magic-nix-cache-action@v15
-        if: runner.os == 'Linux'
-
-      - name: Setup Rust toolchain
-        if: runner.os == 'macOS'
-        uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          cache: false
-
-      - name: Install build dependencies
-        if: runner.os == 'macOS'
-        run: brew install protobuf
 
       - name: Pre Cache
         run: |
@@ -98,24 +89,12 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Show cargo clippy version
-        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy --version
 
-      - name: Show cargo clippy version (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          cargo clippy --version
-
       - name: Run cargo clippy
-        if: runner.os == 'Linux'
         run: |
           nix develop --command cargo clippy-all
-
-      - name: Run cargo clippy (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          cargo clippy --workspace --bins --examples --tests --benches --all-targets
 
   test:
     name: Test
@@ -160,10 +139,50 @@ jobs:
           nix develop --command cargo nextest --version
 
       - name: Test with cargo-nextest
-        uses: coactions/setup-xvfb@v1
+        run: |
+          nix develop --command cargo nextest-all ${{ matrix.mode == 'release' && '--release' || '' }}
+
+  test-macos:
+    name: Test (macOS)
+    runs-on: macos-15
+    needs:
+      - clippy
+
+    env:
+      NEXTEST_RETRIES: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Enable Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v15
+
+      - name: Cache
+        uses: actions/cache@v6
         with:
-          run: |
-            nix develop --command cargo nextest-all ${{ matrix.mode == 'release' && '--release' || '' }}
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: ${{ runner.os }}-${{ runner.arch }}-cargo-${{ hashFiles('flake.lock', '**/Cargo.lock') }}
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.11
+
+      - name: Show cargo-nextest version
+        run: |
+          nix develop --command cargo nextest --version
+
+      - name: Test with cargo-nextest
+        run: |
+          nix develop --command cargo nextest-all --release
+
+      - name: Run doctests
+        run: |
+          nix develop --command cargo test --workspace --release --doc
 
   doc:
     name: Doc

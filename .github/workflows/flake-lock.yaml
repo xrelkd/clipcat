@@ -1,0 +1,35 @@
+name: Update flake.lock
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 0,6,12,18 * * *"
+
+jobs:
+  update-flake-lock:
+    name: Update flake.lock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+
+      - name: Update flake.lock
+        uses: DeterminateSystems/update-flake-lock@v29
+        with:
+          base: develop
+          branch: chore/nix-flake-lock
+          pr-title: "build(nix): update `flake.lock`"
+          commit-msg: "build(nix): update `flake.lock`"
+          pr-body: |
+            Automated by [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock).
+
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```

@@ -117,19 +117,7 @@ impl Default for Config {
             access_token: None,
             access_token_file_path: None,
 
-            #[cfg(all(
-                unix,
-                not(any(
-                    target_os = "macos",
-                    target_os = "ios",
-                    target_os = "android",
-                    target_os = "emscripten"
-                ))
-            ))]
-            finder: FinderType::Rofi,
-
-            #[cfg(target_os = "macos")]
-            finder: FinderType::Choose,
+            finder: default_finder(),
 
             preview_length: 80,
             grpc_max_message_size: default_grpc_max_message_size(),
@@ -260,6 +248,26 @@ impl Default for CustomFinder {
 
 fn default_menu_prompt() -> String { clipcat_base::DEFAULT_MENU_PROMPT.to_string() }
 
+const fn default_finder() -> FinderType {
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    {
+        FinderType::Rofi
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        FinderType::Choose
+    }
+}
+
 const fn default_menu_length() -> usize {
     #[cfg(all(
         unix,
@@ -328,7 +336,7 @@ fn expand_path<P: AsRef<Path>>(path: P) -> Result<PathBuf, Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Config, FinderType};
+    use super::{Config, FinderType, default_finder, default_line_length, default_menu_length};
 
     #[test]
     fn test_partial_config_preserves_defaults() {
@@ -369,32 +377,36 @@ finder = "dmenu"
 
     #[test]
     fn test_comprehensive_toml_defaults_match_config_default() {
-        let toml_str = r#"
+        let finder = default_finder();
+        let line_length = default_line_length();
+        let menu_length = default_menu_length();
+        let toml_str = format!(
+            r#"
 preview_length = 80
-finder = "rofi"
+finder = "{finder}"
 grpc_max_message_size = 8388608
 
 [rofi]
-line_length = 100
-menu_length = 30
+line_length = {line_length}
+menu_length = {menu_length}
 menu_prompt = "Clipcat"
 extra_arguments = []
 
 [dmenu]
-line_length = 100
-menu_length = 30
+line_length = {line_length}
+menu_length = {menu_length}
 menu_prompt = "Clipcat"
 extra_arguments = []
 
 [fuzzel]
-line_length = 100
-menu_length = 30
+line_length = {line_length}
+menu_length = {menu_length}
 menu_prompt = "Clipcat"
 extra_arguments = []
 
 [choose]
-line_length = 100
-menu_length = 30
+line_length = {line_length}
+menu_length = {menu_length}
 menu_prompt = "Clipcat"
 extra_arguments = []
 
@@ -407,8 +419,9 @@ emit_journald = false
 emit_stdout = false
 emit_stderr = false
 level = "INFO"
-"#;
-        let from_toml: Config = toml::from_str(toml_str).unwrap();
+"#
+        );
+        let from_toml: Config = toml::from_str(&toml_str).unwrap();
         let from_default = Config::default();
         assert_eq!(from_toml.preview_length, from_default.preview_length);
         assert_eq!(from_toml.finder, from_default.finder);
@@ -423,21 +436,48 @@ level = "INFO"
 
     #[test]
     fn test_finder_defaults() {
+        let expected_menu_length = default_menu_length();
+        let expected_line_length = default_line_length();
+
         let config: Config = toml::from_str("finder = \"rofi\"").unwrap();
-        assert_eq!(config.rofi.as_ref().unwrap().menu_length, 30);
-        assert_eq!(config.rofi.as_ref().unwrap().line_length, 100);
+        assert_eq!(config.rofi.as_ref().unwrap().menu_length, expected_menu_length);
+        assert_eq!(config.rofi.as_ref().unwrap().line_length, expected_line_length);
 
         let config: Config = toml::from_str("finder = \"dmenu\"").unwrap();
-        assert_eq!(config.dmenu.as_ref().unwrap().menu_length, 30);
-        assert_eq!(config.dmenu.as_ref().unwrap().line_length, 100);
+        assert_eq!(config.dmenu.as_ref().unwrap().menu_length, expected_menu_length);
+        assert_eq!(config.dmenu.as_ref().unwrap().line_length, expected_line_length);
 
         let config: Config = toml::from_str("finder = \"fuzzel\"").unwrap();
-        assert_eq!(config.fuzzel.as_ref().unwrap().menu_length, 30);
-        assert_eq!(config.fuzzel.as_ref().unwrap().line_length, 100);
+        assert_eq!(config.fuzzel.as_ref().unwrap().menu_length, expected_menu_length);
+        assert_eq!(config.fuzzel.as_ref().unwrap().line_length, expected_line_length);
 
         let config: Config = toml::from_str("finder = \"choose\"").unwrap();
-        assert_eq!(config.choose.as_ref().unwrap().menu_length, 30);
-        assert_eq!(config.choose.as_ref().unwrap().line_length, 100);
+        assert_eq!(config.choose.as_ref().unwrap().menu_length, expected_menu_length);
+        assert_eq!(config.choose.as_ref().unwrap().line_length, expected_line_length);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_macos_defaults() {
+        assert_eq!(default_finder(), FinderType::Choose);
+        assert_eq!(default_menu_length(), 15);
+        assert_eq!(default_line_length(), 70);
+    }
+
+    #[cfg(all(
+        unix,
+        not(any(
+            target_os = "macos",
+            target_os = "ios",
+            target_os = "android",
+            target_os = "emscripten"
+        ))
+    ))]
+    #[test]
+    fn test_non_apple_unix_defaults() {
+        assert_eq!(default_finder(), FinderType::Rofi);
+        assert_eq!(default_menu_length(), 30);
+        assert_eq!(default_line_length(), 100);
     }
 
     #[test]

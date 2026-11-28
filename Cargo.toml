@@ -1,5 +1,5 @@
 [workspace.package]
-version      = "0.27.0"
+version      = "0.27.1"
 authors      = ["xrelkd <46590321+xrelkd@users.noreply.github.com>"]
 repository   = "https://github.com/xrelkd/clipcat"
 readme       = "README.md"
@@ -92,7 +92,7 @@ linicon = "2"
 lru = "0.19"
 mime = "0.3"
 mio = { version = "1.2", features = ["os-ext"] }
-notify = "8"
+notify = "9"
 notify-rust = "4"
 parking_lot = "0.13"
 prometheus = "0.14"
